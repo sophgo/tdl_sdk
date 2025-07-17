@@ -29,6 +29,7 @@ if("${CVI_PLATFORM}" STREQUAL "SOPHON")
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmrt.a
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmlib.a
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmodel.a
+      ${MLIR_SDK_ROOT}/lib/libz.a
 )
 elseif("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
   set(MLIR_LIBS
