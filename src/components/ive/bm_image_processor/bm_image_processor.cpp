@@ -6,19 +6,19 @@
 #include "image/vpss_image.hpp"
 #include "utils/tdl_log.hpp"
 
-extern int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img,
-                          int rwidth, int rheight, unsigned char *right_img,
-                          int bwidth, int bheight, unsigned char *blend_img,
-                          int overlay_lx, int overlay_rx, unsigned char *wgt,
-                          int channel, int format, int wgt_mode);
+// extern int cpu_2way_blend(int lwidth, int lheight, unsigned char *left_img,
+//                           int rwidth, int rheight, unsigned char *right_img,
+//                           int bwidth, int bheight, unsigned char *blend_img,
+//                           int overlay_lx, int overlay_rx, unsigned char *wgt,
+//                           int channel, int format, int wgt_mode);
 
 int32_t getChannelSize(CVI_S32 format, CVI_S32 width, CVI_S32 height,
                        int src1_size[3]) {
   switch (format) {
     case PIXEL_FORMAT_YUV_PLANAR_420:
       src1_size[0] = height * width;
-      src1_size[1] = BM_ALIGN(width / 2, 2) * BM_ALIGN(height / 2, 2);
-      src1_size[2] = BM_ALIGN(width / 2, 2) * BM_ALIGN(height / 2, 2);
+      src1_size[1] = ALIGN(width / 2, 2) * ALIGN(height / 2, 2);
+      src1_size[2] = ALIGN(width / 2, 2) * ALIGN(height / 2, 2);
       break;
     case PIXEL_FORMAT_YUV_400:
       src1_size[0] = height * width;
@@ -31,7 +31,7 @@ int32_t getChannelSize(CVI_S32 format, CVI_S32 width, CVI_S32 height,
     case PIXEL_FORMAT_NV12:
     case PIXEL_FORMAT_NV21:
       src1_size[0] = width * height;
-      src1_size[1] = BM_ALIGN(height / 2, 2);
+      src1_size[1] = ALIGN(height / 2, 2);
       break;
     default:
       printf("Pixel format(%d) not supported!\n", format);
@@ -332,6 +332,26 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   CVI_S32 blend_w = lwidth + rwidth - overlay_w;
   CVI_S32 blend_h = lheight;
   CVI_S32 channel = (image_format == ImageFormat::GRAY) ? 1 : 3;
+  int dsize = 0;
+  if (left->getPixDataType() == TDLDataType::UINT8 ||
+      left->getPixDataType() == TDLDataType::INT8) {
+    dsize = sizeof(unsigned char);
+  } else if (left->getPixDataType() == TDLDataType::UINT16 ||
+             left->getPixDataType() == TDLDataType::INT16) {
+    dsize = sizeof(unsigned short);
+  } else if (left->getPixDataType() == TDLDataType::INT32 ||
+             left->getPixDataType() == TDLDataType::UINT32) {
+    dsize = sizeof(unsigned int);
+  } else if (left->getPixDataType() == TDLDataType::BF16 ||
+             left->getPixDataType() == TDLDataType::FP16) {
+    dsize = sizeof(unsigned short);
+  } else if (left->getPixDataType() == TDLDataType::FP32) {
+    dsize = sizeof(float);
+  } else {
+    LOGE("Image pix data type is not supported: %d\n",
+         static_cast<int>(left->getPixDataType()));
+    return -1;
+  }
 
   // 创建输出图像
   if (!output || output->getHeight() != blend_h ||
@@ -422,7 +442,7 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
     output_img_mem[c].size = output_strides[c] * blend_h;
   }
 #endif
-  int wgt_size[2] = {overlay_w * blend_h, BM_ALIGN(blend_h / 2, 2) * overlay_w};
+  int wgt_size[2] = {overlay_w * blend_h, ALIGN(blend_h / 2, 2) * overlay_w};
 
   CVI_U8 *wgt_y_vir_addr = wgt->getVirtualAddress()[0];
   CVI_U8 *wgt_uv_vir_addr = wgt_y_vir_addr + wgt_size[0];
@@ -452,9 +472,12 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   ImageInfo left_img;
   ImageInfo right_img;
   ImageInfo output_img;
-  set_blend_Image_param(&left_img, format, lwidth, left_strides, lheight);
-  set_blend_Image_param(&right_img, format, rwidth, right_strides, rheight);
-  set_blend_Image_param(&output_img, format, blend_w, output_strides, blend_h);
+  set_blend_Image_param(&left_img, format, lwidth, left_strides, lheight,
+                        dsize);
+  set_blend_Image_param(&right_img, format, rwidth, right_strides, rheight,
+                        dsize);
+  set_blend_Image_param(&output_img, format, blend_w, output_strides, blend_h,
+                        dsize);
   bm_status_t ret = tpu_2way_blending(
       handle_, &left_img, left_img_mem, &right_img, right_img_mem, &output_img,
       output_img_mem, overlay_lx, overlay_rx, wgt_mem,
@@ -498,5 +521,90 @@ int32_t BmImageProcessor::compareResult(CVI_U8 *tpu_result, CVI_U8 *cpu_result,
     }
   }
   printf("cpu and tpu result same.\n");
+  return 0;
+}
+
+int32_t BmImageProcessor::erode(std::shared_ptr<BaseImage> &input,
+                                CVI_U32 kernal_w, CVI_U32 kernal_h,
+                                std::shared_ptr<BaseImage> &output) {
+  int32_t ret = morphProcess(input, "erode", kernal_w, kernal_h, output);
+  return ret;
+}
+
+int32_t BmImageProcessor::dilate(std::shared_ptr<BaseImage> &input,
+                                 CVI_U32 kernal_w, CVI_U32 kernal_h,
+                                 std::shared_ptr<BaseImage> &output) {
+  int32_t ret = morphProcess(input, "dilate", kernal_w, kernal_h, output);
+  return ret;
+}
+
+int32_t BmImageProcessor::morphProcess(std::shared_ptr<BaseImage> &input,
+                                       std::string morph_type, CVI_U32 kernal_w,
+                                       CVI_U32 kernal_h,
+                                       std::shared_ptr<BaseImage> &output) {
+  // 参数校验
+  if (!input) {
+    printf("input is nullptr\n");
+    return -1;  // 参数无效
+  }
+
+  // 从BaseImage获取必要的参数
+  CVI_S32 height = input->getHeight();
+  CVI_S32 width = input->getWidth();
+  std::vector<uint32_t> strides = input->getStrides();
+  CVI_S32 aligned_width = strides[0];
+  ImageFormat image_format = input->getImageFormat();
+  TDLDataType pix_data_type = input->getPixDataType();
+  if (!output || output->getHeight() != height || output->getWidth() != width ||
+      output->getImageFormat() != image_format ||
+      output->getPixDataType() != pix_data_type) {
+    output =
+        ImageFactory::createImage(width, height, image_format, pix_data_type,
+                                  true, InferencePlatform::AUTOMATIC);
+  }
+
+  PIXEL_FORMAT_E format =
+      VPSSImage::convertPixelFormat(image_format, pix_data_type);
+  if (format != PIXEL_FORMAT_YUV_400) {
+    printf("ImageInfo format not supported for thresholdProcess: %d\n",
+           static_cast<int>(image_format));
+    printf("Only grayscale images are supported for threshold operation.\n");
+    return -1;
+  }
+
+  // 设备内存
+  bm_device_mem_t input_mem;
+  bm_device_mem_t output_mem;
+
+  std::unique_ptr<MemoryBlock> &input_mem_block = input->getMemoryBlock();
+  std::unique_ptr<MemoryBlock> &output_mem_block = output->getMemoryBlock();
+  input_mem.u.device.device_addr = input_mem_block->physicalAddress;
+  output_mem.u.device.device_addr = output_mem_block->physicalAddress;
+  input_mem.size = input_mem_block->size;
+  output_mem.size = output_mem_block->size;
+
+  if (morph_type == "erode") {
+    bm_status_t ret =
+        bm_cv_erode(handle_, input_mem, output_mem, format, width, height,
+                    aligned_width, kernal_w, kernal_h, tpu_module_);
+    if (ret != BM_SUCCESS) {
+      printf("bm_cv_erode failed\n");
+      // 释放设备内存
+      bm_free_device(handle_, input_mem);
+      bm_free_device(handle_, output_mem);
+      return static_cast<int32_t>(ret);
+    }
+  } else if (morph_type == "dilate") {
+    bm_status_t ret =
+        bm_cv_dilate(handle_, input_mem, output_mem, format, width, height,
+                     aligned_width, kernal_w, kernal_h, tpu_module_);
+    if (ret != BM_SUCCESS) {
+      printf("bm_cv_dilate failed\n");
+      // 释放设备内存
+      bm_free_device(handle_, input_mem);
+      bm_free_device(handle_, output_mem);
+      return static_cast<int32_t>(ret);
+    }
+  }
   return 0;
 }

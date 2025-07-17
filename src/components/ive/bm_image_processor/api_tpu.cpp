@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <cvi_math.h>
+#include <limits.h>
 #include <math.h>
 #include "cvi_tpu.hpp"
 #include "stdio.h"
@@ -52,6 +54,18 @@ typedef struct sg_cv_blend_2way {
   int wgt_mode;
 } __attribute__((packed)) sg_cv_blend_2way_t;
 
+typedef struct sg_api_cv_morph {
+  unsigned long long src_addr;
+  unsigned long long dst_addr;
+  int width;
+  int height;
+  int kh;
+  int kw;
+  int stride_i;
+  int stride_o;
+  int op;
+} __attribute__((packed)) sg_api_cv_morph_t;
+
 static unsigned char blend_pixel(unsigned char left, unsigned char right,
                                  unsigned char alpha) {
   float r = (alpha * left + (255 - alpha) * right) / 255;
@@ -72,13 +86,13 @@ static void process_uv_plane(unsigned char *blend_uv_base,
   int overlay_w = overlay_rx - overlay_lx + 1;
   int overlay_uv_w = overlay_w / 2;
 
-  int uv_bheight = BM_ALIGN(bheight / 2, 2);
-  int uv_bwidth = BM_ALIGN(bwidth / 2, 2);
+  int uv_bheight = ALIGN(bheight / 2, 2);
+  int uv_bwidth = ALIGN(bwidth / 2, 2);
 
-  int uv_lheight = BM_ALIGN(lheight / 2, 2);
+  int uv_lheight = ALIGN(lheight / 2, 2);
 
-  int uv_rheight = BM_ALIGN(rheight / 2, 2);
-  int uv_rwidth = BM_ALIGN(rwidth / 2, 2);
+  int uv_rheight = ALIGN(rheight / 2, 2);
+  int uv_rwidth = ALIGN(rwidth / 2, 2);
 
   int buv_size = uv_bheight * uv_bstride;
   int luv_size = uv_lheight * uv_lstride;
@@ -428,8 +442,8 @@ bm_status_t tpu_cv_subads(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
     api.width[0] = width;
 
     for (int i = 1; i < 3; i++) {
-      api.height[i] = BM_ALIGN(height / 2, 2);
-      api.width[i] = BM_ALIGN(width / 2, 2);
+      api.height[i] = ALIGN(height / 2, 2);
+      api.width[i] = ALIGN(width / 2, 2);
     }
   } else {
     for (int c = 0; c < channel; c++) {
@@ -541,7 +555,8 @@ bm_status_t tpu_cv_threshold(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
 }
 
 static int get_channel_info(int size[3], int stride[3], int h[3], int w[3],
-                            int *channel, int width, int height, int format) {
+                            int *channel, int width, int height, int format,
+                            int dsize) {
   int ret = 0;
 
   switch (format) {
@@ -550,7 +565,7 @@ static int get_channel_info(int size[3], int stride[3], int h[3], int w[3],
     case PIXEL_FORMAT_YUV_PLANAR_444:
       for (int i = 0; i < 3; i++) {
         size[i] = width * height;
-        stride[i] = width;
+        stride[i] = width * dsize;
         w[i] = width;
         h[i] = height;
       }
@@ -558,15 +573,15 @@ static int get_channel_info(int size[3], int stride[3], int h[3], int w[3],
       break;
     case PIXEL_FORMAT_YUV_PLANAR_420:
       size[0] = width * height;
-      stride[0] = width;
+      stride[0] = width * dsize;
       w[0] = width;
       h[0] = height;
 
       for (int i = 1; i < 3; i++) {
-        size[i] = BM_ALIGN(width / 2, 2) * BM_ALIGN(height / 2, 2);
-        stride[i] = BM_ALIGN(width / 2, 2);
-        w[i] = BM_ALIGN(width / 2, 2);
-        h[i] = BM_ALIGN(height / 2, 2);
+        size[i] = ALIGN(width / 2, 2) * ALIGN(height / 2, 2);
+        stride[i] = ALIGN(width / 2, 2) * dsize;
+        w[i] = ALIGN(width / 2, 2);
+        h[i] = ALIGN(height / 2, 2);
       }
 
       *channel = 3;
@@ -574,20 +589,20 @@ static int get_channel_info(int size[3], int stride[3], int h[3], int w[3],
     case PIXEL_FORMAT_NV12:
     case PIXEL_FORMAT_NV21:
       size[0] = width * height;
-      size[1] = BM_ALIGN(height / 2, 2) * width;
+      size[1] = ALIGN(height / 2, 2) * width;
 
-      stride[0] = stride[1] = width;
+      stride[0] = stride[1] = width * dsize;
       stride[2] = 0;
 
       w[1] = w[0] = width;
 
       h[0] = height;
-      h[1] = BM_ALIGN(height / 2, 2);
+      h[1] = ALIGN(height / 2, 2);
 
       *channel = 2;
       break;
     case PIXEL_FORMAT_YUV_400:
-      stride[0] = width;
+      stride[0] = width * dsize;
       w[0] = width;
       h[0] = height;
       size[0] = width * height;
@@ -604,13 +619,14 @@ static int get_channel_info(int size[3], int stride[3], int h[3], int w[3],
 }
 
 int set_blend_Image_param(ImageInfo *img, PIXEL_FORMAT_E img_format, int width,
-                          std::vector<uint32_t> &w_stride, int height) {
+                          std::vector<uint32_t> &w_stride, int height,
+                          int dsize) {
   int channel_stride[3] = {0}, stride[3] = {0}, w[3] = {0}, h[3] = {0},
       channel = 3;
   int ret = 0;
 
   if (get_channel_info(channel_stride, stride, h, w, &channel, width, height,
-                       img_format) != 0) {
+                       img_format, dsize) != 0) {
     printf("%s: blend get_channel info failed\n", __func__);
     return -1;
   }
@@ -620,7 +636,13 @@ int set_blend_Image_param(ImageInfo *img, PIXEL_FORMAT_E img_format, int width,
 
   if (!w_stride.empty()) {
     for (int i = 0; i < img->channel && i < w_stride.size(); i++) {
-      stride[i] = static_cast<int>(w_stride[i]);
+      if (w_stride[i] >= stride[i]) {
+        stride[i] = w_stride[i];
+      } else {
+        assert(w_stride[i] > 0 && ((w_stride[i] & (w_stride[i] - 1)) == 0));
+        int stride_temp = stride[i];
+        stride[i] = ALIGN(stride_temp * dsize, w_stride[i]);
+      }
       channel_stride[i] = stride[i] * h[i];
     }
   }
@@ -837,4 +859,153 @@ bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
   }
 
   return ret;
+}
+
+void grayscale_dilate(const unsigned char *src, unsigned char *dst, int width,
+                      int height, int w_stride, int ksize) {
+  const int radius = ksize / 2;
+
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      unsigned char max_val = 0;
+
+      for (int ky = -radius; ky <= radius; ky++) {
+        for (int kx = -radius; kx <= radius; kx++) {
+          int ny = y + ky;
+          int nx = x + kx;
+
+          if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+            if (src[ny * w_stride + nx] > max_val) {
+              max_val = src[ny * w_stride + nx];
+            }
+          }
+        }
+      }
+      dst[y * w_stride + x] = max_val;
+    }
+  }
+}
+
+void grayscale_erode(const unsigned char *src, unsigned char *dst, int width,
+                     int height, int w_stride, int ksize) {
+  const int radius = ksize / 2;
+
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      unsigned char min_val = UCHAR_MAX;
+
+      for (int ky = -radius; ky <= radius; ky++) {
+        for (int kx = -radius; kx <= radius; kx++) {
+          int ny = y + ky;
+          int nx = x + kx;
+
+          if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+            if (src[ny * w_stride + nx] < min_val) {
+              min_val = src[ny * w_stride + nx];
+            }
+          }
+        }
+      }
+      dst[y * w_stride + x] = min_val;
+    }
+  }
+}
+
+bm_status_t bm_cv_morph_check(bm_handle_t handle, PIXEL_FORMAT_E format,
+                              int img_height, int img_width, int kw, int kh,
+                              enum MorphTypes op) {
+  const char *info_label =
+      (op == MORPH_DILATE ? "MORPH_DILATE" : "MORPH_ERODE");
+  if (handle == NULL) {
+    bmlib_log(info_label, BMLIB_LOG_ERROR, "Can not get handle!\r\n");
+    return BM_ERR_PARAM;
+  }
+
+  if (format != PIXEL_FORMAT_YUV_400) {
+    bmlib_log(info_label, BMLIB_LOG_ERROR,
+              "Only Support PIXEL_FORMAT_YUV_400!\r\n");
+    return BM_ERR_PARAM;
+  }
+
+  if (op != MORPH_DILATE && op != MORPH_ERODE) {
+    bmlib_log(info_label, BMLIB_LOG_ERROR, "MorphTypes(%d) Not Support!\r\n",
+              op);
+    return BM_ERR_PARAM;
+  }
+
+  if (kw > 7 || kh > 7) {
+    bmlib_log(info_label, BMLIB_LOG_ERROR,
+              "The kernel size must be not greater than 7!\r\n");
+    return BM_ERR_PARAM;
+  }
+
+  if (img_height > 1440 && img_height < 5) {
+    bmlib_log(info_label, BMLIB_LOG_ERROR,
+              "the img height should between 8 and 1440!\r\n");
+    return BM_ERR_PARAM;
+  }
+
+  if (img_width + kw - 1 > 2700 && img_width + kw - 1 < 5) {
+    bmlib_log(info_label, BMLIB_LOG_ERROR, "image width is too large!\r\n");
+    return BM_ERR_PARAM;
+  }
+
+  return BM_SUCCESS;
+}
+
+bm_status_t bm_cv_morph(bm_handle_t handle, bm_device_mem_t src_mem,
+                        bm_device_mem_t dst_mem, int kh, int kw, int img_height,
+                        int img_width, int img_w_stride, enum MorphTypes op,
+                        tpu_kernel_module_t tpu_module) {
+  bm_status_t ret = BM_SUCCESS;
+
+  sg_api_cv_morph api;
+  memset(&api, 0, sizeof(sg_api_cv_morph));
+  src_mem.flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+  dst_mem.flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+  api.src_addr = bm_mem_get_device_addr(src_mem);
+  api.dst_addr = bm_mem_get_device_addr(dst_mem);
+  api.width = img_width;
+  api.height = img_height;
+  api.stride_i = img_w_stride;
+  api.stride_o = img_w_stride;
+  api.op = op;
+  api.kh = kh;
+  api.kw = kw;
+
+  ret = sg_tpu_kernel_launch(handle, "cv_morph", &api, sizeof(api), tpu_module);
+  if (ret) {
+    printf("cv_morph tpu_kernel_launch failed\n");
+    return BM_ERR_FAILURE;
+  }
+
+  return ret;
+}
+
+bm_status_t bm_cv_dilate(bm_handle_t handle, bm_device_mem_t src_mem,
+                         bm_device_mem_t dst_mem, PIXEL_FORMAT_E format,
+                         int width, int height, int w_stride, int kw, int kh,
+                         tpu_kernel_module_t tpu_module) {
+  bm_status_t ret =
+      bm_cv_morph_check(handle, format, height, width, kw, kh, MORPH_DILATE);
+  if (ret != BM_SUCCESS) {
+    return ret;
+  }
+
+  return bm_cv_morph(handle, src_mem, dst_mem, kh, kw, height, width, w_stride,
+                     MORPH_DILATE, tpu_module);
+}
+
+bm_status_t bm_cv_erode(bm_handle_t handle, bm_device_mem_t src_mem,
+                        bm_device_mem_t dst_mem, PIXEL_FORMAT_E format,
+                        int width, int height, int w_stride, int kw, int kh,
+                        tpu_kernel_module_t tpu_module) {
+  bm_status_t ret =
+      bm_cv_morph_check(handle, format, height, width, kw, kh, MORPH_ERODE);
+  if (ret != BM_SUCCESS) {
+    return ret;
+  }
+
+  return bm_cv_morph(handle, src_mem, dst_mem, kh, kw, height, width, w_stride,
+                     MORPH_ERODE, tpu_module);
 }

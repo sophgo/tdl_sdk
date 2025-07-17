@@ -24,6 +24,15 @@ class BmImageProcessor : public ImageProcessor {
                                  std::shared_ptr<BaseImage> &right,
                                  std::shared_ptr<BaseImage> &wgt,
                                  std::shared_ptr<BaseImage> &output) override;
+  virtual int32_t erode(std::shared_ptr<BaseImage> &input, CVI_U32 kernal_w,
+                        CVI_U32 kernal_h,
+                        std::shared_ptr<BaseImage> &output) override;
+  virtual int32_t dilate(std::shared_ptr<BaseImage> &input, CVI_U32 kernal_w,
+                         CVI_U32 kernal_h,
+                         std::shared_ptr<BaseImage> &output) override;
+  int32_t morphProcess(std::shared_ptr<BaseImage> &input,
+                       std::string morph_type, CVI_U32 kernal_w,
+                       CVI_U32 kernal_h, std::shared_ptr<BaseImage> &output);
   int32_t compareResult(CVI_U8 *tpu_result, CVI_U8 *cpu_result, CVI_S32 size);
 
  private:

@@ -23,6 +23,18 @@ int32_t ImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   return 0;
 }
 
+int32_t ImageProcessor::erode(std::shared_ptr<BaseImage> &input,
+                              CVI_U32 kernal_w, CVI_U32 kernal_h,
+                              std::shared_ptr<BaseImage> &output) {
+  return 0;
+}
+
+int32_t ImageProcessor::dilate(std::shared_ptr<BaseImage> &input,
+                               CVI_U32 kernal_w, CVI_U32 kernal_h,
+                               std::shared_ptr<BaseImage> &output) {
+  return 0;
+}
+
 std::shared_ptr<ImageProcessor> ImageProcessor::getImageProcessor(
     const std::string &tpu_kernel_module_path) {
 #if defined(__CV184X__) || defined(__CMODEL_CV184X__)

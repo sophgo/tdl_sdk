@@ -12,8 +12,6 @@ extern "C" {
 #endif
 #endif /* __cplusplus */
 
-#define BM_ALIGN(x, a) (((x) + (a)-1) / (a) * (a))
-
 typedef enum _TPU_THRESHOLD_TYPE {
   THRESHOLD_BINARY = 0,
   THRESHOLD_BINARY_INV,
@@ -49,7 +47,8 @@ typedef struct Image_t {
 } ImageInfo;
 
 int set_blend_Image_param(ImageInfo *img, PIXEL_FORMAT_E img_format, int width,
-                          std::vector<uint32_t> &w_stride, int height);
+                          std::vector<uint32_t> &w_stride, int height,
+                          int dsize);
 
 bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
                               bm_device_mem_t *left_mem, ImageInfo *right_img,
@@ -58,6 +57,21 @@ bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
                               short overlay_rx, bm_device_mem_t *wgt_phy_mem,
                               TPU_BLEND_WGT_MODE mode,
                               tpu_kernel_module_t tpu_module);
+
+enum MorphTypes {
+  MORPH_ERODE = 0,   //!< see #erode
+  MORPH_DILATE = 1,  //!< see #dilate
+};
+
+bm_status_t bm_cv_dilate(bm_handle_t handle, bm_device_mem_t src_mem,
+                         bm_device_mem_t dst_mem, PIXEL_FORMAT_E format,
+                         int width, int height, int w_stride, int kw, int kh,
+                         tpu_kernel_module_t tpu_module);
+
+bm_status_t bm_cv_erode(bm_handle_t handle, bm_device_mem_t src_mem,
+                        bm_device_mem_t dst_mem, PIXEL_FORMAT_E format,
+                        int width, int height, int w_stride, int kw, int kh,
+                        tpu_kernel_module_t tpu_module);
 
 #ifdef __cplusplus
 #if __cplusplus

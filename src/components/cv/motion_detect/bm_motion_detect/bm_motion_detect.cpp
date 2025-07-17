@@ -129,6 +129,12 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
                                   ImageFormat::GRAY, TDLDataType::UINT8, true);
   }
 
+  if (!md_temp_image_) {
+    md_temp_image_ =
+        ImageFactory::createImage(image->getWidth(), image->getHeight(),
+                                  ImageFormat::GRAY, TDLDataType::UINT8, true);
+  }
+
   // 创建非const的共享指针用于传递给image_processor_
   std::shared_ptr<BaseImage> img_input =
       std::const_pointer_cast<BaseImage>(image);
@@ -147,14 +153,28 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
                                            threshold,         // 阈值
                                            255, md_output_);  // 最大值
 
-  md_timer_.TicToc("image_process");
-
   if (ret != 0) {
     LOGE("Failed to perform threshold processing, ret=%d\n", ret);
     return -1;
   }
+  uint32_t kernal_w = 5;
+  uint32_t kernal_h = 5;
 
-  // 执行腐蚀和膨胀操作
+  ret = image_processor_->erode(md_output_, kernal_w, kernal_h, md_temp_image_);
+  if (ret != 0) {
+    LOGE("Failed to perform erode, ret=%d\n", ret);
+    return -1;
+  }
+
+  ret =
+      image_processor_->dilate(md_temp_image_, kernal_w, kernal_h, md_output_);
+  if (ret != 0) {
+    LOGE("Failed to perform dilate, ret=%d\n", ret);
+    return -1;
+  }
+
+  md_timer_.TicToc("image_process");
+
   md_output_->invalidateCache();
   std::vector<uint8_t *> virtual_addresses = md_output_->getVirtualAddress();
   uint8_t *ptr_src = virtual_addresses[0];
@@ -162,20 +182,6 @@ int32_t BmMotionDetection::detect(const std::shared_ptr<BaseImage> &image,
   cv::Mat img_in_mem = cv::Mat(md_output_->getHeight(), md_output_->getWidth(),
                                CV_8UC1, ptr_src, strides[0]);
   cv::Mat img = img_in_mem.clone();
-  // 创建3x3的矩形结构元素
-  cv::Mat kernel = cv::Mat::ones(3, 3, CV_8U);
-
-  // // 创建5x5的十字形结构元素
-  // cv::Mat kernel = cv::Mat::zeros(5, 5, CV_8U);
-  // for (int i = 0; i < 5; i++) {
-  //   kernel.at<uchar>(2, i) = 1;  // 中间行全1
-  //   kernel.at<uchar>(i, 2) = 1;  // 中间列全1
-  // }
-
-  // 腐蚀操作
-  cv::erode(img, img, kernel);
-  // 膨胀操作
-  // cv::dilate(img, img, kernel);
   // 获取图像信息
   int wstride = img.step[0];
   int num_boxes = 0;

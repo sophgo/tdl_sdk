@@ -23,6 +23,13 @@ class ImageProcessor {
                                  std::shared_ptr<BaseImage> &right,
                                  std::shared_ptr<BaseImage> &wgt,
                                  std::shared_ptr<BaseImage> &output) = 0;
+
+  virtual int32_t erode(std::shared_ptr<BaseImage> &input, CVI_U32 kernal_w,
+                        CVI_U32 kernal_h,
+                        std::shared_ptr<BaseImage> &output) = 0;
+  virtual int32_t dilate(std::shared_ptr<BaseImage> &input, CVI_U32 kernal_w,
+                         CVI_U32 kernal_h,
+                         std::shared_ptr<BaseImage> &output) = 0;
   // 创建匹配器实例
   static std::shared_ptr<ImageProcessor> getImageProcessor(
       const std::string &tpu_kernel_module_path = "");

@@ -21,7 +21,8 @@ class BmMotionDetection : public MotionDetection {
 
  private:
   std::shared_ptr<BaseImage> background_image_;
-  std::shared_ptr<BaseImage> md_output_;  // 保存运动检测输出图像
+  std::shared_ptr<BaseImage> md_output_;      // 保存运动检测输出图像
+  std::shared_ptr<BaseImage> md_temp_image_;  // 中间结果
   std::vector<ObjectBoxInfo> roi_s_;
   void *ccl_instance_;
   bool use_roi_ = false;
