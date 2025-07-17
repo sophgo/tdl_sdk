@@ -63,9 +63,9 @@ else()
 endif()
 
 if (IS_LOCAL)
-  set(OPENCV_URL ${COMMON_OPENCV_URL_PREFIX}${ARCHITECTURE}/opencv_aisdk.tar.gz)
+  set(OPENCV_URL ${COMMON_OPENCV_URL_PREFIX}${ARCHITECTURE}/opencv4.5.tar.gz)
 else()
-  set(OPENCV_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/opencv_aisdk.tar.gz)
+  set(OPENCV_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/opencv4.5.tar.gz)
 endif()
 
 if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/opencv-src/lib")
@@ -90,37 +90,26 @@ set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_core.so
 set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_core.a
                                ${OPENCV_ROOT}/lib/libopencv_imgproc.a
                                ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a
-                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libIlmImf.a
-                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjasper.a
-                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjpeg.a
-                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibpng.a
-                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibtiff.a
-                               ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibwebp.a)
+                               ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibjpeg-turbo.a
+                               ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibpng.a
+                               ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibopenjp2.a
+                               ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibtiff.a
+                               ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibwebp.a
+                               ${OPENCV_ROOT}/lib/opencv4/3rdparty/libzlib.a)
 
 if(NOT "${ARCH}" STREQUAL "riscv" AND NOT "${ARCH}" STREQUAL "RISCV")
-  list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libtegra_hal.a")
+  set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_LIBS_IMCODEC_STATIC} ${OPENCV_ROOT}/lib/opencv4/3rdparty/libtegra_hal.a)
+  set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_LIBS_IMCODEC_STATIC} ${OPENCV_ROOT}/lib/opencv4/3rdparty/libittnotify.a)
 endif()
-
-list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libIlmImf.a")
-list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjasper.a")
-list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjpeg.a")
-list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibpng.a")
-list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibtiff.a")
-list(APPEND OPENCV_LIBS_IMCODEC_STATIC "${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibwebp.a")
 
 set(OPENCV_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/opencv)
 
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  install(PROGRAMS ${OPENCV_ROOT}/lib/libopencv_core.so.3.2.0 DESTINATION ${OPENCV_PATH}/lib RENAME libopencv_core.so)
-  install(PROGRAMS ${OPENCV_ROOT}/lib/libopencv_imgproc.so.3.2.0 DESTINATION ${OPENCV_PATH}/lib RENAME libopencv_imgproc.so)
-  install(PROGRAMS ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so.3.2.0 DESTINATION ${OPENCV_PATH}/lib RENAME libopencv_imgcodecs.so)
-  install(PROGRAMS ${OPENCV_ROOT}/lib/libopencv_core.so.3.2.0 DESTINATION ${OPENCV_PATH}/lib RENAME libopencv_core.so.3.2)
-  install(PROGRAMS ${OPENCV_ROOT}/lib/libopencv_imgproc.so.3.2.0 DESTINATION ${OPENCV_PATH}/lib RENAME libopencv_imgproc.so.3.2)
-  install(PROGRAMS ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so.3.2.0 DESTINATION ${OPENCV_PATH}/lib RENAME libopencv_imgcodecs.so.3.2)
-else()
-  file(GLOB OPENCV_LIBS "${OPENCV_ROOT}/lib/*so*")
-  install(FILES ${OPENCV_LIBS} DESTINATION ${OPENCV_PATH}/lib)
-endif()
 
-install(FILES ${OPENCV_LIBS_IMCODEC_STATIC} DESTINATION ${OPENCV_PATH}/lib)
+file(GLOB OPENCV_LIBS_CORE "${OPENCV_ROOT}/lib/libopencv_core.so*")
+install(FILES ${OPENCV_LIBS_CORE} DESTINATION ${OPENCV_PATH}/lib)
+file(GLOB OPENCV_LIBS_PROC "${OPENCV_ROOT}/lib/libopencv_imgproc.so*")
+install(FILES ${OPENCV_LIBS_PROC} DESTINATION ${OPENCV_PATH}/lib)
+file(GLOB OPENCV_LIBS_CODECS "${OPENCV_ROOT}/lib/libopencv_imgcodecs.so*")
+install(FILES ${OPENCV_LIBS_CODECS} DESTINATION ${OPENCV_PATH}/lib)
+
 install(DIRECTORY ${OPENCV_ROOT}/include/ DESTINATION ${OPENCV_PATH}/include)
