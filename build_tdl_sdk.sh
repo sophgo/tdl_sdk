@@ -170,6 +170,12 @@ elif [[ "$1" == "clean" ]]; then
         rm -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh"
     fi
 
+    #Remove thirdparty if exists
+    if [ -e "${TOP_DIR}/tdl_sdk/dependency/thirdparty" ]; then
+        echo "Removing existing dependency..."
+        rm -r "${TOP_DIR}/tdl_sdk/dependency/thirdparty"
+    fi
+
     exit 0
 
 elif [[ "$1" == "sample" ]]; then
