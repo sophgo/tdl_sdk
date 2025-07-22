@@ -10,7 +10,7 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
   if (strstr(model_path, "recognition_face_r34") != NULL) {
     *model_index = TDL_MODEL_FEATURE_BMFACE_R34;
-  } else if (strstr(model_path, "recognition_face_112_112") != NULL) {
+  } else if (strstr(model_path, "feature_cviface_112_112_INT8") != NULL) {
     *model_index = TDL_MODEL_FEATURE_CVIFACE;
   } else {
     ret = -1;
@@ -20,11 +20,16 @@ int get_model_info(char *model_path, TDLModel *model_index) {
 
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
-  printf("  %s -m <model_path> -i <input_image>,<input_image>\n", prog_name);
-  printf("  %s  --model_path <path> --input <image>,<image>\n\n", prog_name);
+  printf("  %s -m <model_path> -i <input_image>,<input_image> -c config_path\n",
+         prog_name);
+  printf(
+      "  %s  --model_path <path> --input <image>,<image> --config "
+      "config_path\n\n",
+      prog_name);
   printf("Options:\n");
   printf("  -m, --model_path      Path to feature model\n");
   printf("  -i, --input           Path to first input image\n");
+  printf("  -c, --config          Path to first config\n");
   printf("  -h, --help            Show this help message\n");
 }
 
@@ -33,20 +38,25 @@ int main(int argc, char *argv[]) {
   char *input_image1 = NULL;
   char *input_image2 = NULL;
   char *input_image = NULL;
+  char *config = NULL;
 
   struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
                                   {"input", required_argument, 0, 'i'},
+                                  {"config", required_argument, 0, 'c'},
                                   {"help", no_argument, 0, 'h'},
                                   {NULL, 0, NULL, 0}};
 
   int opt;
-  while ((opt = getopt_long(argc, argv, "m:i:h", long_options, NULL)) != -1) {
+  while ((opt = getopt_long(argc, argv, "m:i:c:h", long_options, NULL)) != -1) {
     switch (opt) {
       case 'm':
         model_path = optarg;
         break;
       case 'i':
         input_image = optarg;
+        break;
+      case 'c':
+        config = optarg;
         break;
       case 'h':
         print_usage(argv[0]);
@@ -60,7 +70,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (!input_image) {
+  if (!input_image || !config) {
     fprintf(stderr, "Error: All arguments are required\n");
     print_usage(argv[0]);
     return -1;
@@ -85,6 +95,7 @@ int main(int argc, char *argv[]) {
   printf("  Model path:      %s\n", model_path);
   printf("  Input image 1:   %s\n", input_image1);
   printf("  Input image 2:   %s\n", input_image2);
+  printf("  Config:          %s\n", config);
 
   int ret = 0;
 
@@ -97,7 +108,7 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, config);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;

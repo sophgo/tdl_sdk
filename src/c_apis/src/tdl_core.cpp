@@ -160,16 +160,12 @@ int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
   if (str_model_path.empty()) {
     str_model_path = factory.getModelPath(model_type);
   }
-  ModelConfig model_config = factory.getModelConfig(model_type);
+
   if (model_config_json != nullptr) {
-    try {
-      nlohmann::json json_config = nlohmann::json::parse(model_config_json);
-      model_config = factory.parseModelConfig(json_config);
-    } catch (const std::exception &e) {
-      LOGE("Failed to parse model config: %s", e.what());
-      return -1;
-    }
+    factory.loadModelConfig(model_config_json);
   }
+
+  ModelConfig model_config = factory.getModelConfig(model_type);
   std::shared_ptr<BaseModel> model =
       factory.getModel(model_type, str_model_path, model_config);
   if (model == nullptr) {
