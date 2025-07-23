@@ -55,6 +55,29 @@ TDLImage TDL_WrapFrame(void *frame, bool own_memory) {
   return (TDLImage)image_context;
 }
 
+int32_t TDL_WrapImage(TDLImage image, void *frame) {
+  if (image == nullptr) {
+    LOGE("Invalid input parameters: image or frame is null");
+    return -1;
+  }
+
+  TDLImageContext *image_context = (TDLImageContext *)image;
+
+  if (image_context->image == nullptr) {
+    LOGE("Invalid image context: image is null");
+    return -1;
+  }
+
+  void *internal_data = image_context->image->getInternalData();
+  if (internal_data == nullptr) {
+    LOGE("Failed to get internal data from image");
+    return -1;
+  }
+
+  frame = internal_data;
+  return 0;
+}
+
 TDLImage TDL_ReadImage(const char *path) {
   TDLImageContext *image_context = new TDLImageContext();
   image_context->image = ImageFactory::readImage(path, ImageFormat::BGR_PACKED,
@@ -1337,11 +1360,3 @@ int32_t TDL_APP_ConsumerCounting(TDLHandle handle, const char *channel_name,
 
   return 0;
 }
-
-#if defined(__CV181X__) || defined(__CV184X__)
-int32_t TDL_WrapImage(TDLImage image, VIDEO_FRAME_INFO_S *frame) {
-  TDLImageContext *image_context = (TDLImageContext *)image;
-  *frame = *(VIDEO_FRAME_INFO_S *)image_context->image->getInternalData();
-  return 0;
-}
-#endif

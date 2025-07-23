@@ -3,10 +3,6 @@
 
 #include <getopt.h>
 #include "tdl_model_def.h"
-#if defined(__CV181X__) || defined(__CV184X__)
-#include <cvi_comm_video.h>
-#endif
-
 #include "tdl_types.h"
 #include "tdl_utils.h"
 #ifdef __cplusplus
@@ -31,11 +27,20 @@ int32_t TDL_DestroyHandle(TDLHandle handle);
 /**
  * @brief 包装一帧图像信息为 TDLImageHandle 对象
  *
- * @param frame 需要包装的帧图像信息
+ * @param frame 需要包装的帧图像信息，类型为VIDEO_FRAME_INFO_S
  * @param own_memory 是否拥有内存所有权
  * @return  返回包装的 TDLImageHandle 对象, 如果失败返回 NULL
  */
 TDLImage TDL_WrapFrame(void *frame, bool own_memory);
+
+/**
+ * @brief 将TDLImage包装为VIDEO_FRAME_INFO_S
+ *
+ * @param image TDLImageHandle 对象
+ * @param frame 输出参数，存储包装后的帧信息，类型为VIDEO_FRAME_INFO_S
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_WrapImage(TDLImage image, void *frame);
 
 #if !defined(__BM168X__) && !defined(__CMODEL_CV181X__)
 /**
@@ -450,17 +455,6 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
 int32_t TDL_APP_ConsumerCounting(TDLHandle handle, const char *channel_name,
                                  TDLObject *object_meta, uint32_t *enter_num,
                                  uint32_t *miss_num);
-
-#if defined(__CV181X__) || defined(__CV184X__)
-/**
- * @brief 将TDLImage包装为VIDEO_FRAME_INFO_S
- *
- * @param image TDLImageHandle 对象
- * @param frame 输出参数，存储包装后的帧信息
- * @return 成功返回 0，失败返回-1
- */
-int32_t TDL_WrapImage(TDLImage image, VIDEO_FRAME_INFO_S *frame);
-#endif
 
 #ifdef __cplusplus
 }
