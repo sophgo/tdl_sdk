@@ -206,7 +206,7 @@ get_filename_component(_deps "${BUILD_DOWNLOAD_DIR}" REALPATH BASE_DIR "${CMAKE_
 set(FETCHCONTENT_BASE_DIR ${_deps})
 
 # set 3rd_party url
-set(3RD_PARTY_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
+set(3RD_PARTY_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest")
 
 if("${CVI_PLATFORM}" STREQUAL "BM1684X" OR
    "${CVI_PLATFORM}" STREQUAL "BM1684" OR

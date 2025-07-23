@@ -200,28 +200,6 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MLIR_SDK_ROOT}/lib/libz.a)
     add_definitions(-DSENSOR_GCORE_GC4653)
 elseif(${CVI_PLATFORM} STREQUAL "CV184X")
-    set(COMMON_ZLIB_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
-    if(EXISTS "${OSS_TARBALL_PATH}/zlib.tar.gz")
-      set(ZLIB_URL ${OSS_TARBALL_PATH}/zlib.tar.gz)
-    elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/zlib.tar.gz")
-      set(ZLIB_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/zlib.tar.gz)
-    elseif(IS_LOCAL)
-      set(ZLIB_URL ${COMMON_ZLIB_URL_PREFIX}${ARCHITECTURE}/zlib.tar.gz)
-    else()
-      message(FATAL_ERROR "Failed to find zlib.tar.gz")
-    endif()
-
-    if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/zlib-src/lib")
-      FetchContent_Declare(
-        zlib
-        URL ${ZLIB_URL}
-      )
-      FetchContent_MakeAvailable(zlib)
-      message("Zlib downloaded from ${ZLIB_URL} to ${zlib_SOURCE_DIR}")
-    endif()
-    set(ZLIB_ROOT ${BUILD_DOWNLOAD_DIR}/zlib-src)
-    include_directories(${BUILD_DOWNLOAD_DIR}/zlib-src/include)
-
     set(MIDDLEWARE_LIBS
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
         ${MIDDLEWARE_SDK_ROOT}/lib/3rd/libini.so
@@ -237,8 +215,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libsensor.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libsensor_cfg.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libmipi.so
-        ${ZLIB_ROOT}/lib/libz.so)
+        ${MIDDLEWARE_SDK_ROOT}/lib/libmipi.so)
     set(MIDDLEWARE_LIBS_STATIC
         "-Wl,--whole-archive"
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
@@ -256,8 +233,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libsensor.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libsensor_cfg.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libmipi.a
-        "-Wl,--no-whole-archive"
-        ${ZLIB_ROOT}/lib/libz.a)
+        "-Wl,--no-whole-archive")
     if(${CONFIG_DUAL_OS} STREQUAL "OFF")
         set(MIDDLEWARE_LIBS
           ${MIDDLEWARE_LIBS}
@@ -285,8 +261,8 @@ else()
         ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-        ${MLIR_SDK_ROOT}/lib/libz.so)
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so)
+        # ${MLIR_SDK_ROOT}/lib/libz.so)
     set(MIDDLEWARE_LIBS_STATIC
         "-Wl,--whole-archive"
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
@@ -302,8 +278,8 @@ else()
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
-        "-Wl,--no-whole-archive"
-        ${MLIR_SDK_ROOT}/lib/libz.a)
+        "-Wl,--no-whole-archive")
+        # ${MLIR_SDK_ROOT}/lib/libz.a)
 
     # Additional libraries for v2
     if(${MW_VER} STREQUAL "v2")
@@ -326,8 +302,8 @@ else()
                 ${MIDDLEWARE_SDK_ROOT}/lib/libae.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
-                ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
-                ${MLIR_SDK_ROOT}/lib/libz.so)
+                ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so)
+                # ${MLIR_SDK_ROOT}/lib/libz.so)
             set(MIDDLEWARE_LIBS_STATIC
                 "-Wl,--whole-archive"
                 ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
@@ -348,8 +324,7 @@ else()
                 ${MIDDLEWARE_SDK_ROOT}/lib/libaf.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.a
                 ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
-                "-Wl,--no-whole-archive"
-                ${MLIR_SDK_ROOT}/lib/libz.a)
+                "-Wl,--no-whole-archive")
         endif()
         set(MIDDLEWARE_LIBS ${MIDDLEWARE_LIBS} ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)
         set(MIDDLEWARE_LIBS_STATIC ${MIDDLEWARE_LIBS_STATIC} ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.a)

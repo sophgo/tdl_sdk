@@ -7,6 +7,9 @@
 #include "cv/motion_detect/motion_detect.hpp"
 #include "encoder/image_encoder/image_encoder.hpp"
 #include "model/base_model.hpp"
+#if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
+#include "network/api_poster/unified_api_client.hpp"
+#endif
 #include "tdl_model_def.h"
 #include "tdl_model_defs.hpp"
 #include "tdl_model_factory.hpp"
@@ -23,6 +26,9 @@ typedef struct {
   std::shared_ptr<AppTask> app_task;
   std::shared_ptr<ImageEncoder> encoder;
   std::shared_ptr<IntrusionDetection> intrusion_detect;
+#if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
+  std::unique_ptr<UnifiedApiClient> api_client;
+#endif
 } TDLContext;
 
 typedef struct {

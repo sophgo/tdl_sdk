@@ -25,12 +25,13 @@ else()
   message(FATAL_ERROR "No shrinked 3rd party library for ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
+# ===============Eigen===============
 if(EXISTS "${OSS_TARBALL_PATH}/eigen.tar.gz")
   set(EIGEN_URL ${OSS_TARBALL_PATH}/eigen.tar.gz)
 elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/eigen.tar.gz")
   set(EIGEN_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/eigen.tar.gz)
 elseif(IS_LOCAL)
-  set(EIGEN_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/eigen.tar.gz)
+  set(EIGEN_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/eigen.tar.gz)
 else()
   set(EIGEN_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/eigen.tar.gz)
 endif()
@@ -45,13 +46,15 @@ if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/libeigen-src")
   message("Content downloaded to ${libeigen_SOURCE_DIR}")
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/libeigen-src/include/eigen3)
+# ===============Eigen===============
 
+# ===============Google Test===============
 if(EXISTS "${OSS_TARBALL_PATH}/googletest.tar.gz")
   set(GOOGLETEST_URL ${OSS_TARBALL_PATH}/googletest.tar.gz)
 elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/googletest.tar.gz")
   set(GOOGLETEST_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/googletest.tar.gz)
 elseif(IS_LOCAL)
-  set(GOOGLETEST_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/googletest.tar.gz)
+  set(GOOGLETEST_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/googletest.tar.gz)
 else()
   set(GOOGLETEST_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/googletest.tar.gz)
 endif()
@@ -70,13 +73,15 @@ else()
   add_subdirectory(${BUILD_DOWNLOAD_DIR}/googletest-src/)
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include/gtest)
+# ===============Google Test===============
 
+# ===============nlohmannjson===============
 if(EXISTS "${OSS_TARBALL_PATH}/nlohmannjson.tar.gz")
   set(NLOHMANNJSON_URL ${OSS_TARBALL_PATH}/nlohmannjson.tar.gz)
 elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/nlohmannjson.tar.gz")
   set(NLOHMANNJSON_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/nlohmannjson.tar.gz)
 elseif(IS_LOCAL)
-  set(NLOHMANNJSON_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/nlohmannjson.tar.gz)
+  set(NLOHMANNJSON_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/nlohmannjson.tar.gz)
 else()
   set(NLOHMANNJSON_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/nlohmannjson.tar.gz)
 endif()
@@ -90,159 +95,105 @@ if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/nlohmannjson-src")
   message("Content downloaded to ${nlohmannjson_SOURCE_DIR}")
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/nlohmannjson-src)
+# ===============nlohmannjson===============
 
-if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
-  #--------------libwebsockets--------------
-  set(LIBWEBSOCKETS_TGZ "${BUILD_DOWNLOAD_DIR}/libwebsockets.tar.gz")
-  set(LIBWEBSOCKETS_DST "${BUILD_DOWNLOAD_DIR}/libwebsockets-src")
+if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
+  # ===============libwebsockets===============
   if(EXISTS "${OSS_TARBALL_PATH}/libwebsockets.tar.gz")
-    # 离线/本地环境：直接复制
-    file(COPY "${OSS_TARBALL_PATH}/libwebsockets.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    set(LIBWEBSOCKETS_URL ${OSS_TARBALL_PATH}/libwebsockets.tar.gz)
   elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/libwebsockets.tar.gz")
-    # 离线/本地环境：直接复制
-    file(COPY "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/libwebsockets.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    set(LIBWEBSOCKETS_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/libwebsockets.tar.gz)
   elseif(IS_LOCAL)
-    # 在线环境：FTP 下载
-    file(DOWNLOAD "${LIBWEBSOCKETS_URL}" "${LIBWEBSOCKETS_TGZ}"
-        STATUS _dl_stat)
-    list(GET _dl_stat 0 _rc)
-    if(_rc)
-      message(FATAL_ERROR "Download libwebsockets.tar.gz failed: ${_dl_stat}")
-    endif()
+    set(LIBWEBSOCKETS_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/libwebsockets.tar.gz)
   else()
-    # 离线/本地环境：直接复制
-    file(COPY "${TOP_DIR}/tdl_sdk/dependency/thirdparty/libwebsockets.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    set(LIBWEBSOCKETS_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/libwebsockets.tar.gz)
   endif()
-
-  # ---------- 解包（只做一次） ----------
-  if(NOT IS_DIRECTORY "${LIBWEBSOCKETS_DST}")
-    file(ARCHIVE_EXTRACT
-        INPUT       "${LIBWEBSOCKETS_TGZ}"
-        DESTINATION "${LIBWEBSOCKETS_DST}")
+  if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/libwebsockets-src")
+    FetchContent_Declare(
+      libwebsockets
+      URL ${LIBWEBSOCKETS_URL}
+    )
+    FetchContent_MakeAvailable(libwebsockets)
+    message("Content downloaded from ${LIBWEBSOCKETS_URL} to ${libwebsockets_SOURCE_DIR}")
   endif()
-
-  set(LIBWEBSOCKETS_INCLUDE ${LIBWEBSOCKETS_DST}/include)
-  include_directories(${LIBWEBSOCKETS_DST}/include)
-  set(LIBWEBSOCKETS_LIBRARY ${LIBWEBSOCKETS_DST}/lib/libwebsockets.so)
-  set(LIBWEBSOCKETS_LIBRARY_STATIC ${LIBWEBSOCKETS_DST}/lib/libwebsockets.a)
+  set(LIBWEBSOCKETS_ROOT ${BUILD_DOWNLOAD_DIR}/libwebsockets-src)
+  include_directories(${LIBWEBSOCKETS_ROOT}/include)
+  set(LIBWEBSOCKETS_LIBS ${LIBWEBSOCKETS_ROOT}/lib/libwebsockets.so)
+  set(LIBWEBSOCKETS_LIBS_STATIC ${LIBWEBSOCKETS_ROOT}/lib/libwebsockets.a)
   set(LIBWEBSOCKETS_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/libwebsockets)
-  # 安装LIBWEBSOCKETS动态库
-  if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-      # 只安装主要的动态库文件，并创建软链接
-      install(PROGRAMS ${LIBWEBSOCKETS_DST}/lib/libwebsockets.so.17 DESTINATION ${LIBWEBSOCKETS_PATH}/lib RENAME libwebsockets.so)
-      install(PROGRAMS ${LIBWEBSOCKETS_DST}/lib/libwebsockets.so.17 DESTINATION ${LIBWEBSOCKETS_PATH}/lib RENAME libwebsockets.so.17)
-  else()
-      # 安装所有动态库文件
-      file(GLOB LIBWEBSOCKETS_DYNAMIC_LIBS "${LIBWEBSOCKETS_DST}/lib/*so*")
-      install(FILES ${LIBWEBSOCKETS_DYNAMIC_LIBS} DESTINATION ${LIBWEBSOCKETS_PATH}/lib)
-  endif()
-  # 安装LIBWEBSOCKETS静态库
-  install(FILES ${LIBWEBSOCKETS_LIBRARY_STATIC} DESTINATION ${LIBWEBSOCKETS_PATH}/lib)
-  # 安装LIBWEBSOCKETS头文件
-  install(DIRECTORY ${LIBWEBSOCKETS_DST}/include/ DESTINATION ${LIBWEBSOCKETS_PATH}/include)
-  # install(DIRECTORY ${LIBWEBSOCKETS_DST}/include/libwebsockets/ DESTINATION ${LIBWEBSOCKETS_PATH}/include)
+  file(GLOB LIBWEBSOCKETS_LIBS_INSTALL "${LIBWEBSOCKETS_ROOT}/lib/libwebsockets.so*")
+  install(FILES ${LIBWEBSOCKETS_LIBS_INSTALL} DESTINATION ${LIBWEBSOCKETS_PATH}/lib)
 
+  install(DIRECTORY ${LIBWEBSOCKETS_ROOT}/include/ DESTINATION ${LIBWEBSOCKETS_PATH}/include)
+  # ===============libwebsockets===============
 
-  #--------------openssl--------------
-  set(OPENSSL_TGZ "${BUILD_DOWNLOAD_DIR}/openssl.tar.gz")
-  set(OPENSSL_DST "${BUILD_DOWNLOAD_DIR}/openssl-src")
+  # ===============openssl===============
   if(EXISTS "${OSS_TARBALL_PATH}/openssl.tar.gz")
-    # 离线/本地环境：直接复制
-    file(COPY "${OSS_TARBALL_PATH}/openssl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    set(OPENSSL_URL ${OSS_TARBALL_PATH}/openssl.tar.gz)
   elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/openssl.tar.gz")
-    # 离线/本地环境：直接复制
-    file(COPY "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/openssl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    set(OPENSSL_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/openssl.tar.gz)
   elseif(IS_LOCAL)
-    # 在线环境：FTP 下载
-    file(DOWNLOAD "${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/openssl.tar.gz" "${OPENSSL_TGZ}"
-        STATUS _dl_stat)
-    list(GET _dl_stat 0 _rc)
-    if(_rc)
-      message(FATAL_ERROR "Download openssl.tar.gz failed: ${_dl_stat}")
-    endif()
+    set(OPENSSL_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/openssl.tar.gz)
   else()
-    # 离线/本地环境：直接复制
-    file(COPY "${TOP_DIR}/tdl_sdk/dependency/thirdparty/openssl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    set(OPENSSL_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/openssl.tar.gz)
   endif()
-
-  # ---------- 解包（只做一次） ----------
-  if(NOT IS_DIRECTORY "${OPENSSL_DST}")
-    file(ARCHIVE_EXTRACT
-        INPUT       "${OPENSSL_TGZ}"
-        DESTINATION "${OPENSSL_DST}")
+  if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/openssl-src")
+    FetchContent_Declare(
+      openssl
+      URL ${OPENSSL_URL}
+    )
+    FetchContent_MakeAvailable(openssl)
+    message("Content downloaded from ${OPENSSL_URL} to ${openssl_SOURCE_DIR}")
   endif()
+  set(OPENSSL_ROOT ${BUILD_DOWNLOAD_DIR}/openssl-src)
+  include_directories(${OPENSSL_ROOT}/include)
+  set(OPENSSL_LIBRARY ${OPENSSL_ROOT}/lib/libssl.so ${OPENSSL_ROOT}/lib/libcrypto.so)
+  set(OPENSSL_LIBRARY_STATIC ${OPENSSL_ROOT}/lib/libssl.a ${OPENSSL_ROOT}/lib/libcrypto.a)
+  set(OPENSSL_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/openssl)
+  file(GLOB OPENSSL_LIBS_INSTALL "${OPENSSL_ROOT}/lib/libssl.so*" "${OPENSSL_ROOT}/lib/libcrypto.so*")
+  install(FILES ${OPENSSL_LIBS_INSTALL} DESTINATION ${OPENSSL_PATH}/lib)
+  install(DIRECTORY ${OPENSSL_ROOT}/include/ DESTINATION ${OPENSSL_PATH}/include)
+  # ===============openssl===============
 
-  set(OPENSSL_INCLUDE ${OPENSSL_DST}/include)
-  include_directories(${OPENSSL_DST}/include)
-  set(OPENSSL_LIBRARY ${OPENSSL_DST}/lib/libssl.so ${OPENSSL_DST}/lib/libcrypto.so)
-  set(OPENSSL_LIBRARY_STATIC ${OPENSSL_DST}/lib/libssl.a ${OPENSSL_DST}/lib/libcrypto.a)
-  #--------------curl--------------
-  set(CURL_TGZ "${BUILD_DOWNLOAD_DIR}/curl.tar.gz")
-  set(CURL_DST "${BUILD_DOWNLOAD_DIR}/curl-src")
-
-  # ---------- 获取 curl.tar.gz ----------
+  # ===============curl===============
   if(EXISTS "${OSS_TARBALL_PATH}/curl.tar.gz")
-    # 离线/本地环境：直接复制
-    file(COPY "${OSS_TARBALL_PATH}/curl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    set(CURL_URL ${OSS_TARBALL_PATH}/curl.tar.gz)
   elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/curl.tar.gz")
-    # 离线/本地环境：直接复制
-    file(COPY "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/curl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    set(CURL_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/curl.tar.gz)
   elseif(IS_LOCAL)
-    # 在线环境：FTP 下载
-    file(DOWNLOAD "${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/curl.tar.gz" "${CURL_TGZ}"
-        STATUS _dl_stat)
-    list(GET _dl_stat 0 _rc)
-    if(_rc)
-      message(FATAL_ERROR "Download curl.tar.gz failed: ${_dl_stat}")
-    endif()
+    set(CURL_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/curl.tar.gz)
   else()
-    # 离线/本地环境：直接复制
-    file(COPY "${TOP_DIR}/tdl_sdk/dependency/thirdparty/curl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    set(CURL_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/curl.tar.gz)
   endif()
-
-  # ---------- 解包（只做一次） ----------
-  if(NOT IS_DIRECTORY "${CURL_DST}")
-    file(ARCHIVE_EXTRACT
-        INPUT       "${CURL_TGZ}"
-        DESTINATION "${CURL_DST}")
+  if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/curl-src")
+    FetchContent_Declare(
+      curl
+      URL ${CURL_URL}
+    )
+    FetchContent_MakeAvailable(curl)
+    message("Content downloaded from ${CURL_URL} to ${curl_SOURCE_DIR}")
   endif()
-
-  message(STATUS "curl unpacked to: ${CURL_DST}")
-
-
-  set(CURL_INCLUDE ${CURL_DST}/include)
-  include_directories(${CURL_DST}/include)
-  set(CURL_LIBRARY ${CURL_DST}/lib/libcurl.so)
-  set(CURL_LIBRARY_STATIC ${CURL_DST}/lib/libcurl.a)
+  set(CURL_ROOT ${BUILD_DOWNLOAD_DIR}/curl-src)
+  include_directories(${CURL_ROOT}/include)
+  set(CURL_LIBRARY ${CURL_ROOT}/lib/libcurl.so)
+  set(CURL_LIBRARY_STATIC ${CURL_ROOT}/lib/libcurl.a)
   set(CURL_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/curl)
-  # 安装CURL动态库
-  if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-      # 只安装主要的动态库文件，并创建软链接
-      install(PROGRAMS ${CURL_DST}/lib/libcurl.so.4.8.0 DESTINATION ${CURL_PATH}/lib RENAME libcurl.so)
-      install(PROGRAMS ${CURL_DST}/lib/libcurl.so.4.8.0 DESTINATION ${CURL_PATH}/lib RENAME libcurl.so.4)
-      install(PROGRAMS ${CURL_DST}/lib/libcurl.so.4.8.0 DESTINATION ${CURL_PATH}/lib RENAME libcurl.so.4.8.0)
-  else()
-      # 安装所有动态库文件
-      file(GLOB CURL_DYNAMIC_LIBS "${CURL_DST}/lib/*so*")
-      install(FILES ${CURL_DYNAMIC_LIBS} DESTINATION ${CURL_PATH}/lib)
-  endif()
-  # 安装CURL静态库
-  install(FILES ${CURL_LIBRARY_STATIC} DESTINATION ${CURL_PATH}/lib)
-  # 安装CURL头文件
-  install(DIRECTORY ${CURL_DST}/include/ DESTINATION ${CURL_PATH}/include)
+  file(GLOB CURL_LIBS_INSTALL "${CURL_ROOT}/lib/libcurl.so*")
+  install(FILES ${CURL_LIBS_INSTALL} DESTINATION ${CURL_PATH}/lib)
+  install(DIRECTORY ${CURL_ROOT}/include/ DESTINATION ${CURL_PATH}/include)
+  # ===============curl===============
 
-  set(COMMON_ZLIB_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
+  # ===============zlib===============
   if(EXISTS "${OSS_TARBALL_PATH}/zlib.tar.gz")
     set(ZLIB_URL ${OSS_TARBALL_PATH}/zlib.tar.gz)
   elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/zlib.tar.gz")
     set(ZLIB_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/zlib.tar.gz)
   elseif(IS_LOCAL)
-    set(ZLIB_URL ${COMMON_ZLIB_URL_PREFIX}${ARCHITECTURE}/zlib.tar.gz)
+    set(ZLIB_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/zlib.tar.gz)
   else()
     set(ZLIB_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/zlib.tar.gz)
   endif()
-
-  if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/zlib-src/lib")
+  if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/zlib-src")
     FetchContent_Declare(
       zlib
       URL ${ZLIB_URL}
@@ -251,8 +202,14 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
     message("Zlib downloaded from ${ZLIB_URL} to ${zlib_SOURCE_DIR}")
   endif()
   set(ZLIB_ROOT ${BUILD_DOWNLOAD_DIR}/zlib-src)
-  include_directories(${BUILD_DOWNLOAD_DIR}/zlib-src/include)
+  include_directories(${ZLIB_ROOT}/include)
   set(ZLIB_LIBRARY ${ZLIB_ROOT}/lib/libz.so)
+  set(ZLIB_LIBRARY_STATIC ${ZLIB_ROOT}/lib/libz.a)
+  set(ZLIB_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/zlib)
+  file(GLOB ZLIB_LIBS_INSTALL "${ZLIB_ROOT}/lib/libz.so*")
+  install(FILES ${ZLIB_LIBS_INSTALL} DESTINATION ${ZLIB_PATH}/lib)
+  install(DIRECTORY ${ZLIB_ROOT}/include/ DESTINATION ${ZLIB_PATH}/include)
+  # ===============zlib===============
 endif()
 
 if(${CVI_PLATFORM} STREQUAL "BM1688")
@@ -264,7 +221,7 @@ if(EXISTS "${OSS_TARBALL_PATH}/stb.tar.gz")
 elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/stb.tar.gz")
   set(STB_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/stb.tar.gz)
 elseif(IS_LOCAL)
-  set(STB_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/stb.tar.gz)
+  set(STB_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/stb.tar.gz)
 else()
   set(STB_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/stb.tar.gz)
 endif()

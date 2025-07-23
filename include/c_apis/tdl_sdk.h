@@ -2,6 +2,8 @@
 #define TDL_SDK_H
 
 #include <getopt.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include "tdl_model_def.h"
 #include "tdl_types.h"
 #include "tdl_utils.h"
@@ -391,6 +393,24 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
                             uint8_t threshold, double min_area,
                             TDLObject *obj_meta,
                             uint32_t background_update_interval);
+
+#endif
+
+#if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
+/**
+ * @brief 调用API服务
+ *
+ * @param handle TDLHandle 对象
+ * @param client_type 客户端类型（如"sophnet"）
+ * @param method_name 方法名（如"chat"）
+ * @param params_json 参数JSON字符串
+ * @param result_buf 用于接收结果的缓冲区
+ * @param buf_size 结果缓冲区大小
+ * @return 0成功，非0失败
+ */
+int32_t TDL_LLMApiCall(TDLHandle handle, const char *client_type,
+                       const char *method_name, const char *params_json,
+                       char *result_buf, size_t buf_size);
 #endif
 
 /*******************************************

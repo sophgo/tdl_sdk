@@ -129,7 +129,7 @@
 {
     "ak": "your access key",
     "sk": "your secret key",
-    "target_age": "5（或 70）",
+    "target_age": 5（或 70）,
     "image_path": "path/to/picture.jpg",
     "output_path": "path/to/output_picture.jpg"
 }
@@ -229,9 +229,9 @@ sub_req_key:
     "appid": "your api key",
     "token": "your token",
     "voice_type": "BV700_V2_streaming",
-    "encoding": "pcm",
+    "encoding": "pcm",//mp3,wav,etc
     "text": "要合成语音的文本",
-    "output_path": "path/to/audio.raw（后缀需与 encoding 保持一致）",
+    "output_path": "path/to/audio.pcm（后缀需与 encoding 保持一致）",
     "operation": "submit"
 }
 ```

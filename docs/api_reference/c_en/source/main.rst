@@ -2526,4 +2526,60 @@ Wrap TDLImage as VIDEO_FRAME_INFO_S.
      - VIDEO_FRAME_INFO_S*
      - frame
      - Output parameter, stores the wrapped frame information
+
+TDL_LLMApiCall
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_LLMApiCall(TDLHandle handle, const char *client_type,
+                       const char *method_name, const char *params_json,
+                       char *result_buf, size_t buf_size)
+
+【Description】
+
+Invoke a specific LLM client method.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - Context handle returned by TDL_CreateHandle
+
+   * - Input
+     - const char*
+     - client_type
+     - Specifies the type of LLM client to invoke
+
+   * - Input
+     - const char*
+     - method_name
+     - Name of the API method to call
+
+   * - Input
+     - const char*
+     - params_json
+     - JSON-formatted request body string
+
+   * - Input
+     - size_t
+     - buf_size
+     - Available size of result_buf in bytes
+
+   * - Output
+     - char*
+     - result_buf
+     - Buffer for storing the returned JSON result or error message
   

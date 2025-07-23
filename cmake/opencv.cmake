@@ -33,10 +33,6 @@ if(("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X") OR ("${CVI_PLATFORM}" STREQUAL "
   return()
 endif()
 
-set(COMMON_OPENCV_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
-# Combine the common prefix and the architecture-specific part
-
-
 # Get the architecture-specific part based on the toolchain file
 if ("${CMAKE_TOOLCHAIN_FILE}" MATCHES "arm-cvitek-linux-uclibcgnueabihf.cmake")
   set(ARCHITECTURE "uclibc")
@@ -67,7 +63,7 @@ if(EXISTS "${OSS_TARBALL_PATH}/opencv4.5.tar.gz")
 elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/opencv4.5.tar.gz")
   set(OPENCV_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/opencv4.5.tar.gz)
 elseif(IS_LOCAL)
-  set(OPENCV_URL ${COMMON_OPENCV_URL_PREFIX}${ARCHITECTURE}/opencv4.5.tar.gz)
+  set(OPENCV_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/opencv4.5.tar.gz)
 else()
   message(FATAL_ERROR "Failed to find opencv4.5.tar.gz")
 endif()

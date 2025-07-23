@@ -83,6 +83,7 @@ class TtsClient {
   std::atomic<bool> _finished{false};        // 请求完成状态
   std::atomic<bool> _thread_running{false};  // 线程运行状态
   bool _handshake_auth_added = false;
+  std::vector<uint8_t> _recv_buffer;
 };
 
 }  // namespace Tts

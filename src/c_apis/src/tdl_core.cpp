@@ -1,8 +1,12 @@
 #include "tdl_sdk.h"
 
+#include <cstring>
 #include <opencv2/opencv.hpp>
 #include "app/app_data_types.hpp"
 #include "common/common_types.hpp"
+#if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
+#include "network/api_poster/unified_api_client.hpp"
+#endif
 #include "tdl_type_internal.hpp"
 #include "tdl_utils.h"
 #include "tracker/tracker_types.hpp"
@@ -38,7 +42,11 @@ int32_t TDL_DestroyHandle(TDLHandle handle) {
   if (context->app_task) {
     context->app_task->release();
   }
-
+#if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
+  if (context->api_client) {
+    context->api_client.reset();
+  }
+#endif
   delete context;
   context = nullptr;
   return 0;
@@ -1025,6 +1033,48 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
   return 0;
 }
 
+#endif
+
+#if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
+int32_t TDL_LLMApiCall(TDLHandle handle, const char *client_type,
+                       const char *method_name, const char *params_json,
+                       char *result_buf, size_t buf_size) {
+  if (!handle || !client_type || !method_name || !params_json || !result_buf ||
+      buf_size == 0) {
+    return -1;
+  }
+
+  try {
+    TDLContext *context = (TDLContext *)handle;
+    if (context->api_client == nullptr) {
+      context->api_client = std::make_unique<UnifiedApiClient>();
+      if (context->api_client == nullptr) {
+        LOGE("Failed to create api client");
+        return -1;
+      }
+    }
+    nlohmann::json params = nlohmann::json::parse(params_json);
+    nlohmann::json resp =
+        context->api_client->call(client_type, method_name, params);
+    std::string resp_str = resp.dump();
+
+    if (resp_str.size() >= buf_size) {
+      return -2;  // 缓冲区不足
+    }
+    strncpy(result_buf, resp_str.c_str(), buf_size - 1);
+    result_buf[buf_size - 1] = '\0';
+    return 0;
+  } catch (const std::exception &e) {
+    const char *err_msg = e.what();
+    size_t err_len = strlen(err_msg);
+    if (err_len >= buf_size) {
+      err_len = buf_size - 1;
+    }
+    strncpy(result_buf, err_msg, err_len);
+    result_buf[err_len] = '\0';
+    return -3;  // 解析或调用出错
+  }
+}
 #endif
 
 /*******************************************

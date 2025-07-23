@@ -296,7 +296,23 @@ int TtsClient::send_data(struct lws *wsi, const std::string &data,
 
 // 消息接收回调
 void TtsClient::on_message(struct lws *wsi, const char *msg, size_t len) {
-  const uint8_t *data = reinterpret_cast<const uint8_t *>(msg);
+  // WebSocket fragment 支持
+  bool is_first = lws_is_first_fragment(wsi);
+  bool is_final = lws_is_final_fragment(wsi);
+  if (is_first) {
+    _recv_buffer.clear();
+  }
+  // append 本次收到的数据
+  _recv_buffer.insert(_recv_buffer.end(), (const uint8_t *)msg,
+                      (const uint8_t *)msg + len);
+
+  // 只有在收到最后一个 fragment 时，才算是一个完整协议包
+  if (!is_final) {
+    return;
+  }
+  const uint8_t *data = _recv_buffer.data();
+  size_t total_len = _recv_buffer.size();
+
   uint8_t hdr0 = data[0];
   uint8_t hdr_sz = (hdr0 & 0x0f) * 4;
   uint8_t msg_type = (data[1] & 0xf0) >> 4;
@@ -304,27 +320,30 @@ void TtsClient::on_message(struct lws *wsi, const char *msg, size_t len) {
   uint8_t comp = data[2] & 0x0f;
 
   const uint8_t *body = data + hdr_sz;
-  size_t body_sz = len - hdr_sz;
+  size_t body_sz = total_len - hdr_sz;
 
-  // 音频数据响应 (0xB)
+  // Audio chunk
   if (msg_type == 0xB) {
     if (flags == 0) {
-      // ACK, 无有效载荷
+      // ACK
       return;
     }
     int32_t seq = ntohl(*reinterpret_cast<const uint32_t *>(body));
     uint32_t chunk_sz = ntohl(*reinterpret_cast<const uint32_t *>(body + 4));
     const uint8_t *audio = body + 8;
 
+    // 打开文件并写入
     if (!_ofs.is_open()) {
       _ofs.open(_output_path, std::ios::binary);
       if (!_ofs) {
-        std::cerr << "Failed to open " << _output_path << "\n";
+        std::cerr << "[ERROR] Failed to open " << _output_path << "\n";
         close();
         return;
       }
     }
+    // 这里一次性写完整个 chunk
     _ofs.write(reinterpret_cast<const char *>(audio), chunk_sz);
+    std::cout << "[TTS] seq=" << seq << ", chunk_sz=" << chunk_sz << std::endl;
 
     // 最后一个音频块
     if (seq < 0) {
@@ -336,6 +355,7 @@ void TtsClient::on_message(struct lws *wsi, const char *msg, size_t len) {
       }
       _cv.notify_one();
     }
+    return;
   }
   // 错误消息 (0xF)
   else if (msg_type == 0xF) {
@@ -351,6 +371,10 @@ void TtsClient::on_message(struct lws *wsi, const char *msg, size_t len) {
       _finished = true;
     }
     _cv.notify_one();
+    return;
+  } else {
+    std::cout << "Unhandled msg_type=0x" << std::hex << int(msg_type)
+              << std::dec << std::endl;
   }
 }
 

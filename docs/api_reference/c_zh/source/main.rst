@@ -2547,3 +2547,60 @@ TDL_WrapImage
      - VIDEO_FRAME_INFO_S*
      - frame
      - 输出参数，存储包装后的帧信息
+
+TDL_LLMApiCall
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_LLMApiCall(TDLHandle handle, const char *client_type,
+                       const char *method_name, const char *params_json,
+                       char *result_buf, size_t buf_size)
+
+【描述】
+
+向指定的LLM客户端发起调用请求。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据类型
+     - 参数名称
+     - 描述
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDL_CreateHandle返回的上下文句柄
+
+   * - 输入
+     - const char*
+     - client_type
+     - LLM客户端类型
+
+   * - 输入
+     - const char*
+     - method_name
+     - 调用的接口方法名
+
+   * - 输入
+     - const char*
+     - params_json
+     - 请求体的json字符串
+
+   * - 输入
+     - size_t
+     - buf_size
+     - result_buf可用空间大小
+
+   * - 输出
+     - char*
+     - result_buf
+     - 存放调用返回的JSON结果或错误信息
+
