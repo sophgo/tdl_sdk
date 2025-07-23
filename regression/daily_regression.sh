@@ -38,22 +38,34 @@ dataset_dir=${dataset_dir:-/mnt/data/dataset}
 asset_dir=${asset_dir:-/mnt/data/asset}
 
 
+if [ -z "$CHIP_ARCH" ]; then
 
-chip_info=$(devmem 0x300008c)
+  chip_info=$(devmem 0x300008c)
 
-if  echo "$chip_info" | grep -q "181"; then
-  CHIP_ARCH="CV181X"
-elif  echo "$chip_info" | grep -q "184"; then
-  CHIP_ARCH="CV184X"
-elif [ -f "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem" ]; then
-  CHIP_ARCH="CV186X"
-elif [ -f "/proc/soph/vpss" ]; then
-  CHIP_ARCH="BM1688"
-else 
-  echo "unkonw CHIP_ARCH!"
-  exit
+  if  echo "$chip_info" | grep -q "181"; then
+    CHIP_ARCH="CV181X"
+  elif  echo "$chip_info" | grep -q "184"; then
+    CHIP_ARCH="CV184X"
+  elif [ -f "/sys/kernel/debug/ion/cvi_npu_heap_dump/total_mem" ]; then
+    CHIP_ARCH="CV186X"
+  elif [ -f "/proc/soph/vpss" ]; then
+    CHIP_ARCH="BM1688"
+  else 
+    echo "unkonw CHIP_ARCH!"
+    exit
+  fi
+
+else
+  case "$CHIP_ARCH" in
+      CV181X|CV184X|CV186X|BM1688)
+          ;;
+      *)
+          echo "Error: CHIP_ARCH must be one of: CV181X, CV184X, CV186X, BM1688"
+          exit 1
+          ;;
+  esac
+
 fi
-
 
 echo "CHIP_ARCH: ${CHIP_ARCH}"
 
