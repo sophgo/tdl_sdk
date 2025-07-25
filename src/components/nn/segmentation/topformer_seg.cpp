@@ -94,7 +94,7 @@ int32_t TopformerSeg::outputParse(
   std::shared_ptr<BaseTensor> out_conf_tensor =
       net_->getOutputTensor(out_conf_name);
 
-#if defined(__BM168X__) || defined(__CV186X__)
+#if defined(__BM168X__) || defined(__CV186X__) || defined(__CV184X__)
   outShapeH = out_id_info.shape[2];
   outShapeW = out_id_info.shape[3];
 #else
