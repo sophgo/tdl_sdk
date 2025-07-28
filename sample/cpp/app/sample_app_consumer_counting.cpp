@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
       //                     consumer_counting_result->head_person_boxes);
 
       channel_counter[channel_name]++;
-      std::cout << "export fall detection result done" << std::endl;
+      std::cout << "export consumer counting result done" << std::endl;
     }
   }
   app_task->release();
