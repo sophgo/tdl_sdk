@@ -25,7 +25,11 @@ else()
   message(FATAL_ERROR "No shrinked 3rd party library for ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-if (IS_LOCAL)
+if(EXISTS "${OSS_TARBALL_PATH}/eigen.tar.gz")
+  set(EIGEN_URL ${OSS_TARBALL_PATH}/eigen.tar.gz)
+elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/eigen.tar.gz")
+  set(EIGEN_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/eigen.tar.gz)
+elseif(IS_LOCAL)
   set(EIGEN_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/eigen.tar.gz)
 else()
   set(EIGEN_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/eigen.tar.gz)
@@ -42,7 +46,11 @@ if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/libeigen-src")
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/libeigen-src/include/eigen3)
 
-if (IS_LOCAL)
+if(EXISTS "${OSS_TARBALL_PATH}/googletest.tar.gz")
+  set(GOOGLETEST_URL ${OSS_TARBALL_PATH}/googletest.tar.gz)
+elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/googletest.tar.gz")
+  set(GOOGLETEST_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/googletest.tar.gz)
+elseif(IS_LOCAL)
   set(GOOGLETEST_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/googletest.tar.gz)
 else()
   set(GOOGLETEST_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/googletest.tar.gz)
@@ -63,7 +71,11 @@ else()
 endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include/gtest)
 
-if (IS_LOCAL)
+if(EXISTS "${OSS_TARBALL_PATH}/nlohmannjson.tar.gz")
+  set(NLOHMANNJSON_URL ${OSS_TARBALL_PATH}/nlohmannjson.tar.gz)
+elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/nlohmannjson.tar.gz")
+  set(NLOHMANNJSON_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/nlohmannjson.tar.gz)
+elseif(IS_LOCAL)
   set(NLOHMANNJSON_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/nlohmannjson.tar.gz)
 else()
   set(NLOHMANNJSON_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/nlohmannjson.tar.gz)
@@ -83,9 +95,15 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
   #--------------libwebsockets--------------
   set(LIBWEBSOCKETS_TGZ "${BUILD_DOWNLOAD_DIR}/libwebsockets.tar.gz")
   set(LIBWEBSOCKETS_DST "${BUILD_DOWNLOAD_DIR}/libwebsockets-src")
-  if(IS_LOCAL)
+  if(EXISTS "${OSS_TARBALL_PATH}/libwebsockets.tar.gz")
+    # 离线/本地环境：直接复制
+    file(COPY "${OSS_TARBALL_PATH}/libwebsockets.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+  elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/libwebsockets.tar.gz")
+    # 离线/本地环境：直接复制
+    file(COPY "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/libwebsockets.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+  elseif(IS_LOCAL)
     # 在线环境：FTP 下载
-    file(DOWNLOAD "${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/libwebsockets.tar.gz" "${LIBWEBSOCKETS_TGZ}"
+    file(DOWNLOAD "${LIBWEBSOCKETS_URL}" "${LIBWEBSOCKETS_TGZ}"
         STATUS _dl_stat)
     list(GET _dl_stat 0 _rc)
     if(_rc)
@@ -93,8 +111,7 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
     endif()
   else()
     # 离线/本地环境：直接复制
-    file(COPY "${TOP_DIR}/tdl_sdk/dependency/thirdparty/libwebsockets.tar.gz"
-        DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    file(COPY "${TOP_DIR}/tdl_sdk/dependency/thirdparty/libwebsockets.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
   endif()
 
   # ---------- 解包（只做一次） ----------
@@ -129,7 +146,13 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
   #--------------openssl--------------
   set(OPENSSL_TGZ "${BUILD_DOWNLOAD_DIR}/openssl.tar.gz")
   set(OPENSSL_DST "${BUILD_DOWNLOAD_DIR}/openssl-src")
-  if(IS_LOCAL)
+  if(EXISTS "${OSS_TARBALL_PATH}/openssl.tar.gz")
+    # 离线/本地环境：直接复制
+    file(COPY "${OSS_TARBALL_PATH}/openssl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+  elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/openssl.tar.gz")
+    # 离线/本地环境：直接复制
+    file(COPY "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/openssl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+  elseif(IS_LOCAL)
     # 在线环境：FTP 下载
     file(DOWNLOAD "${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/openssl.tar.gz" "${OPENSSL_TGZ}"
         STATUS _dl_stat)
@@ -139,8 +162,7 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
     endif()
   else()
     # 离线/本地环境：直接复制
-    file(COPY "${TOP_DIR}/tdl_sdk/dependency/thirdparty/openssl.tar.gz"
-        DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    file(COPY "${TOP_DIR}/tdl_sdk/dependency/thirdparty/openssl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
   endif()
 
   # ---------- 解包（只做一次） ----------
@@ -159,7 +181,13 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
   set(CURL_DST "${BUILD_DOWNLOAD_DIR}/curl-src")
 
   # ---------- 获取 curl.tar.gz ----------
-  if(IS_LOCAL)
+  if(EXISTS "${OSS_TARBALL_PATH}/curl.tar.gz")
+    # 离线/本地环境：直接复制
+    file(COPY "${OSS_TARBALL_PATH}/curl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+  elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/curl.tar.gz")
+    # 离线/本地环境：直接复制
+    file(COPY "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/curl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
+  elseif(IS_LOCAL)
     # 在线环境：FTP 下载
     file(DOWNLOAD "${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/curl.tar.gz" "${CURL_TGZ}"
         STATUS _dl_stat)
@@ -169,8 +197,7 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
     endif()
   else()
     # 离线/本地环境：直接复制
-    file(COPY "${TOP_DIR}/tdl_sdk/dependency/thirdparty/curl.tar.gz"
-        DESTINATION "${BUILD_DOWNLOAD_DIR}")
+    file(COPY "${TOP_DIR}/tdl_sdk/dependency/thirdparty/curl.tar.gz" DESTINATION "${BUILD_DOWNLOAD_DIR}")
   endif()
 
   # ---------- 解包（只做一次） ----------
@@ -205,7 +232,11 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
   install(DIRECTORY ${CURL_DST}/include/ DESTINATION ${CURL_PATH}/include)
 
   set(COMMON_ZLIB_URL_PREFIX "ftp://${FTP_SERVER_NAME}:${FTP_SERVER_PWD}@${FTP_SERVER_IP}/sw_rls/third_party/latest/")
-  if (IS_LOCAL)
+  if(EXISTS "${OSS_TARBALL_PATH}/zlib.tar.gz")
+    set(ZLIB_URL ${OSS_TARBALL_PATH}/zlib.tar.gz)
+  elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/zlib.tar.gz")
+    set(ZLIB_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/zlib.tar.gz)
+  elseif(IS_LOCAL)
     set(ZLIB_URL ${COMMON_ZLIB_URL_PREFIX}${ARCHITECTURE}/zlib.tar.gz)
   else()
     set(ZLIB_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/zlib.tar.gz)
@@ -228,7 +259,11 @@ if(${CVI_PLATFORM} STREQUAL "BM1688")
   return()
 endif()
 
-if (IS_LOCAL)
+if(EXISTS "${OSS_TARBALL_PATH}/stb.tar.gz")
+  set(STB_URL ${OSS_TARBALL_PATH}/stb.tar.gz)
+elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/stb.tar.gz")
+  set(STB_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/stb.tar.gz)
+elseif(IS_LOCAL)
   set(STB_URL ${3RD_PARTY_URL_PREFIX}${ARCHITECTURE}/stb.tar.gz)
 else()
   set(STB_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/stb.tar.gz)

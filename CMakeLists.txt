@@ -155,7 +155,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
 
 endif()
 
-if (NOT IS_LOCAL AND NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dependency/thirdparty")
+set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+get_filename_component(TOP_DIR ${CURRENT_DIR} DIRECTORY)
+
+if (NOT IS_LOCAL AND 
+    NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dependency/thirdparty" AND 
+    NOT EXISTS "${TOP_DIR}/oss" AND 
+    NOT EXISTS "${OSS_TARBALL_PATH}")
 
   execute_process(
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/download_thirdparty.sh "${CMAKE_TOOLCHAIN_FILE}"
@@ -218,10 +225,6 @@ endif()
 
 # open app modules use the video module for test
 set(APP_VIDEO_ENABLE OFF)
-
-set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-get_filename_component(TOP_DIR ${CURRENT_DIR} DIRECTORY)
 
 set(REPO_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
