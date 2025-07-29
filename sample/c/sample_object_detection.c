@@ -42,6 +42,8 @@ int get_model_info(char *model_path, TDLModel *model_index) {
     *model_index = TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE;
   } else if (strstr(model_path, "yolov8n_det_pet_person") != NULL) {
     *model_index = TDL_MODEL_YOLOV8N_DET_PET_PERSON;
+  } else if (strstr(model_path, "yolov8n_det_bicycle_motor_ebicycle") != NULL) {
+    *model_index = TDL_MODEL_YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE;
   } else if (strstr(model_path, "yolov8n_det_traffic_light") != NULL) {
     *model_index = TDL_MODEL_YOLOV8N_DET_TRAFFIC_LIGHT;
   } else if (strstr(model_path, "mbv2_det_person") != NULL) {

@@ -15,6 +15,10 @@
       "types":["cat","dog","person"],
       "file_name":"yolov8n_det_pet_person_384_640_INT8"
     },
+    "YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE":{
+      "types":["bicycle","motorcycle","ebicycle"],
+      "file_name":"yolov8n_det_bicycle_motor_ebicycle_384_640_INT8"
+    },
     "YOLOV8N_DET_PERSON_VEHICLE":{
       "types":["car","bus","truck","rider with motorcycle","person","bike","motorcycle"],
       "file_name":"yolov8n_det_person_vehicle_384_640_INT8"

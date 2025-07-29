@@ -5,6 +5,7 @@
   X(MBV2_DET_PERSON, "0:person")                                              \
   X(YOLOV8N_DET_HAND, "")                                                     \
   X(YOLOV8N_DET_PET_PERSON, "0:cat,1:dog,2:person")                           \
+  X(YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE, "0:bicycle,1:motorcycle,2:ebicycle")  \
   X(YOLOV8N_DET_PERSON_VEHICLE,                                               \
     "0:car,1:bus,2:truck,3:rider with "                                       \
     "motorcycle,4:person,5:bike,6:motorcycle")                                \

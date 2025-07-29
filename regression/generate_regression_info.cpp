@@ -29,6 +29,8 @@ static const std::unordered_map<std::string, std::string> special_model_id_map =
         {"yolov8n_det_person_vehicle_mv2_035_384_640_INT8",
          "YOLOV8N_DET_PERSON_VEHICLE"},
         {"yolov8n_det_pet_person_035_384_640_INT8", "YOLOV8N_DET_PET_PERSON"},
+        {"yolov8n_det_bicycle_motor_ebicycle_mbv2_384_640_INT8",
+         "YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE"},
 
         {"cls_4_attribute_face_112_112_INT8", "CLS_ATTRIBUTE_FACE"},
         {"cls_sound_nihaoshiyun_126_40_INT8", "CLS_SOUND_COMMAND_NIHAOSHIYUN"},

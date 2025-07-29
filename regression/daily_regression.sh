@@ -117,6 +117,8 @@ det_json="${det_json}:yolov8n_det_fire_384_640_INT8.json"
 det_json="${det_json}:scrfd_det_face_432_768_INT8.json"
 det_json="${det_json}:yolov8n_det_hand_384_640_INT8.json"
 det_json="${det_json}:yolov8n_det_hand_mv3_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_bicycle_motor_ebicycle_384_640_INT8.json"
+det_json="${det_json}:yolov8n_det_bicycle_motor_ebicycle_mbv2_384_640_INT8.json"
 
 if [ ${CHIP_ARCH} != "CV184X" ]; then  #tpu-milr bug
   det_json="${det_json}:yolov5m_det_coco80_640_640_INT8.json"
