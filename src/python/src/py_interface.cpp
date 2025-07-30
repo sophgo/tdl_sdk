@@ -1,7 +1,9 @@
 #include "py_image.hpp"
 #include "py_llm.hpp"
 #include "py_model.hpp"
+#include "utils/tokenizer_bpe.hpp"
 using namespace pytdl;
+using namespace pybind11::literals;
 
 // 明确指定函数类型，解决重载问题
 PyImage (*read_func)(const std::string&) = &read;
@@ -21,7 +23,7 @@ PyImage (*align_face_func)(const PyImage& image,
 PyModel (*get_model_with_path)(ModelType, const std::string&, const py::dict&,
                                const int) = &get_model;
 PyModel (*get_model_with_dir)(ModelType, const std::string&,
-                              const int) = &get_model;
+                              const int) = &get_model_from_dir;
 
 // pybind11绑定实现
 PYBIND11_MODULE(tdl, m) {
@@ -103,7 +105,7 @@ PYBIND11_MODULE(tdl, m) {
   nn.def("get_model", get_model_with_path, py::arg("model_type"),
          py::arg("model_path"), py::arg("model_config") = py::dict(),
          py::arg("device_id") = 0);
-  nn.def("get_model", get_model_with_dir, py::arg("model_type"),
+  nn.def("get_model_from_dir", get_model_with_dir, py::arg("model_type"),
          py::arg("model_dir") = "", py::arg("device_id") = 0);
   py::module llm = m.def_submodule("llm", "LLM module");
   llm.def("fetch_video", &pytdl::fetch_video, py::arg("video_path"),
@@ -151,4 +153,21 @@ PYBIND11_MODULE(tdl, m) {
       .def("__enter__", [](pytdl::PyQwen2VL& self) { return &self; })
       .def("__exit__", [](pytdl::PyQwen2VL& self, py::object, py::object,
                           py::object) { self.deinit(); });
+  // 添加BytePairEncoder绑定
+  py::module utils = m.def_submodule("utils", "Utility functions module");
+
+  py::class_<BytePairEncoder>(utils, "BytePairEncoder")
+      .def(py::init<const std::string&, const std::string&>(), "encoder_file"_a,
+           "bpe_file"_a)
+      .def(
+          "tokenizer_bpe",
+          [](BytePairEncoder& self, const std::string& text_file) {
+            std::vector<std::vector<int32_t>> tokens;
+            int result = self.tokenizerBPE(text_file, tokens);
+            if (result != 0) {
+              throw std::runtime_error("Tokenization failed");
+            }
+            return tokens;
+          },
+          "text_file"_a, "Tokenize text file and return token sequences");
 }

@@ -264,7 +264,7 @@
     },
     "FEATURE_CLIP_IMG":{
       "_comment":"clip image feature extraction",
-      "file_name":"feature_clip_img_224_224_W4BF16",
+      "file_name":"feature_clip_image_224_224_W4BF16",
       "rgb_order":"rgb"
     },
     "FEATURE_CLIP_TEXT":{

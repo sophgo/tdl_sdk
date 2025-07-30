@@ -402,8 +402,8 @@ void PyTracker::setImgSize(int width, int height) {
   tracker_->setImgSize(width, height);
 }
 
-PyModel get_model(const ModelType model_type, const std::string& model_dir,
-                  const int device_id) {
+PyModel get_model_from_dir(const ModelType model_type,
+                           const std::string& model_dir, const int device_id) {
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();
   model_factory.setModelDir(model_dir);
   auto model = model_factory.getModel(model_type, device_id);

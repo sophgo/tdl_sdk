@@ -50,8 +50,10 @@ class PyTracker {
 void getModelConfig(const py::dict& model_config,
                     ModelConfig& model_config_cpp);
 
-PyModel get_model(ModelType model_type, const std::string& model_dir = "",
-                  const int device_id = 0);
+PyModel get_model_from_dir(ModelType model_type,
+                           const std::string& model_dir = "",
+
+                           const int device_id = 0);
 
 PyModel get_model(ModelType model_type, const std::string& model_path,
                   const py::dict& model_config = py::dict(),

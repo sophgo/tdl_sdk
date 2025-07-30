@@ -10,7 +10,7 @@ PreprocessParameters = {
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python sample_fd.py <model_path> <image_path>")
+        print("Usage: python sample_img_classification.py <model_path> <image_path>")
         sys.exit(1)
     model_path = sys.argv[1]
     img_path = sys.argv[2]
@@ -21,4 +21,7 @@ if __name__ == "__main__":
     result = classification[0]
     print(result["class_id"])
     print(result["score"])
+
+# input: python sample_img_classification.py <model_path> <image_path>
+# output: <class_id_value> <score_value>
     

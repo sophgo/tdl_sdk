@@ -154,11 +154,20 @@ TDLDataType
    * - YOLOV6_DET_COCO80
      - YOLOv6 COCO80检测模型
 
+    * - YOLOV7_DET_COCO80
+      - YOLOv7 COCO80检测模型
+
    * - YOLOV8_DET_COCO80
      - YOLOv8 COCO80检测模型
 
    * - YOLOV10_DET_COCO80
      - YOLOv10 COCO80检测模型
+  
+   * - PPYOLOE_DET_COCO80
+     - PPYOLOE COCO80检测模型
+
+   * - YOLOX_DET_COCO80
+     - YOLOX COCO80检测模型
 
    * - YOLOV8N_DET_HAND
      - 手部检测模型
@@ -171,6 +180,9 @@ TDLDataType
 
    * - YOLOV8N_DET_HAND_FACE_PERSON
      - 手、脸与人检测模型 (0:手, 1:脸, 2:人)
+
+   * - YOLOV8N_DET_FACE_HEAD_PERSON_HEAD
+     - 人脸、头部、人、宠物检测模型 (0:人脸, 1:头部, 2:人， 3:宠物)
 
    * - YOLOV8N_DET_HEAD_PERSON
      - 人头检测模型 (0:人, 1:头)
@@ -214,6 +226,9 @@ TDLDataType
    * - CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION
      - 人脸属性分类模型 (年龄, 性别, 眼镜, 情绪)
 
+   * - FEATURE_CVIFACE
+     - CV人脸特征提取模型
+
    * - FEATURE_BMFACE_R34
      - ResNet34 512维特征提取模型
 
@@ -240,6 +255,15 @@ TDLDataType
 
    * - CLS_SOUND_COMMAND
      - 命令声音分类模型 
+   
+   * - CLS_SOUND_COMMAND_NIHAOSHIYUN
+     - 命令声音分类模型 (0:背景, 1:你好视云)
+
+   * - CLS_SOUND_COMMAND_NIHAOSUANNENG
+     - 命令声音分类模型 (0:背景, 1:你好算能)
+
+   * - CLS_SOUND_COMMAND_XIAOAIXIAOAI
+     - 命令声音分类模型 (0:背景, 1:小爱小爱)
 
    * - KEYPOINT_LICENSE_PLATE
      - 车牌关键点检测模型
@@ -262,8 +286,7 @@ TDLDataType
    * - YOLOV8_SEG_COCO80
      - YOLOv8 COCO80分割模型
 
-   * - TOPFORMER_SEG_PERSON_FACE \
-       _VEHICLE
+   * - TOPFORMER_SEG_PERSON_FACE_VEHICLE
      - 人、脸与车辆分割模型 (0:背景, 1:人, 2:脸, 3:车辆, 4:车牌)
 
    * - TOPFORMER_SEG_MOTION
@@ -308,7 +331,7 @@ TDLDataType
      - PyModel
      - 创建模型实例，可指定配置参数
 
-   * - get_model(model_type, model_dir="", device_id=0)
+   * - get_model_from_dir(model_type, model_dir="", device_id=0)
      - model_type: 模型类型枚举值
 
        model_dir: 模型文件夹路径，下面包含各平台模型文件夹(bm1688,bm1684x,cv181x,cv184x,...)
@@ -352,7 +375,7 @@ PyModel 类接口说明
    from tdl import nn, image
 
    # 人脸检测示例
-   face_detector = nn.get_model(nn.ModelType.FD_SCRFD, "model_path")
+   face_detector = nn.get_model(nn.ModelType.SCRFD_DET_FACE, "model_path")
    img = image.read("image_path")
    bboxes = face_detector.inference(img)
 
@@ -364,7 +387,7 @@ PyModel 类接口说明
    from tdl import nn, image
 
    # 人脸检测示例
-   face_detector = nn.get_model(nn.ModelType.FD_SCRFD, "model_path")
+   face_detector = nn.get_model(nn.ModelType.SCRFD_DET_FACE, "model_path")
    img = cv2.imread(img_path)
    bboxes = face_detector.inference(img)
 

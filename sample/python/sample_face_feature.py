@@ -57,21 +57,20 @@ def detect_and_align_face(img_path, detector):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 6:
-        print("Usage: python sample_face_feature.py <feature_extraction_model_id_name> <face_datection_model_path> \
-              <feature_extraction_model_path> <image_path1> <image_path2>")
+    if len(sys.argv) != 5:
+        print("Usage: python sample_face_feature.py <feature_extraction_model_id_name> <model_dir> \
+              <image_path1> <image_path2>")
         print("feature_extraction_model_id_name: ", list(model_id_mapping.keys()))
         sys.exit(1)
     feature_extraction_model_id_name = sys.argv[1]
-    face_detection_model_path = sys.argv[2]
-    feature_extraction_model_path = sys.argv[3]
-    img_path1 = sys.argv[4]
-    img_path2 = sys.argv[5]
+    model_dir = sys.argv[2]
+    img_path1 = sys.argv[3]
+    img_path2 = sys.argv[4]
 
-    face_detector = nn.get_model(nn.ModelType.SCRFD_DET_FACE, face_detection_model_path)
+    face_detector = nn.get_model_from_dir(nn.ModelType.SCRFD_DET_FACE, model_dir)
 
     model_type = model_id_mapping[feature_extraction_model_id_name]
-    feature_extractor = nn.get_model(model_type, feature_extraction_model_path)
+    feature_extractor = nn.get_model_from_dir(model_type, model_dir)
 
     aligned_img1 = detect_and_align_face(img_path1, face_detector)
     aligned_img2 = detect_and_align_face(img_path2, face_detector)
