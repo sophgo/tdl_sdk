@@ -38,6 +38,10 @@ class BmImageProcessor : public ImageProcessor {
  private:
   bm_handle_t handle_;
   tpu_kernel_module_t tpu_module_;
+  tpu_kernel_function_t func_id_subads_;
+  tpu_kernel_function_t func_id_threshold_;
+  tpu_kernel_function_t func_id_blend_2way_;
+  tpu_kernel_function_t func_id_morph_;
 };
 
 #endif  // __BM_IMAGE_PROCESSOR_HPP__

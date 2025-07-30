@@ -69,6 +69,12 @@ BmImageProcessor::BmImageProcessor(const std::string &tpu_kernel_module_path) {
     bm_dev_free(handle_);
     return;
   }
+  func_id_subads_ = tpu_kernel_get_function(handle_, tpu_module_, "cv_subads");
+  func_id_threshold_ =
+      tpu_kernel_get_function(handle_, tpu_module_, "cv_threshold");
+  func_id_blend_2way_ =
+      tpu_kernel_get_function(handle_, tpu_module_, "cv_blend_2way");
+  func_id_morph_ = tpu_kernel_get_function(handle_, tpu_module_, "cv_morph");
 }
 
 BmImageProcessor::~BmImageProcessor() {
@@ -189,9 +195,9 @@ int32_t BmImageProcessor::subads(std::shared_ptr<BaseImage> &src1,
   }
 
 #endif
-  bm_status_t ret =
-      tpu_cv_subads(handle_, height, aligned_width, format, channel,
-                    src1_img_mem, src2_img_mem, dst_img_mem, tpu_module_);
+  bm_status_t ret = tpu_cv_subads(handle_, height, aligned_width, format,
+                                  channel, src1_img_mem, src2_img_mem,
+                                  dst_img_mem, tpu_module_, func_id_subads_);
 
   if (ret != BM_SUCCESS) {
     printf("tpu_cv_subads failed\n");
@@ -288,9 +294,9 @@ int32_t BmImageProcessor::thresholdProcess(std::shared_ptr<BaseImage> &input,
   output_mem.size = output_mem_block->size;
 #endif
 
-  bm_status_t ret =
-      tpu_cv_threshold(handle_, height, aligned_width, mode, threshold,
-                       max_value, &input_mem, &output_mem, tpu_module_);
+  bm_status_t ret = tpu_cv_threshold(
+      handle_, height, aligned_width, mode, threshold, max_value, &input_mem,
+      &output_mem, tpu_module_, func_id_threshold_);
 
   if (ret != BM_SUCCESS) {
     printf("tpu_cv_threshold failed\n");
@@ -481,7 +487,7 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   bm_status_t ret = tpu_2way_blending(
       handle_, &left_img, left_img_mem, &right_img, right_img_mem, &output_img,
       output_img_mem, overlay_lx, overlay_rx, wgt_mem,
-      TPU_BLEND_WGT_MODE::WGT_UV_SHARE, tpu_module_);
+      TPU_BLEND_WGT_MODE::WGT_UV_SHARE, tpu_module_, func_id_blend_2way_);
 
 #if defined(__CMODEL_CV184X__)
   // 将结果从设备内存拷贝回主机内存
@@ -584,9 +590,9 @@ int32_t BmImageProcessor::morphProcess(std::shared_ptr<BaseImage> &input,
   output_mem.size = output_mem_block->size;
 
   if (morph_type == "erode") {
-    bm_status_t ret =
-        bm_cv_erode(handle_, input_mem, output_mem, format, width, height,
-                    aligned_width, kernal_w, kernal_h, tpu_module_);
+    bm_status_t ret = bm_cv_erode(handle_, input_mem, output_mem, format, width,
+                                  height, aligned_width, kernal_w, kernal_h,
+                                  tpu_module_, func_id_morph_);
     if (ret != BM_SUCCESS) {
       printf("bm_cv_erode failed\n");
       // 释放设备内存
@@ -595,9 +601,9 @@ int32_t BmImageProcessor::morphProcess(std::shared_ptr<BaseImage> &input,
       return static_cast<int32_t>(ret);
     }
   } else if (morph_type == "dilate") {
-    bm_status_t ret =
-        bm_cv_dilate(handle_, input_mem, output_mem, format, width, height,
-                     aligned_width, kernal_w, kernal_h, tpu_module_);
+    bm_status_t ret = bm_cv_dilate(handle_, input_mem, output_mem, format,
+                                   width, height, aligned_width, kernal_w,
+                                   kernal_h, tpu_module_, func_id_morph_);
     if (ret != BM_SUCCESS) {
       printf("bm_cv_dilate failed\n");
       // 释放设备内存

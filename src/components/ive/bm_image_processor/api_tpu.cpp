@@ -376,15 +376,6 @@ int cpu_2way_blend(int lwidth, int lheight, int *left_stride,
   return 0;
 }
 
-bm_status_t sg_tpu_kernel_launch(bm_handle_t handle, const char *func_name,
-                                 void *param, size_t size,
-                                 tpu_kernel_module_t tpu_module) {
-  tpu_kernel_function_t func_id = 0;
-  func_id = tpu_kernel_get_function(handle, tpu_module, (char *)func_name);
-  bm_status_t ret = tpu_kernel_launch(handle, func_id, param, size);
-  return ret;
-}
-
 bm_status_t tpu_subads_param_check(bm_handle_t handle, int height, int width,
                                    PIXEL_FORMAT_E format) {
   if (handle == NULL) {
@@ -423,7 +414,8 @@ bm_status_t tpu_cv_subads(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
                           PIXEL_FORMAT_E format, CVI_S32 channel,
                           bm_device_mem_t *src1_mem, bm_device_mem_t *src2_mem,
                           bm_device_mem_t *dst_mem,
-                          tpu_kernel_module_t tpu_module) {
+                          tpu_kernel_module_t tpu_module,
+                          tpu_kernel_function_t func_id) {
   bm_status_t ret = BM_ERR_FAILURE;
 
   ret = tpu_subads_param_check(handle, height, width, (PIXEL_FORMAT_E)format);
@@ -463,10 +455,9 @@ bm_status_t tpu_cv_subads(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
     api.input1_str[i] = api.input2_str[i] = api.output_str[i] = api.width[i];
   }
 
-  ret =
-      sg_tpu_kernel_launch(handle, "cv_subads", &api, sizeof(api), tpu_module);
+  ret = tpu_kernel_launch(handle, func_id, &api, sizeof(api));
   if (ret != BM_SUCCESS) {
-    bmlib_log("SUBADS", BMLIB_LOG_ERROR, "sg_tpu_kernel_launch!\r\n");
+    bmlib_log("SUBADS", BMLIB_LOG_ERROR, "tpu_kernel_launch!\r\n");
     return BM_ERR_FAILURE;
   }
 
@@ -522,7 +513,8 @@ bm_status_t tpu_cv_threshold(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
                              TPU_THRESHOLD_TYPE mode, CVI_U32 threshold,
                              CVI_U32 max_value, bm_device_mem_t *input_mem,
                              bm_device_mem_t *output_mem,
-                             tpu_kernel_module_t tpu_module) {
+                             tpu_kernel_module_t tpu_module,
+                             tpu_kernel_function_t func_id) {
   bm_status_t ret = BM_ERR_FAILURE;
 
   ret = tpu_threshold_check(handle, height, width, mode, threshold, max_value);
@@ -544,10 +536,9 @@ bm_status_t tpu_cv_threshold(bm_handle_t handle, CVI_S32 height, CVI_S32 width,
   api.max_value = max_value;
   api.channel = 1;  // Only Support PIXEL_FORMAT_YUV_400
 
-  ret = sg_tpu_kernel_launch(handle, "cv_threshold", &api, sizeof(api),
-                             tpu_module);
+  ret = tpu_kernel_launch(handle, func_id, &api, sizeof(api));
   if (ret != BM_SUCCESS) {
-    bmlib_log("THRESHOLD", BMLIB_LOG_ERROR, "sg_tpu_kernel_launch!\r\n");
+    bmlib_log("THRESHOLD", BMLIB_LOG_ERROR, "tpu_kernel_launch!\r\n");
     return BM_ERR_FAILURE;
   }
 
@@ -807,7 +798,8 @@ bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
                               bm_device_mem_t *blend_mem, short overlay_lx,
                               short overlay_rx, bm_device_mem_t *wgt_phy_mem,
                               TPU_BLEND_WGT_MODE mode,
-                              tpu_kernel_module_t tpu_module) {
+                              tpu_kernel_module_t tpu_module,
+                              tpu_kernel_function_t func_id) {
   bm_status_t ret = BM_ERR_FAILURE;
   sg_cv_blend_2way_t api;
   memset(&api, 0, sizeof(sg_cv_blend_2way_t));
@@ -851,10 +843,9 @@ bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
     blend_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
     api.blend_img_addr[i] = bm_mem_get_device_addr(blend_mem[i]);
   }
-  ret = sg_tpu_kernel_launch(handle, "cv_blend_2way", &api, sizeof(api),
-                             tpu_module);
+  ret = tpu_kernel_launch(handle, func_id, &api, sizeof(api));
   if (ret != BM_SUCCESS) {
-    bmlib_log("BLEND", BMLIB_LOG_ERROR, "sg_tpu_kernel_launch!\r\n");
+    bmlib_log("BLEND", BMLIB_LOG_ERROR, "tpu_kernel_launch!\r\n");
     return BM_ERR_FAILURE;
   }
 
@@ -956,7 +947,8 @@ bm_status_t bm_cv_morph_check(bm_handle_t handle, PIXEL_FORMAT_E format,
 bm_status_t bm_cv_morph(bm_handle_t handle, bm_device_mem_t src_mem,
                         bm_device_mem_t dst_mem, int kh, int kw, int img_height,
                         int img_width, int img_w_stride, enum MorphTypes op,
-                        tpu_kernel_module_t tpu_module) {
+                        tpu_kernel_module_t tpu_module,
+                        tpu_kernel_function_t func_id) {
   bm_status_t ret = BM_SUCCESS;
 
   sg_api_cv_morph api;
@@ -972,10 +964,10 @@ bm_status_t bm_cv_morph(bm_handle_t handle, bm_device_mem_t src_mem,
   api.op = op;
   api.kh = kh;
   api.kw = kw;
+  ret = tpu_kernel_launch(handle, func_id, &api, sizeof(api));
 
-  ret = sg_tpu_kernel_launch(handle, "cv_morph", &api, sizeof(api), tpu_module);
-  if (ret) {
-    printf("cv_morph tpu_kernel_launch failed\n");
+  if (ret != BM_SUCCESS) {
+    bmlib_log("MORPH", BMLIB_LOG_ERROR, "tpu_kernel_launch!\r\n");
     return BM_ERR_FAILURE;
   }
 
@@ -985,7 +977,8 @@ bm_status_t bm_cv_morph(bm_handle_t handle, bm_device_mem_t src_mem,
 bm_status_t bm_cv_dilate(bm_handle_t handle, bm_device_mem_t src_mem,
                          bm_device_mem_t dst_mem, PIXEL_FORMAT_E format,
                          int width, int height, int w_stride, int kw, int kh,
-                         tpu_kernel_module_t tpu_module) {
+                         tpu_kernel_module_t tpu_module,
+                         tpu_kernel_function_t func_id) {
   bm_status_t ret =
       bm_cv_morph_check(handle, format, height, width, kw, kh, MORPH_DILATE);
   if (ret != BM_SUCCESS) {
@@ -993,13 +986,14 @@ bm_status_t bm_cv_dilate(bm_handle_t handle, bm_device_mem_t src_mem,
   }
 
   return bm_cv_morph(handle, src_mem, dst_mem, kh, kw, height, width, w_stride,
-                     MORPH_DILATE, tpu_module);
+                     MORPH_DILATE, tpu_module, func_id);
 }
 
 bm_status_t bm_cv_erode(bm_handle_t handle, bm_device_mem_t src_mem,
                         bm_device_mem_t dst_mem, PIXEL_FORMAT_E format,
                         int width, int height, int w_stride, int kw, int kh,
-                        tpu_kernel_module_t tpu_module) {
+                        tpu_kernel_module_t tpu_module,
+                        tpu_kernel_function_t func_id) {
   bm_status_t ret =
       bm_cv_morph_check(handle, format, height, width, kw, kh, MORPH_ERODE);
   if (ret != BM_SUCCESS) {
@@ -1007,5 +1001,5 @@ bm_status_t bm_cv_erode(bm_handle_t handle, bm_device_mem_t src_mem,
   }
 
   return bm_cv_morph(handle, src_mem, dst_mem, kh, kw, height, width, w_stride,
-                     MORPH_ERODE, tpu_module);
+                     MORPH_ERODE, tpu_module, func_id);
 }
