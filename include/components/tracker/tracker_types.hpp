@@ -12,6 +12,7 @@ class TrackerInfo {
 
   ObjectBoxInfo box_info_;
   TrackStatus status_;
+  int matched_times_;
   // if -1, it is not matched with current detection
   int obj_idx_;
   int pair_track_idx_;
@@ -22,8 +23,8 @@ class TrackerInfo {
 };
 class TrackerConfig {
  public:
-  int max_unmatched_times_ = 10;
-  int track_confirmed_frames_ = 2;
+  int max_unmatched_times_ = 15;
+  int track_confirmed_frames_ = 3;
   int track_pair_update_missed_times_ = 2;
   float track_init_score_thresh_ = 0.6;
   float high_score_thresh_ = 0.5;

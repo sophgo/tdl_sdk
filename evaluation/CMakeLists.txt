@@ -10,6 +10,7 @@ set(SAMPLE_INCLUDES
     ${REPO_DIR}/include/framework
     ${REPO_DIR}/include/components
     ${REPO_DIR}/include/nn
+    ${REPO_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

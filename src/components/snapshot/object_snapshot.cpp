@@ -1,4 +1,5 @@
 #include "components/snapshot/object_snapshot.hpp"
+#include <cstdio>
 #include "framework/utils/tdl_log.hpp"
 ObjectSnapshot::ObjectSnapshot() {
   preprocessor_ =
@@ -11,6 +12,7 @@ ObjectSnapshot::ObjectSnapshot() {
   config_.snapshot_quality_threshold = 0.f;
   config_.crop_square = false;
   config_.max_miss_counter = 20;
+  config_.min_matched_times = 25;
   config_.snapshot_interval = 10;
   config_.crop_size_min = 0;
   config_.crop_size_max = 0;
@@ -84,13 +86,17 @@ int32_t ObjectSnapshot::updateSnapshot(
     float quality_score = quality_scores.at(track.track_id_);
     bool update_snapshot = false;
     if (snapshot_infos_.count(track.track_id_)) {
-      if (quality_score > snapshot_infos_[track.track_id_].quality) {
+      snapshot_infos_[track.track_id_].matched_times = track.matched_times_;
+      if (quality_score > snapshot_infos_[track.track_id_].quality + 0.05) {
         update_snapshot = true;
       }
-    } else if (quality_score > config_.snapshot_quality_threshold) {
+    } else if (quality_score > config_.snapshot_quality_threshold &&
+               track.status_ == TrackStatus::TRACKED) {
       update_snapshot = true;
       ObjectSnapshotInfo snapshot_info;
       snapshot_info.export_frame_id = frame_id;
+
+      snapshot_info.matched_times = track.matched_times_;
       // memset(&snapshot_info, 0, sizeof(ObjectSnapshotInfo));
       snapshot_infos_[track.track_id_] = snapshot_info;
     }
@@ -134,6 +140,13 @@ int32_t ObjectSnapshot::updateSnapshot(
             landmarks.push_back(landmark_info.landmarks_y[i]);
           }
           snapshot_info.other_info["landmarks"] = Packet::make(landmarks);
+        }
+        if (other_info.count("ori_face_meta")) {
+          const std::vector<ObjectBoxLandmarkInfo>& ori_face_meta =
+              other_info.at("ori_face_meta")
+                  .get<std::vector<ObjectBoxLandmarkInfo>>();
+          snapshot_info.other_info["ori_face_meta"] =
+              Packet::make(ori_face_meta[obj_idx]);
         }
       } else {
         int crop_x = 0;
@@ -186,6 +199,9 @@ int32_t ObjectSnapshot::updateSnapshot(
                                 scale_y);
           }
           snapshot_info.other_info["landmarks"] = Packet::make(landmarks);
+
+          snapshot_info.other_info["ori_face_meta"] =
+              Packet::make(face_landmarks[obj_idx]);
         }
       }
     }
@@ -197,7 +213,8 @@ int32_t ObjectSnapshot::updateSnapshot(
     if (track_valid_flag.count(iter->first) == 0 ||
         iter->second.miss_counter > config_.max_miss_counter) {
       // need to erase
-      if (iter->second.object_image != nullptr) {
+      if (iter->second.object_image != nullptr &&
+          iter->second.matched_times >= config_.min_matched_times) {
         export_snapshots_.push_back(iter->second);
       }
       iter = snapshot_infos_.erase(iter);

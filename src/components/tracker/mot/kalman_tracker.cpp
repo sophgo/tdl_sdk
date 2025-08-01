@@ -83,7 +83,11 @@ void KalmanTracker::update(const uint64_t &frame_id, const KalmanFilter &kf,
     if (status_ == TrackStatus::NEW &&
         matched_times_ >= conf.track_confirmed_frames_) {
       status_ = TrackStatus::TRACKED;
-      LOGI("trackid:%d,update to tracked", id_);
+      LOGI("trackid:%d, new update to tracked", id_);
+    }
+    if (status_ == TrackStatus::LOST) {
+      status_ = TrackStatus::TRACKED;
+      LOGI("trackid:%d, lost update to tracked", id_);
     }
     LOGI(
         "update "

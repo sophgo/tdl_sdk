@@ -1,4 +1,5 @@
 #include "mot/mot.hpp"
+#include <cstdio>
 #include <iostream>
 #include <set>
 #include "mot/munkres.hpp"
@@ -80,6 +81,7 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
     }
     TrackerInfo tinfo;
     tinfo.track_id_ = track_id;
+    tinfo.matched_times_ = trackers_[track_id_to_idx[track_id]]->matched_times_;
     tinfo.box_info_ = trackers_[track_id_to_idx[track_id]]->getBoxInfo();
     tinfo.status_ = trackers_[track_id_to_idx[track_id]]->status_;
     tinfo.velocity_x_ = trackers_[track_id_to_idx[track_id]]->velocity_x_;
@@ -93,6 +95,7 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
     if (exported_tracks.count(t->id_) == 0) {
       TrackerInfo tinfo;
       tinfo.track_id_ = t->id_;
+      tinfo.matched_times_ = t->matched_times_;
       tinfo.box_info_ = t->getBoxInfo();
       tinfo.status_ = t->status_;
       tinfo.velocity_x_ = t->velocity_x_;
@@ -211,8 +214,10 @@ void MOT::trackFuse(std::vector<ObjectBoxInfo> &boxes,
           "got conflict pair info,det obji:%d,pair_obj_idx:%d,matched "
           "trackid:%lu,pair_trackid:%lu,pairtrackid_pair:%lu",
           i, pair_obj_idx, det_track_ids_[i], pair_obj_trackid, trackid);
-      trackers_[tracker_idx]->resetPairInfo();
-      trackers_[pair_tracker_idx]->resetPairInfo();
+      pair_obj_idxes_[i] = -1;
+      pair_obj_idxes_[pair_obj_idx] = -1;
+      // trackers_[tracker_idx]->resetPairInfo();
+      // trackers_[pair_tracker_idx]->resetPairInfo();
     }
   }
 
@@ -242,6 +247,10 @@ void MOT::updatePairInfo(std::vector<ObjectBoxInfo> &boxes,
                          TDLObjectType priority_type,
                          TDLObjectType secondary_type, float corre_thresh) {
   // TODO: implement
+  std::map<uint64_t, int> trackid_idx_map;
+  for (size_t i = 0; i < trackers_.size(); i++) {
+    trackid_idx_map[trackers_[i]->id_] = i;
+  }
 
   if (priority_idxes.empty() || secondary_idxes.empty()) {
     return;
@@ -253,7 +262,7 @@ void MOT::updatePairInfo(std::vector<ObjectBoxInfo> &boxes,
     for (size_t j = 0; j < secondary_idxes.size(); j++) {
       LOGI(
           "priority_idx:%d,secondary_idx:%d,prioritybox[%.1f,%.1f,%.1f,%.1f],"
-          "secondarybox[%.1f,%.1f,%.1f,%.1f]",
+          "secondarybox[%.1f,%.1f,%.1f,%.1f]\n",
           priority_idxes[i], secondary_idxes[j], boxes[priority_idxes[i]].x1,
           boxes[priority_idxes[i]].y1, boxes[priority_idxes[i]].x2,
           boxes[priority_idxes[i]].y2, boxes[secondary_idxes[j]].x1,
@@ -263,6 +272,16 @@ void MOT::updatePairInfo(std::vector<ObjectBoxInfo> &boxes,
           1 - MotBoxHelper::calObjectPairScore(boxes[priority_idxes[i]],
                                                boxes[secondary_idxes[j]],
                                                priority_type, secondary_type);
+      if (det_track_ids_[priority_idxes[i]] != 0 &&
+          det_track_ids_[secondary_idxes[j]] != 0) {
+        int tracker_idx = trackid_idx_map[det_track_ids_[priority_idxes[i]]];
+        if (trackers_[tracker_idx]->getPairTrackID() ==
+                det_track_ids_[secondary_idxes[j]] &&
+            cost_matrix(i, j) < 1.0) {
+          cost_matrix(i, j) = 0;
+        }
+      }
+
       LOGI("cost_matrix(%d,%d):%f", i, j, cost_matrix(i, j));
     }
   }
@@ -506,10 +525,25 @@ void MOT::updateTrackers(const std::vector<ObjectBoxInfo> &boxes,
   // erase trackers with unmatched_times_ >
   // max_unmatched_times_for_bbox_matching
   for (auto it = trackers_.begin(); it != trackers_.end();) {
+    bool to_erase = false;
+    uint64_t pair_trackid = (*it)->getPairTrackID();
+
     if ((*it)->status_ == TrackStatus::REMOVED) {
-      LOGI("erase tracker:%lu", (*it)->id_);
-      resetPairTrackerOfRemovedTracker((*it)->id_);
-      it = trackers_.erase(it);
+      if (pair_trackid == 0 || trackid_idx_map.count(pair_trackid) == 0) {
+        to_erase = true;
+      } else if (!trackers_[trackid_idx_map[pair_trackid]] ||
+                 trackers_[trackid_idx_map[pair_trackid]]->status_ ==
+                     TrackStatus::REMOVED) {
+        to_erase = true;
+      }
+      if (to_erase) {
+        LOGI("erase tracker:%lu", (*it)->id_);
+        resetPairTrackerOfRemovedTracker((*it)->id_);
+        it = trackers_.erase(it);
+      } else {
+        (*it)->status_ = TrackStatus::LOST;
+        it++;
+      }
     } else {
       it++;
     }

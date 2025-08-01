@@ -15,12 +15,14 @@ struct ObjectSnapshotInfo {
   uint64_t export_frame_id = 0;
   uint64_t track_id = 0;
   int32_t miss_counter = 0;
+  int32_t matched_times = 0;
   ObjectBoxInfo object_box_info;  // this is the box of the cropped image
   std::map<std::string, Packet> other_info;
 };
 
 struct SnapshotConfig {
   int max_miss_counter;
+  int min_matched_times;
   int snapshot_interval;  // if 0,only export once
   int min_snapshot_size;  // if 0,no limit
   int crop_size_min;

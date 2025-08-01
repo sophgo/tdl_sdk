@@ -24,6 +24,8 @@ class FaceCaptureApp : public AppTask {
   std::shared_ptr<PipelineNode> getPersonDetectionNode(
       const nlohmann::json &node_config);
   std::shared_ptr<PipelineNode> getTrackNode(const nlohmann::json &node_config);
+  std::shared_ptr<PipelineNode> getLandmarkDetectionNode(
+      const nlohmann::json &node_config);
   std::shared_ptr<PipelineNode> getSnapshotNode(
       const nlohmann::json &node_config);
 

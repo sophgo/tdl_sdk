@@ -1,4 +1,5 @@
 #include "face_pet_capture_app.hpp"
+#include <cstdio>
 #include <json.hpp>
 #include "app/app_data_types.hpp"
 #include "components/snapshot/object_quality.hpp"
@@ -110,23 +111,10 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
 
   auto image =
       frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
-  if (image == nullptr) {
-    std::cout << "image is nullptr" << std::endl;
-    return -1;
-  }
   face_pet_capture_result->image = image;
   face_pet_capture_result->frame_id = frame_info->frame_id_;
-  face_pet_capture_result->frame_width = image->getWidth();
-  face_pet_capture_result->frame_height = image->getHeight();
-
-  face_pet_capture_result->face_boxes =
-      getNodeData<std::vector<ObjectBoxLandmarkInfo>>("face_meta", frame_info);
-  face_pet_capture_result->person_boxes =
-      getNodeData<std::vector<ObjectBoxInfo>>("person_meta", frame_info);
-  face_pet_capture_result->pet_boxes =
-      getNodeData<std::vector<ObjectBoxInfo>>("pet_meta", frame_info);
-  face_pet_capture_result->track_results =
-      getNodeData<std::vector<TrackerInfo>>("track_results", frame_info);
+  face_pet_capture_result->frame_width = frame_info->frame_width;
+  face_pet_capture_result->frame_height = frame_info->frame_height;
   face_pet_capture_result->face_snapshots =
       getNodeData<std::vector<ObjectSnapshotInfo>>("snapshots", frame_info);
   face_pet_capture_result->face_features =
@@ -135,6 +123,18 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
   face_pet_capture_result->face_attributes =
       getNodeData<std::vector<std::map<TDLObjectAttributeType, float>>>(
           "face_attributes", frame_info);
+  if (image == nullptr) {
+    result = Packet::make(face_pet_capture_result);
+    return -1;  // return here, for final force all snapshots
+  }
+  face_pet_capture_result->face_boxes =
+      getNodeData<std::vector<ObjectBoxLandmarkInfo>>("face_meta", frame_info);
+  face_pet_capture_result->person_boxes =
+      getNodeData<std::vector<ObjectBoxInfo>>("person_meta", frame_info);
+  face_pet_capture_result->pet_boxes =
+      getNodeData<std::vector<ObjectBoxInfo>>("pet_meta", frame_info);
+  face_pet_capture_result->track_results =
+      getNodeData<std::vector<TrackerInfo>>("track_results", frame_info);
 
   if (getChannelNodeName(pipeline_name, 0) == "video_node") {
     pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
@@ -191,6 +191,10 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getVideoNode(
     }
     frame_info->node_data_["image"] = Packet::make(image);
     frame_info->frame_id_ = video_decoder->getFrameId();
+    if (frame_info->frame_id_ == 0) {
+      frame_info->frame_width = image->getWidth();
+      frame_info->frame_height = image->getHeight();
+    }
     return 0;
   };
   video_node->setProcessFunc(lambda_func);
@@ -369,6 +373,10 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
         frame_info->node_data_["face_meta"]
             .get<std::vector<ObjectBoxLandmarkInfo>>();
 
+    std::vector<ObjectBoxLandmarkInfo> rescale_face_infos =
+        frame_info->node_data_["face_meta"]
+            .get<std::vector<ObjectBoxLandmarkInfo>>();
+
     const std::vector<float> &face_head_quality =
         frame_info->node_data_["face_head_quality"].get<std::vector<float>>();
 
@@ -387,7 +395,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
     for (auto &t : track_results) {
       if (t.box_info_.object_type == TDLObjectType::OBJECT_TYPE_FACE) {
         if (t.obj_idx_ != -1 && face_head_quality[t.obj_idx_] > 0.4) {
-          ObjectBoxLandmarkInfo face_info = face_infos[t.obj_idx_];
+          ObjectBoxLandmarkInfo face_info = rescale_face_infos[t.obj_idx_];
           // 1. 计算原始框的宽高和中心
           float orig_w = face_info.x2 - face_info.x1;
           float orig_h = face_info.y2 - face_info.y1;
@@ -416,14 +424,14 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
           if (crop_y + crop_h > img_height)
             crop_y = std::max(0, img_height - crop_h);
 
-          face_infos[t.obj_idx_].x1 =
-              (face_infos[t.obj_idx_].x1 - crop_x) * scale;
-          face_infos[t.obj_idx_].y1 =
-              (face_infos[t.obj_idx_].y1 - crop_y) * scale;
-          face_infos[t.obj_idx_].x2 =
-              (face_infos[t.obj_idx_].x2 - crop_x) * scale;
-          face_infos[t.obj_idx_].y2 =
-              (face_infos[t.obj_idx_].y2 - crop_y) * scale;
+          rescale_face_infos[t.obj_idx_].x1 =
+              (rescale_face_infos[t.obj_idx_].x1 - crop_x) * scale;
+          rescale_face_infos[t.obj_idx_].y1 =
+              (rescale_face_infos[t.obj_idx_].y1 - crop_y) * scale;
+          rescale_face_infos[t.obj_idx_].x2 =
+              (rescale_face_infos[t.obj_idx_].x2 - crop_x) * scale;
+          rescale_face_infos[t.obj_idx_].y2 =
+              (rescale_face_infos[t.obj_idx_].y2 - crop_y) * scale;
 
           std::shared_ptr<BasePreprocessor> preprocessor =
               landmark_detection_model->getPreprocessor();
@@ -454,15 +462,27 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
             assert(false);
           }
 
-          face_infos[t.obj_idx_].landmarks_x = landmark_meta->landmarks_x;
-          face_infos[t.obj_idx_].landmarks_y = landmark_meta->landmarks_y;
+          rescale_face_infos[t.obj_idx_].landmarks_x =
+              landmark_meta->landmarks_x;
+          rescale_face_infos[t.obj_idx_].landmarks_y =
+              landmark_meta->landmarks_y;
+
+          for (int i = 0; i < landmark_meta->landmarks_x.size();
+               i++) {  // for eval
+            face_infos[t.obj_idx_].landmarks_x.push_back(
+                landmark_meta->landmarks_x[i] / scale + crop_x);
+            face_infos[t.obj_idx_].landmarks_y.push_back(
+                landmark_meta->landmarks_y[i] / scale + crop_y);
+          }
         }
       }
     }
 
     frame_info->node_data_["track_results"] =
         Packet::make(track_results);  // to update track_results (blurness)
-    frame_info->node_data_["rescale_face_meta"] = Packet::make(face_infos);
+    frame_info->node_data_["rescale_face_meta"] =
+        Packet::make(rescale_face_infos);
+    frame_info->node_data_["face_meta"] = Packet::make(face_infos);
     frame_info->node_data_["crop_face_imgs"] = Packet::make(crop_face_imgs);
 
     LOGI("frame id:%d, crop_face_imgs size: %d\n", frame_info->frame_id_,
@@ -504,9 +524,13 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
     std::vector<TrackerInfo> face_track_results;
     std::map<uint64_t, float> face_qaulity_scores;
     std::vector<float> face_landmarks;
-    const std::vector<ObjectBoxLandmarkInfo> &face_infos =
+    const std::vector<ObjectBoxLandmarkInfo> &rescale_face_infos =
         frame_info->node_data_["rescale_face_meta"]
             .get<std::vector<ObjectBoxLandmarkInfo>>();
+    const std::vector<ObjectBoxLandmarkInfo> &face_infos =
+        frame_info->node_data_["face_meta"]
+            .get<std::vector<ObjectBoxLandmarkInfo>>();
+
     const std::vector<TrackerInfo> &track_results =
         frame_info->node_data_["track_results"].get<std::vector<TrackerInfo>>();
     const std::vector<float> &face_head_quality =
@@ -517,7 +541,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
         face_track_results.push_back(t);
 
         if (t.obj_idx_ != -1) {
-          ObjectBoxLandmarkInfo face_info = face_infos[t.obj_idx_];
+          ObjectBoxLandmarkInfo face_info = rescale_face_infos[t.obj_idx_];
           face_track_boxes[t.track_id_] =
               ObjectBoxInfo(face_info.class_id, face_info.score, face_info.x1,
                             face_info.y1, face_info.x2, face_info.y2);
@@ -530,7 +554,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
                                                        {"blr", t.blurness}};
 
             float face_quality = ObjectQualityHelper::getFaceQuality(
-                face_info, image->getWidth(), image->getHeight(), other_info);
+                face_infos[t.obj_idx_], image->getWidth(), image->getHeight(),
+                other_info);
             LOGI("track_id:%lu,frame_id:%lu,face_quality:%f\n", t.track_id_,
                  frame_info->frame_id_, face_quality);
             face_qaulity_scores[t.track_id_] = face_quality;
@@ -544,7 +569,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
             .get<std::map<uint64_t, std::shared_ptr<BaseImage>>>();
 
     std::map<std::string, Packet> other_info;
-    other_info["face_landmark"] = Packet::make(face_infos);
+    other_info["face_landmark"] = Packet::make(rescale_face_infos);
+    other_info["ori_face_meta"] = Packet::make(face_infos);
     LOGI("to update snapshot,frame_id:%lu,face_track_boxes.size:%zu\n",
          frame_info->frame_id_, face_track_boxes.size());
     snapshot->updateSnapshot(image, frame_info->frame_id_, face_track_boxes,

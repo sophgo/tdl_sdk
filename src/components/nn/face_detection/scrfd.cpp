@@ -220,6 +220,10 @@ int32_t SCRFD::outputParse(
           box.landmarks_y = landmarks_y;
           box.landmarks_score = landmarks_score;
           DetectionHelper::rescaleBbox(box, rescale_params);
+          box.x1 = std::max(0.0f, box.x1);
+          box.y1 = std::max(0.0f, box.y1);
+          box.x2 = std::min((float)image_width, box.x2);
+          box.y2 = std::min((float)image_height, box.y2);
           vec_bbox.push_back(box);
         }
       }

@@ -25,7 +25,7 @@ class VideoDecoder {
  protected:
   VideoDecoderType type_ = VideoDecoderType::UNKNOWN;
   std::string path_ = "";
-  uint64_t frame_id_ = 0;
+  uint64_t frame_id_ = -1;
 };
 
 class VideoDecoderFactory {

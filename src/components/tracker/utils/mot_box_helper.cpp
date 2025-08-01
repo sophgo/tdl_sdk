@@ -100,9 +100,11 @@ float MotBoxHelper::calObjectPairScore(ObjectBoxInfo boxa, ObjectBoxInfo boxb,
     float person_height = boxb.y2 - boxb.y1;
 
     int face_size = std::max(face_width, face_height);
-    if (boxa.y1 < boxb.y1) return 0;
+    float face_ct_y = (boxa.y1 + boxa.y2) / 2;
+
+    if (face_ct_y < boxb.y1) return 0;
     float yoffset = 0.2;
-    float ydiff = boxa.y1 - boxb.y1 - face_size * yoffset;
+    float ydiff = face_ct_y - boxb.y1 - face_size * (yoffset + 0.5);
     float ydiff_score = 1.0 - ydiff / (boxa.y2 - boxa.y1);
 
     if (person_height > face_size * 18) return 0;
@@ -111,10 +113,11 @@ float MotBoxHelper::calObjectPairScore(ObjectBoxInfo boxa, ObjectBoxInfo boxb,
     float xdiff = abs(ped_ct_x - face_ct_x);
     float xdiff_score = 1.0 - xdiff / face_size;
     ObjectBoxInfo ped_top_box(
-        boxb.class_id, boxb.score, boxb.x1 + person_width * 0.2, boxa.y1,
-        boxb.x1 + 0.8 * person_width, boxa.y1 + face_size);
+        boxb.class_id, boxb.score, boxb.x1 + person_width * 0.2,
+        boxb.y1 + 0.25 * face_size, boxb.x1 + 0.8 * person_width,
+        boxa.y1 + 1.25 * face_size);
     float iou_on_first = calculateIOUOnFirst(boxa, ped_top_box);
-    if (iou_on_first < 0.8) {
+    if (iou_on_first < 0) {
       LOGI(
           "iou_on_first:%f,boxa[%.1f,%.1f,%.1f,%.1f],ped_top_box[%.1f,%.1f,%."
           "1f,%.1f]",
