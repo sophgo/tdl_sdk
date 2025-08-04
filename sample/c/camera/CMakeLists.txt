@@ -10,6 +10,10 @@ include_directories(${CAMERA_INCLUDES})
 
 file(GLOB CAMERA_SRC_FILES *.c)
 
+if(${CVI_PLATFORM} STREQUAL "SOPHON")
+    list(REMOVE_ITEM CAMERA_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_vi_detection.c)
+endif()
+
 if(BUILD_SHARED)
     set(CAMERA_LIBS tdl_core tdl_ex tdl_utils ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 else()

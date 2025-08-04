@@ -9,8 +9,8 @@
 #include "rtsp_utils.h"
 #include "tdl_sdk.h"
 
-#define VI_WIDTH 640
-#define VI_HEIGHT 360
+#define VI_WIDTH 2560
+#define VI_HEIGHT 1440
 
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
   newt.c_lflag &= ~(ICANON | ECHO);
   tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 
-  VIDEO_FRAME_INFO_S frame = {0};
+  VIDEO_FRAME_INFO_S *frame = NULL;
   printf("按任意键退出...\n");
   int is_rtsp_running = 0;
 
@@ -151,39 +151,28 @@ int main(int argc, char *argv[]) {
     if (ret != 0) {
       printf("TDL_Detection failed with %#x!\n", ret);
     } else {
-      // 为每个检测到的目标画框
+      TDLBrush brush = {0};
+      brush.size = 5;
+      brush.color.r = 255;
+      brush.color.g = 0;
+      brush.color.b = 0;
       for (int i = 0; i < obj_meta.size; i++) {
-        TDLBrush brush = {0};
-        brush.color.r = 255;
-        brush.color.g = 0;
-        brush.color.b = 0;
-        brush.size = 5;
-
-        // 创建TDLObject结构
-        TDLObjectInfo obj_info = {0};
-        obj_info.box = obj_meta.info[i].box;
-        snprintf(obj_info.name, sizeof(obj_info.name), "class:%d score:%.2f",
-                 obj_meta.info[i].class_id, obj_meta.info[i].score);
-
-        TDLObject meta = {0};
-        meta.info = &obj_info;
-        meta.size = 1;
-
-        // 使用TDL_DrawRect绘制
-        TDL_DrawRect(&meta, &frame, true, brush);
-        for (int i = 0; i < obj_meta.size; i++) {
-          printf("obj_meta_index : %d, ", i);
-          printf("class_id : %d, ", obj_meta.info[i].class_id);
-          printf("score : %f, ", obj_meta.info[i].score);
-          printf("bbox : [%f %f %f %f]\n", obj_meta.info[i].box.x1,
-                 obj_meta.info[i].box.x2, obj_meta.info[i].box.y1,
-                 obj_meta.info[i].box.y2);
-        }
+        printf("obj_meta_index : %d, ", i);
+        printf("class_id : %d, ", obj_meta.info[i].class_id);
+        printf("score : %f, ", obj_meta.info[i].score);
+        printf("bbox : [%f %f %f %f]\n", obj_meta.info[i].box.x1,
+               obj_meta.info[i].box.x2, obj_meta.info[i].box.y1,
+               obj_meta.info[i].box.y2);
+        // 设置目标框名称
+        TDLObjectInfo *obj_info = &obj_meta.info[i];
+        snprintf(obj_info->name, sizeof(obj_info->name), "class:%d score:%.2f",
+                 obj_info->class_id, obj_info->score);
       }
+      TDL_DrawRect(&obj_meta, frame, true, brush);
     }
 
     // 发送帧
-    ret = TDL_SendFrameRTSP(&frame, &rtsp_context);
+    ret = TDL_SendFrameRTSP(frame, &rtsp_context);
     if (ret != 0) {
       printf("TDL_SendFrameRTSP failed with %#x!\n", ret);
       continue;

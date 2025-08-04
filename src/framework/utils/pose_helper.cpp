@@ -138,8 +138,6 @@ int32_t PoseHelper::predictFacePose(const std::vector<float>& landmark_5x,
   if (hp->roll > 180) hp->roll = hp->roll - 360;
   hp->roll /= 90;
   hp->roll = Saturate(hp->roll, -1.f, 1.f);
-  printf("hp->pitch:%f, hp->yaw:%f, hp->roll:%f\n", hp->pitch, hp->yaw,
-         hp->roll);
 
   return 0;
 }

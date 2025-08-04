@@ -68,13 +68,11 @@ int32_t TDL_WrapImage(TDLImage image, void *frame) {
     return -1;
   }
 
-  void *internal_data = image_context->image->getInternalData();
-  if (internal_data == nullptr) {
+  *(void **)frame = image_context->image->getInternalData();
+  if (frame == nullptr) {
     LOGE("Failed to get internal data from image");
     return -1;
   }
-
-  frame = internal_data;
   return 0;
 }
 

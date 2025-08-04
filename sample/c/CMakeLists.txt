@@ -16,7 +16,7 @@ set(SAMPLE_INCLUDES
 
 # Add subdirectories
 add_subdirectory(utils)
-if (${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
+if (${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X" OR ${CVI_PLATFORM} STREQUAL "SOPHON")
     add_subdirectory(camera)
 endif()
 
