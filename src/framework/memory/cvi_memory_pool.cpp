@@ -48,14 +48,19 @@ int32_t CviMemoryPool::release(std::unique_ptr<MemoryBlock> &block) {
   return -1;
 }
 
-std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_size,
-                                                       uint32_t blk_cnt,
-                                                       uint32_t weight,
-                                                       uint32_t height) {
+std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_cnt,
+                                                       uint32_t width,
+                                                       uint32_t height,
+                                                       void *fmt) {
   VB_POOL_CONFIG_EX_S stExconfig;
 
   std::unique_ptr<MemoryBlock> block = std::make_unique<MemoryBlock>();
-
+  PIXEL_FORMAT_E pix_fmt = *(PIXEL_FORMAT_E *)fmt;
+  width = ALIGN(width, DEFAULT_ALIGN);
+  height = ALIGN(height, DEFAULT_ALIGN);
+  uint32_t blk_size =
+      COMMON_GetPicBufferSize(width, height, pix_fmt, DATA_BITWIDTH_8,
+                              COMPRESS_MODE_NONE, DEFAULT_ALIGN);
   CVI_S32 ret =
       CVI_SYS_IonAlloc(reinterpret_cast<CVI_U64 *>(&block->physicalAddress),
                        &block->virtualAddress, "cvi_exvb", blk_size * blk_cnt);
@@ -68,21 +73,34 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_size,
   memset(&stExconfig, 0, sizeof(stExconfig));
   stExconfig.u32BlkCnt = blk_cnt;
   for (uint32_t i = 0; i < blk_cnt; i++) {
-    stExconfig.astUserBlk[i].au64PhyAddr[0] =
-        block->physicalAddress + i * blk_size;
-    stExconfig.astUserBlk[i].au64PhyAddr[1] =
-        block->physicalAddress + 2 * weight * height + i * blk_size;
-    stExconfig.astUserBlk[i].au64PhyAddr[2] =
-        block->physicalAddress + 2 * weight * height + weight * height / 4 +
-        i * blk_size;
+    uint64_t base = block->physicalAddress + i * blk_size;
+    if (pix_fmt == PIXEL_FORMAT_NV21 || pix_fmt == PIXEL_FORMAT_NV12) {
+      stExconfig.astUserBlk[i].au64PhyAddr[0] = base;                   // Y
+      stExconfig.astUserBlk[i].au64PhyAddr[1] = base + width * height;  // VU
+      stExconfig.astUserBlk[i].au64PhyAddr[2] = 0;
+    } else if (pix_fmt == PIXEL_FORMAT_RGB_888 ||
+               pix_fmt == PIXEL_FORMAT_BGR_888 ||
+               pix_fmt == PIXEL_FORMAT_YUV_400) {
+      stExconfig.astUserBlk[i].au64PhyAddr[0] = base;  // Packed RGB or GRAY
+      stExconfig.astUserBlk[i].au64PhyAddr[1] = 0;
+      stExconfig.astUserBlk[i].au64PhyAddr[2] = 0;
+    } else if (pix_fmt == PIXEL_FORMAT_RGB_888_PLANAR ||
+               pix_fmt == PIXEL_FORMAT_BGR_888_PLANAR) {
+      stExconfig.astUserBlk[i].au64PhyAddr[0] = base;                       // R
+      stExconfig.astUserBlk[i].au64PhyAddr[1] = base + width * height;      // G
+      stExconfig.astUserBlk[i].au64PhyAddr[2] = base + width * height * 2;  // B
+    } else {
+      LOGE("imageFormat not support, imageFormat: %d", (int32_t)pix_fmt);
+      return nullptr;
+    }
   }
 
   VB_POOL pool = CVI_VB_CreateExPool(&stExconfig);
   if (pool == VB_INVALID_POOLID) {
     LOGE(
-        "CVI_VB_CreateExPool failed! blk_size: %d, blk_cnt: %d, weight: %d, "
+        "CVI_VB_CreateExPool failed! blk_size: %d, blk_cnt: %d, width: %d, "
         "height: %d",
-        blk_size, blk_cnt, weight, height);
+        blk_size, blk_cnt, width, height);
     CVI_SYS_IonFree(block->physicalAddress, block->virtualAddress);
     return nullptr;
   }

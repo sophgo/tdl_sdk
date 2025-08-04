@@ -137,6 +137,89 @@
      - 文本特征提取模型
 
 结构体参考
+
+================
+
+TDLDataTypeE
+~~~~~~~~~~~~~~~
+
+【说明】
+
+数据类型枚举类
+
+【定义】
+
+.. code-block:: c
+
+  typedef enum {
+    TDL_IMAGE_GRAY = 0,
+    TDL_IMAGE_RGB_PLANAR,
+    TDL_IMAGE_RGB_PACKED,
+    TDL_IMAGE_BGR_PLANAR,
+    TDL_IMAGE_BGR_PACKED,
+    TDL_IMAGE_YUV420SP_UV,  // NV12,semi-planar,one Y plane,one interleaved UV
+                            // plane,size = width * height * 1.5
+    TDL_IMAGE_YUV420SP_VU,  // NV21,semi-planar,one Y plane,one interleaved VU
+                            // plane,size = width * height * 1.5
+    TDL_IMAGE_YUV420P_UV,  // I420,planar,one Y plane(w*h),one U
+                          // plane(w/2*h/2),one V plane(w/2*h/2),size = width *
+                          // height * 1.5
+    TDL_IMAGE_YUV420P_VU,   // YV12,size = width * height * 1.5
+    TDL_IMAGE_YUV422P_UV,   // I422_16,size = width * height * 2
+    TDL_IMAGE_YUV422P_VU,   // YV12_16,size = width * height * 2
+    TDL_IMAGE_YUV422SP_UV,  // NV16,size = width * height * 2
+    TDL_IMAGE_YUV422SP_VU,  // NV61,size = width * height * 2
+
+    TDL_IMAGE_UNKOWN
+  } TDLImageFormatE;
+
+【成员】
+
+.. list-table::
+   :widths: 1 1
+
+   * - 数据类型枚举类
+     - 注释
+
+   * - TDL_IMAGE_GRAY
+     - GRAY的像素格式
+
+   * - TDL_IMAGE_RGB_PLANAR
+     - RGB_PLANAR的像素格式
+
+   * - TDL_IMAGE_RGB_PACKED
+     - RGB_PACKED的像素格式
+
+   * - TDL_IMAGE_BGR_PLANAR
+     - BGR_PLANAR的像素格式
+
+   * - TDL_IMAGE_BGR_PACKED
+     - BGR_PACKED的像素格式
+
+   * - TDL_IMAGE_YUV420SP_UV
+     - YUV420SP_UV的像素格式
+
+   * - TDL_IMAGE_YUV420SP_VU
+     - YUV420SP_VU的像素格式
+
+   * - TDL_IMAGE_YUV420P_UV
+     - YUV420P_UV的像素格式
+
+   * - TDL_IMAGE_YUV420P_VU
+     - YUV420P_VU的像素格式
+
+   * - TDL_IMAGE_YUV422P_UV
+     - YUV422P_UV的像素格式
+
+   * - TDL_IMAGE_YUV422P_VU
+     - YUV422P_VU的像素格式
+
+   * - TDL_IMAGE_YUV422SP_UV
+     - YUV422SP_UV的像素格式
+
+   * - TDL_IMAGE_YUV422SP_VU
+     - YUV422SP_VU的像素格式
+
 ================
 
 TDLDataTypeE

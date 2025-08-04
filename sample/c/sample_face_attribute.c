@@ -20,6 +20,22 @@ void print_usage(const char *prog_name) {
   printf("  -h, --help       Show this help message\n");
 }
 
+int get_model_info(char *model_path, TDLModel *model_index) {
+  int ret = 0;
+  if (strstr(model_path, "cls_attribute_gender_age_glass_112_112") != NULL) {
+    *model_index = TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS;
+  } else if (strstr(model_path, "cls_attribute_gender_age_glass_emotion") !=
+             NULL) {
+    *model_index = TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION;
+  } else if (strstr(model_path,
+                    "cls_attribute_gender_age_glass_mask_112_112") != NULL) {
+    *model_index = TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK;
+  } else {
+    ret = -1;
+  }
+  return ret;
+}
+
 int main(int argc, char *argv[]) {
   char *detect_model = NULL;
   char *attr_model = NULL;
@@ -82,14 +98,19 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
+  TDLModel model_id;
+  if (get_model_info(attr_model, &model_id) == -1) {
+    printf("unsupported model: %s\n", attr_model);
+    return -1;
+  }
+
   ret = TDL_OpenModel(tdl_handle, TDL_MODEL_SCRFD_DET_FACE, detect_model, NULL);
   if (ret != 0) {
     printf("open face detection model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  ret = TDL_OpenModel(tdl_handle, TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK,
-                      attr_model, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id, attr_model, NULL);
   if (ret != 0) {
     printf("open face attribute model failed with %#x!\n", ret);
     goto exit1;
@@ -110,9 +131,7 @@ int main(int argc, char *argv[]) {
     goto exit3;
   }
 
-  ret = TDL_FaceAttribute(tdl_handle,
-                          TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK, image,
-                          &obj_meta);
+  ret = TDL_FaceAttribute(tdl_handle, model_id, image, &obj_meta);
   if (ret != 0) {
     printf("TDL_FaceAttribute failed with %#x!\n", ret);
   } else {
@@ -130,7 +149,7 @@ exit3:
   TDL_ReleaseFaceMeta(&obj_meta);
   TDL_DestroyImage(image);
 exit2:
-  TDL_CloseModel(tdl_handle, TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK);
+  TDL_CloseModel(tdl_handle, model_id);
 exit1:
   TDL_CloseModel(tdl_handle, TDL_MODEL_SCRFD_DET_FACE);
 exit0:

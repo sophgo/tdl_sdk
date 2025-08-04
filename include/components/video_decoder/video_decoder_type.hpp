@@ -3,13 +3,7 @@
 #include <map>
 #include "image/base_image.hpp"
 
-enum class VideoDecoderType {
-  UNKNOWN,
-  VI,
-  OPENCV,
-  IMAGE_FOLDER
-
-};
+enum class VideoDecoderType { UNKNOWN, VI, OPENCV, IMAGE_FOLDER };
 
 class VideoDecoder {
  public:
@@ -18,6 +12,11 @@ class VideoDecoder {
 
   virtual int32_t init(const std::string &path,
                        const std::map<std::string, int> &config = {}) = 0;
+  virtual int32_t initialize(int32_t w = 1920, int32_t h = 1080,
+                             ImageFormat image_fmt = ImageFormat::YUV420SP_VU,
+                             int32_t vb_buffer_num = 3) {
+    return 0;
+  };
   virtual int32_t read(std::shared_ptr<BaseImage> &image, int vi_chn = 0) = 0;
   virtual int32_t release(int vi_chn = 0) { return 0; };
   uint64_t getFrameId() { return frame_id_; }

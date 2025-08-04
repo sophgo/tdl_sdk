@@ -8,7 +8,7 @@
 
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
-  if (strstr(model_path, "license_plate_recognition_lprnet") != NULL) {
+  if (strstr(model_path, "recognition_license_plate") != NULL) {
     *model_index = TDL_MODEL_RECOGNITION_LICENSE_PLATE;
   } else {
     ret = -1;

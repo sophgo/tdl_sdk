@@ -9,8 +9,8 @@
 #include "rtsp_utils.h"
 #include "tdl_sdk.h"
 
-#define VI_WIDTH 2560
-#define VI_HEIGHT 1440
+#define WIDTH 960
+#define HEIGHT 540
 
 int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
@@ -38,8 +38,9 @@ void print_usage(const char *prog_name) {
 
 int main(int argc, char *argv[]) {
   char *model_path = NULL;
-  int vi_chn = 0;
+  char *vi_chn = 0;
   int rtsp_chn = 0;
+  int chn = 0;
 
   struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
                                   {"pipe", required_argument, 0, 'c'},
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
         model_path = optarg;
         break;
       case 'c':
-        vi_chn = atoi(optarg);
+        vi_chn = optarg;
         break;
       case 'h':
         print_usage(argv[0]);
@@ -74,33 +75,36 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
+  if (vi_chn) {
+    chn = atoi(vi_chn);
+  }
+
   printf("Running with:\n");
   printf("  Model path:    %s\n", model_path);
-  printf("  vi_chn:        %d\n", vi_chn);
+  printf("  vi_chn:        %d\n", chn);
   printf("  rtsp_chn:      %d\n", rtsp_chn);
 
   int ret = 0;
   TDLImage image = NULL;
   TDLObject obj_meta = {0};
   TDLModel model_id;
-  TDLHandle tdl_handle = TDL_CreateHandle(vi_chn);
+  TDLHandle tdl_handle = TDL_CreateHandle(chn);
 
   if (get_model_info(model_path, &model_id) == -1) {
     printf("unsupported model: %s\n", model_path);
     return -1;
   }
 
-  ret = TDL_InitCamera(tdl_handle);
+  ret = TDL_InitCamera(tdl_handle, WIDTH, HEIGHT, TDL_IMAGE_YUV420SP_VU, 3);
   if (ret != 0) {
     printf("TDL_InitCamera %#x!\n", ret);
     TDL_DestroyHandle(tdl_handle);
     return ret;
   }
-
-  // system("cat /proc/soph/vi_dbg");
-  // system("cat /proc/soph/mipi-rx");
-  // system("cat /proc/soph/vi");
-
+  // system("cat /proc/cvitek/vi_dbg");
+  // system("cat /proc/cvitek/vpss");
+  // system("cat /proc/cvitek/vb");
+  // system("cat /proc/cvitek/vi");
   ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
@@ -113,8 +117,8 @@ int main(int argc, char *argv[]) {
   TDLRTSPContext rtsp_context = {0};
   rtsp_context.chn = rtsp_chn;
   rtsp_context.pay_load_type = PT_H264;
-  rtsp_context.frame_width = VI_WIDTH;
-  rtsp_context.frame_height = VI_HEIGHT;
+  rtsp_context.frame_width = WIDTH;
+  rtsp_context.frame_height = HEIGHT;
 
   // 设置终端为非规范模式
   struct termios oldt, newt;
@@ -138,7 +142,7 @@ int main(int argc, char *argv[]) {
       break;  // 有键盘输入，退出循环
     }
 
-    image = TDL_GetCameraFrame(tdl_handle, vi_chn);
+    image = TDL_GetCameraFrame(tdl_handle, chn);
     if (image == NULL) {
       printf("TDL_GetViFrame failed\n");
       continue;
@@ -183,7 +187,7 @@ int main(int argc, char *argv[]) {
     }
 
     TDL_ReleaseObjectMeta(&obj_meta);
-    TDL_ReleaseCameraFrame(tdl_handle, vi_chn);
+    TDL_ReleaseCameraFrame(tdl_handle, chn);
     TDL_DestroyImage(image);
     usleep(40 * 1000);  // Match Vi Frame Rate
   }

@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
   // 创建视频解码器
   std::shared_ptr<VideoDecoder> vi_decoder =
       VideoDecoderFactory::createVideoDecoder(VideoDecoderType::VI);
+  vi_decoder->initialize(960, 540, ImageFormat::YUV420SP_VU, 3);
   // 创建运动检测实例
   std::shared_ptr<MotionDetection> md = MotionDetection::getMotionDetection();
 

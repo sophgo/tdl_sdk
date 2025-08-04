@@ -18,9 +18,6 @@
 // #define ENABLE_RTSP
 
 #ifdef ENABLE_RTSP
-#define VI_WIDTH 2560
-#define VI_HEIGHT 1440
-
 static TDLFace g_face_meta = {0};   // face
 static TDLObject g_obj_meta = {0};  // person
 static TDLObject g_pet_meta = {0};  // pet
@@ -28,6 +25,8 @@ static TDLObject g_pet_meta = {0};  // pet
 MUTEXAUTOLOCK_INIT(ResultMutex);
 #endif
 
+#define VI_WIDTH 960
+#define VI_HEIGHT 540
 #define FEATURE_SIZE 256
 static volatile bool to_exit = false;
 
@@ -50,6 +49,7 @@ typedef struct {
 } SEND_FRAME_THREAD_ARG_S;
 
 typedef struct {
+  int vi_chn;
   TDLHandle tdl_handle;
   uint8_t channel_size;
   char **channel_names;
@@ -97,6 +97,17 @@ void *send_frame_thread(void *args) {
 #endif
 
   while (to_exit == false) {
+    // 检查键盘输入
+    fd_set rfds;
+    struct timeval tv = {0, 0};
+    FD_ZERO(&rfds);
+    FD_SET(STDIN_FILENO, &rfds);
+    int key_pressed = select(STDIN_FILENO + 1, &rfds, NULL, NULL, &tv);
+    if (key_pressed > 0 && FD_ISSET(STDIN_FILENO, &rfds)) {
+      to_exit = true;
+      break;  // 有键盘输入，退出循环
+    }
+
     for (size_t i = 0; i < pstArgs->channel_size; i++) {
       TDLImage image = NULL;
 
@@ -166,7 +177,7 @@ void *send_frame_thread(void *args) {
         continue;
       }
 #endif
-      TDL_ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+
       TDL_DestroyImage(image);
     }
   }
@@ -181,18 +192,7 @@ void *run_tdl_thread(void *args) {
   uint64_t last_counter = 0;
   uint32_t last_time_ms = get_time_in_ms();
 
-  while (true) {
-    // 检查键盘输入
-    fd_set rfds;
-    struct timeval tv = {0, 0};
-    FD_ZERO(&rfds);
-    FD_SET(STDIN_FILENO, &rfds);
-    int key_pressed = select(STDIN_FILENO + 1, &rfds, NULL, NULL, &tv);
-    if (key_pressed > 0 && FD_ISSET(STDIN_FILENO, &rfds)) {
-      to_exit = true;
-      break;  // 有键盘输入，退出循环
-    }
-
+  while (to_exit == false) {
     for (size_t i = 0; i < pstArgs->channel_size; i++) {
       TDLCaptureInfo capture_info = {0};
 
@@ -265,7 +265,7 @@ void *run_tdl_thread(void *args) {
                                 filename);
           if (ret != 0) {
             printf("TDL_EncodeFrame failed with %#x!\n", ret);
-            goto exit0;
+            continue;
           }
         }
 
@@ -291,8 +291,7 @@ void *run_tdl_thread(void *args) {
       }
 
       TDL_ReleaseCaptureInfo(&capture_info);
-      // TDL_ReleaseCameraFrame(pstArgs->tdl_handle, vi_chn);
-      // TDL_DestroyImage(pstArgs->image);
+      TDL_ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
     }
 
     if (to_exit) {
@@ -309,7 +308,8 @@ int main(int argc, char *argv[]) {
   char *config_file = NULL;
   char *gallery_dir = NULL;
   char *output_dir = NULL;
-  int vi_chn = 0;
+  char *vi_chn = NULL;
+  int chn = 0;
 
   struct option long_options[] = {
       {"config_file", required_argument, 0, 'c'},
@@ -333,7 +333,7 @@ int main(int argc, char *argv[]) {
         output_dir = optarg;
         break;
       case 'v':
-        vi_chn = atoi(optarg);
+        vi_chn = optarg;
         break;
       case 'h':
         print_usage(argv[0]);
@@ -347,18 +347,21 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (!config_file || !gallery_dir || !output_dir) {
-    fprintf(stderr,
-            "Error: config_file and gallery_dir and output_dir are required\n");
+  if (!config_file) {
+    fprintf(stderr, "Error: config_file are required\n");
     print_usage(argv[0]);
     return -1;
+  }
+
+  if (vi_chn) {
+    chn = atoi(vi_chn);
   }
 
   printf("Running with:\n");
   printf("  config_file:    %s\n", config_file);
   printf("  gallery_dir:   %s\n", gallery_dir);
   printf("  output_dir:  %s\n", output_dir);
-  printf("  vi_chn:        %d\n", vi_chn);
+  printf("  vi_chn:        %d\n", chn);
 
   TDLFeatureInfo gallery_feature = {0};
   int ret = TDL_GetGalleryFeature(gallery_dir, &gallery_feature, FEATURE_SIZE);
@@ -372,17 +375,19 @@ int main(int argc, char *argv[]) {
 
   char **channel_names = NULL;
   uint8_t channel_size = 0;
+
+  ret =
+      TDL_InitCamera(tdl_handle, VI_WIDTH, VI_HEIGHT, TDL_IMAGE_YUV420SP_VU, 3);
+  if (ret != 0) {
+    printf("TDL_InitCamera %#x!\n", ret);
+    return ret;
+  }
+
   ret = TDL_APP_Init(tdl_handle, "face_pet_capture", config_file,
                      &channel_names, &channel_size);
   if (ret != 0) {
     printf("TDL_APP_Init failed with %#x!\n", ret);
     goto exit1;
-  }
-
-  ret = TDL_InitCamera(tdl_handle);
-  if (ret != 0) {
-    printf("TDL_InitCamera %#x!\n", ret);
-    return ret;
   }
 
   // 设置终端为非规范模式
@@ -397,11 +402,12 @@ int main(int argc, char *argv[]) {
   pthread_t stFrameThread, stTDLThread;
 
   SEND_FRAME_THREAD_ARG_S frame_args = {.tdl_handle = tdl_handle,
-                                        .vi_chn = vi_chn,
+                                        .vi_chn = chn,
                                         .channel_size = channel_size,
                                         .channel_names = channel_names};
 
   RUN_TDL_THREAD_ARG_S tdl_args = {.tdl_handle = tdl_handle,
+                                   .vi_chn = chn,
                                    .channel_size = channel_size,
                                    .channel_names = channel_names,
                                    .gallery_feature = &gallery_feature,
