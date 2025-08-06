@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
         snprintf(obj_info->name, sizeof(obj_info->name), "class:%d score:%.2f",
                  obj_info->class_id, obj_info->score);
       }
-      TDL_DrawRect(&obj_meta, frame, true, brush);
+      TDL_DrawObjRect(&obj_meta, frame, true, brush);
     }
 
     // 发送帧

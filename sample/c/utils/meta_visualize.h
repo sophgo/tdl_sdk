@@ -55,9 +55,11 @@ int32_t TDL_VisualizText(int32_t x, int32_t y, char *text, char *input_path,
 
 #if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
     defined(__CV183X__) || defined(__CV184X__) || defined(__CV186X__)
-int32_t TDL_DrawRect(const TDLObject *meta, void *frame, const bool drawText,
-                     TDLBrush brush);
+int32_t TDL_DrawObjRect(const TDLObject *meta, void *frame, const bool drawText,
+                        TDLBrush brush);
 
+int32_t TDL_DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
+                         TDLBrush brush);
 int32_t TDL_ObjectWriteText(char *name, int x, int y, void *frame, float r,
                             float g, float b);
 #endif

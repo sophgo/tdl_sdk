@@ -565,7 +565,8 @@ int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r,
   return _WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_TEXT_THICKNESS);
 }
 
-int DrawMeta(const TDLObject *meta, VIDEO_FRAME_INFO_S *drawFrame,
+template <typename MetaType>
+int DrawMeta(const MetaType *meta, VIDEO_FRAME_INFO_S *drawFrame,
              const bool drawText, const std::vector<TDLBrush> &brushes) {
   if (drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
       drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV12 &&
@@ -633,8 +634,16 @@ int DrawMeta(const TDLObject *meta, VIDEO_FRAME_INFO_S *drawFrame,
   return 0;
 }
 
-int32_t TDL_DrawRect(const TDLObject *meta, void *frame, const bool drawText,
-                     TDLBrush brush) {
+int32_t TDL_DrawObjRect(const TDLObject *meta, void *frame, const bool drawText,
+                        TDLBrush brush) {
+  if (meta->size <= 0) return 0;
+
+  std::vector<TDLBrush> brushes(meta->size, brush);
+  return DrawMeta(meta, (VIDEO_FRAME_INFO_S *)frame, drawText, brushes);
+}
+
+int32_t TDL_DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
+                         TDLBrush brush) {
   if (meta->size <= 0) return 0;
 
   std::vector<TDLBrush> brushes(meta->size, brush);

@@ -61,6 +61,7 @@ typedef struct {
   TDLBox box;
   float score;
   int class_id;
+  uint64_t track_id;
   uint32_t landmark_size;
   TDLLandmarkInfo *landmark_properity;
   TDLObjectTypeE obj_type;

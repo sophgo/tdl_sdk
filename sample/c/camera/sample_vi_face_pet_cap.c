@@ -10,7 +10,23 @@
 #include <pthread.h>
 #include "cvi_comm_video.h"
 #include "cvi_vi.h"
+#include "meta_visualize.h"
+#include "pthread_utils.h"
+#include "rtsp_utils.h"
 #include "tdl_sdk.h"
+
+// #define ENABLE_RTSP
+
+#ifdef ENABLE_RTSP
+#define VI_WIDTH 2560
+#define VI_HEIGHT 1440
+
+static TDLFace g_face_meta = {0};   // face
+static TDLObject g_obj_meta = {0};  // person
+static TDLObject g_pet_meta = {0};  // pet
+
+MUTEXAUTOLOCK_INIT(ResultMutex);
+#endif
 
 #define FEATURE_SIZE 256
 static volatile bool to_exit = false;
@@ -65,6 +81,21 @@ void *send_frame_thread(void *args) {
   uint64_t *channel_frame_id = malloc(pstArgs->channel_size * sizeof(uint64_t));
   memset(channel_frame_id, 0, pstArgs->channel_size * sizeof(uint64_t));
 
+#ifdef ENABLE_RTSP
+
+  TDLFace face_meta = {0};   // face
+  TDLObject obj_meta = {0};  // person
+  TDLObject pet_meta = {0};  // pet
+  VIDEO_FRAME_INFO_S *frame = NULL;
+
+  // 初始化RTSP参数
+  TDLRTSPContext rtsp_context = {0};
+  rtsp_context.chn = 0;
+  rtsp_context.pay_load_type = PT_H264;
+  rtsp_context.frame_width = VI_WIDTH;
+  rtsp_context.frame_height = VI_HEIGHT;
+#endif
+
   while (to_exit == false) {
     for (size_t i = 0; i < pstArgs->channel_size; i++) {
       TDLImage image = NULL;
@@ -87,6 +118,54 @@ void *send_frame_thread(void *args) {
         continue;
       }
 
+#ifdef ENABLE_RTSP
+      {
+        MutexAutoLock(ResultMutex, lock);
+        TDL_CopyFaceMeta(&g_face_meta, &face_meta);
+        TDL_CopyObjectMeta(&g_obj_meta, &obj_meta);
+        TDL_CopyObjectMeta(&g_pet_meta, &pet_meta);
+      }
+
+      TDL_WrapImage(image, &frame);
+
+      TDLBrush brush = {0};
+      brush.size = 5;
+      brush.color.r = 0;
+      brush.color.g = 255;
+      brush.color.b = 0;
+      for (int i = 0; i < obj_meta.size; i++) {
+        TDLObjectInfo *obj_info = &obj_meta.info[i];
+        snprintf(obj_info->name, sizeof(obj_info->name), "id:%d",
+                 obj_info->track_id);
+      }
+      TDL_DrawObjRect(&obj_meta, frame, true, brush);
+
+      brush.color.r = 255;
+      brush.color.g = 0;
+      brush.color.b = 0;
+      for (int i = 0; i < pet_meta.size; i++) {
+        TDLObjectInfo *pet_info = &pet_meta.info[i];
+        snprintf(pet_info->name, sizeof(pet_info->name), "score:%.2f",
+                 pet_info->score);
+      }
+      TDL_DrawObjRect(&pet_meta, frame, true, brush);
+
+      brush.color.r = 0;
+      brush.color.g = 0;
+      brush.color.b = 255;
+      for (int i = 0; i < face_meta.size; i++) {
+        TDLFaceInfo *face_info = &face_meta.info[i];
+        snprintf(face_info->name, sizeof(face_info->name), "id:%d",
+                 face_info->track_id);
+      }
+      TDL_DrawFaceRect(&face_meta, frame, true, brush);
+
+      ret = TDL_SendFrameRTSP(frame, &rtsp_context);
+      if (ret != 0) {
+        printf("TDL_SendFrameRTSP failed with %#x!\n", ret);
+        continue;
+      }
+#endif
       TDL_ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
       TDL_DestroyImage(image);
     }
@@ -145,8 +224,19 @@ void *run_tdl_thread(void *args) {
         goto exit0;
       }
 
-      printf("detect person size: %d, pet size: %d\n",
-             capture_info.person_meta.size, capture_info.pet_meta.size);
+      if (frm_diff > 30) {
+        printf("detect person size: %d, pet size: %d\n",
+               capture_info.person_meta.size, capture_info.pet_meta.size);
+      }
+
+#ifdef ENABLE_RTSP
+      {
+        MutexAutoLock(ResultMutex, lock);
+        TDL_CopyFaceMeta(&capture_info.face_meta, &g_face_meta);
+        TDL_CopyObjectMeta(&capture_info.person_meta, &g_obj_meta);
+        TDL_CopyObjectMeta(&capture_info.pet_meta, &g_pet_meta);
+      }
+#endif
 
       for (uint32_t j = 0; j < capture_info.snapshot_size; j++) {
         printf("snapshot[%d]: male:%d,glass:%d,age:%d,emotion:%s\n", j,
@@ -157,10 +247,18 @@ void *run_tdl_thread(void *args) {
 
         if (capture_info.snapshot_info[j].object_image) {  // save snapshot
           char filename[512];
-          sprintf(filename, "%s/%d_face_%d_qua_%.3f.jpg", pstArgs->output_dir,
-                  capture_info.snapshot_info[j].snapshot_frame_id,
-                  capture_info.snapshot_info[j].track_id,
-                  capture_info.snapshot_info[j].quality);
+          sprintf(
+              filename,
+              "%s/"
+              "%d_face_%d_qua_%.3f_male[%d]_glass[%d]_age[%d]_emotion[%s].jpg",
+              pstArgs->output_dir,
+              capture_info.snapshot_info[j].snapshot_frame_id,
+              capture_info.snapshot_info[j].track_id,
+              capture_info.snapshot_info[j].quality,
+              capture_info.snapshot_info[j].male,
+              capture_info.snapshot_info[j].glass,
+              capture_info.snapshot_info[j].age,
+              emotionStr[capture_info.snapshot_info[j].emotion]);
 
           ret = TDL_EncodeFrame(pstArgs->tdl_handle,
                                 capture_info.snapshot_info[j].object_image,

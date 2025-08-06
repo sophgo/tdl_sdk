@@ -48,6 +48,42 @@ int32_t TDL_ReleaseObjectMeta(TDLObject *object_meta) {
   return 0;
 }
 
+int32_t TDL_CopyObjectMeta(const TDLObject *src, TDLObject *dst) {
+  TDL_ReleaseObjectMeta(dst);
+  memset(dst, 0, sizeof(TDLObject));
+
+  if (src->size > 0) {
+    dst->size = src->size;
+    dst->width = src->width;
+    dst->height = src->height;
+    if (src->info) {
+      dst->info = (TDLObjectInfo *)malloc(src->size * sizeof(TDLObjectInfo));
+      memset(dst->info, 0, sizeof(TDLObjectInfo) * src->size);
+
+      for (int i = 0; i < src->size; i++) {
+        dst->info[i].class_id = src->info[i].class_id;
+        dst->info[i].track_id = src->info[i].track_id;
+        dst->info[i].score = src->info[i].score;
+        dst->info[i].landmark_size = src->info[i].landmark_size;
+        dst->info[i].obj_type = src->info[i].obj_type;
+        dst->info[i].box = src->info[i].box;
+        if (src->info[i].landmark_properity) {
+          dst->info[i].landmark_properity = (TDLLandmarkInfo *)malloc(
+              src->info[i].landmark_size * sizeof(TDLLandmarkInfo));
+          memset(dst->info[i].landmark_properity, 0,
+                 sizeof(TDLLandmarkInfo) * src->info[i].landmark_size);
+          for (int j = 0; j < src->info[i].landmark_size; j++) {
+            dst->info[i].landmark_properity[j] =
+                src->info[i].landmark_properity[j];
+          }
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
 int32_t TDL_InitInstanceSegMeta(TDLInstanceSeg *inst_seg_meta, int num_objects,
                                 uint32_t mask_size) {
   if (inst_seg_meta->info != NULL) return 0;
@@ -120,6 +156,42 @@ int32_t TDL_ReleaseFaceMeta(TDLFace *face_meta) {
   }
   free(face_meta->info);
   face_meta->info = NULL;
+  return 0;
+}
+
+int32_t TDL_CopyFaceMeta(const TDLFace *src, TDLFace *dst) {
+  TDL_ReleaseFaceMeta(dst);
+  memset(dst, 0, sizeof(TDLFace));
+  if (src->size > 0) {
+    dst->size = src->size;
+    dst->width = src->width;
+    dst->height = src->height;
+    if (src->info) {
+      dst->info = (TDLFaceInfo *)malloc(src->size * sizeof(TDLFaceInfo));
+      memset(dst->info, 0, sizeof(TDLFaceInfo) * src->size);
+      for (int i = 0; i < src->size; i++) {
+        dst->info[i] = src->info[i];
+        if (src->info[i].landmarks.x) {
+          dst->info[i].landmarks.x =
+              (float *)malloc(src->info[i].landmarks.size * sizeof(float));
+          memcpy(dst->info[i].landmarks.x, src->info[i].landmarks.x,
+                 src->info[i].landmarks.size * sizeof(float));
+        }
+        if (src->info[i].landmarks.y) {
+          dst->info[i].landmarks.y =
+              (float *)malloc(src->info[i].landmarks.size * sizeof(float));
+          memcpy(dst->info[i].landmarks.y, src->info[i].landmarks.y,
+                 src->info[i].landmarks.size * sizeof(float));
+        }
+        if (dst->info[i].feature.ptr) {
+          dst->info[i].feature.ptr =
+              (int8_t *)malloc(src->info[i].feature.size * sizeof(int8_t));
+          memcpy(dst->info[i].feature.ptr, src->info[i].feature.ptr,
+                 src->info[i].feature.size * sizeof(int8_t));
+        }
+      }
+    }
+  }
   return 0;
 }
 

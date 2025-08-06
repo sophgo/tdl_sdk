@@ -12,10 +12,14 @@ int32_t TDL_InitObjectMeta(TDLObject *object_meta, int num_objects,
 
 int32_t TDL_ReleaseObjectMeta(TDLObject *object_meta);
 
+int32_t TDL_CopyObjectMeta(const TDLObject *src, TDLObject *dst);
+
 int32_t TDL_InitFaceMeta(TDLFace *face_meta, int num_faces,
                          int num_landmark_per_face);
 
 int32_t TDL_ReleaseFaceMeta(TDLFace *face_meta);
+
+int32_t TDL_CopyFaceMeta(const TDLFace *src, TDLFace *dst);
 
 int32_t TDL_InitClassMeta(TDLClass *clas_meta, int num_classes);
 

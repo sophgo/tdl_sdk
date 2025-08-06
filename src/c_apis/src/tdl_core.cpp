@@ -1277,6 +1277,18 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
     capture_info->track_meta.info[i].bbox.x2 = track_info.box_info_.x2;
     capture_info->track_meta.info[i].bbox.y1 = track_info.box_info_.y1;
     capture_info->track_meta.info[i].bbox.y2 = track_info.box_info_.y2;
+
+    if (track_info.obj_idx_ != -1) {
+      if (track_info.box_info_.object_type == TDLObjectType::OBJECT_TYPE_FACE) {
+        capture_info->face_meta.info[track_info.obj_idx_].track_id =
+            track_info.track_id_;
+      } else if (track_info.box_info_.object_type ==
+                 TDLObjectType::OBJECT_TYPE_PERSON) {
+        capture_info->person_meta
+            .info[track_info.obj_idx_ - ori_capture_info->face_boxes.size()]
+            .track_id = track_info.track_id_;
+      }
+    }
   }
 
   capture_info->snapshot_size = ori_capture_info->face_snapshots.size();
