@@ -1169,6 +1169,12 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
   capture_info->frame_width = ori_capture_info->frame_width;
   capture_info->frame_height = ori_capture_info->frame_height;
 
+  if (ori_capture_info->image) {
+    TDLImageContext *image_context = new TDLImageContext();
+    image_context->image = ori_capture_info->image;
+    capture_info->image = (TDLImage)image_context;
+  }
+
   if (ori_capture_info->face_boxes.size() >
       0) {  // face_meta from object detection without landmarks
     TDL_InitFaceMeta(&capture_info->face_meta,

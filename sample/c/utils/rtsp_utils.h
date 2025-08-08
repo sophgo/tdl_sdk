@@ -2,6 +2,7 @@
 #define _RTSP_UTILS_H_
 
 #include <cvi_comm_video.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "tdl_sdk.h"
@@ -9,6 +10,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define QUEUE_SIZE 8
 
 typedef struct {
   int32_t chn;
@@ -38,6 +41,14 @@ typedef enum {
 
   TDL_IMAGE_UNKOWN
 } TDLImageFormatE;
+
+typedef struct {
+  TDLImage queue[QUEUE_SIZE];
+  int front;
+  int rear;
+  int count;
+  pthread_mutex_t mutex;
+} TDLImageQueue;
 
 #if !defined(__BM168X__) && !defined(__CMODEL_CV181X__)
 /**

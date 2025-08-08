@@ -328,6 +328,15 @@ int32_t ViDecoder::deinitialize() {
   CVI_BOOL abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {CVI_FALSE};
   abChnEnable[0] = CVI_TRUE;
 
+  for (int32_t i = 0; i < VI_MAX_PIPE_NUM; i++) {
+    std::unique_lock<std::mutex> lock(queueMutexes[i]);
+    while (!frameQueues[i].empty()) {
+      auto frame_info = frameQueues[i].front();
+      frameQueues[i].pop();
+      CVI_VPSS_ReleaseChnFrame(i, 0, frame_info.get());
+    }
+  }
+
   auto pool = std::dynamic_pointer_cast<CviMemoryPool>(memory_pool_);
 
 #ifdef __CV184X__

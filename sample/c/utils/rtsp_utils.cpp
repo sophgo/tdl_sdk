@@ -23,6 +23,51 @@ int32_t TDL_SendFrameRTSP(VIDEO_FRAME_INFO_S *frame,
   return 0;
 }
 
+void TDL_InitQueue(TDLImageQueue *q) {
+  q->front = q->rear = q->count = 0;
+  pthread_mutex_init(&q->mutex, NULL);
+}
+
+void TDL_DestroyQueue(TDLImageQueue *q) {
+  pthread_mutex_lock(&q->mutex);
+  while (q->count > 0) {
+    TDL_DestroyImage(q->queue[q->front]);
+    q->front = (q->front + 1) % QUEUE_SIZE;
+    q->count--;
+  }
+  pthread_mutex_unlock(&q->mutex);
+  pthread_mutex_destroy(&q->mutex);
+}
+
+int TDL_Image_Enqueue(TDLImageQueue *q, TDLImage img) {
+  int ret = 0;
+  pthread_mutex_lock(&q->mutex);
+  if (q->count == QUEUE_SIZE) {
+    ret = -1;
+  } else {
+    q->queue[q->rear] = img;
+    q->rear = (q->rear + 1) % QUEUE_SIZE;
+    q->count++;
+    ret = 0;
+  }
+  pthread_mutex_unlock(&q->mutex);
+  return ret;
+}
+
+TDLImage TDL_Image_Dequeue(TDLImageQueue *q) {
+  TDLImage img = NULL;
+  pthread_mutex_lock(&q->mutex);
+  if (q->count == 0) {
+    img = NULL;
+  } else {
+    img = q->queue[q->front];
+    q->front = (q->front + 1) % QUEUE_SIZE;
+    q->count--;
+  }
+  pthread_mutex_unlock(&q->mutex);
+  return img;
+}
+
 #if !defined(__BM168X__) && !defined(__CMODEL_CV181X__)
 static ImageFormat TDL_ConvertPixelFormat(TDLImageFormatE image_fmt) {
   switch (image_fmt) {

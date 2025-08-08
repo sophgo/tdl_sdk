@@ -15,21 +15,14 @@
 #include "rtsp_utils.h"
 #include "tdl_sdk.h"
 
-// #define ENABLE_RTSP
-
-#ifdef ENABLE_RTSP
-static TDLFace g_face_meta = {0};   // face
-static TDLObject g_obj_meta = {0};  // person
-static TDLObject g_pet_meta = {0};  // pet
-
-MUTEXAUTOLOCK_INIT(ResultMutex);
-#endif
+#define ENABLE_RTSP
 
 #define VI_WIDTH 960
 #define VI_HEIGHT 540
 #define FEATURE_SIZE 256
-static volatile bool to_exit = false;
 
+static volatile bool to_exit = false;
+static TDLImageQueue image_queue;
 static const char *emotionStr[] = {"Anger",   "Disgust", "Fear",    "Happy",
                                    "Neutral", "Sad",     "Surprise"};
 
@@ -79,22 +72,8 @@ void *send_frame_thread(void *args) {
   SEND_FRAME_THREAD_ARG_S *pstArgs = (SEND_FRAME_THREAD_ARG_S *)args;
 
   uint64_t *channel_frame_id = malloc(pstArgs->channel_size * sizeof(uint64_t));
+  int ret = 0;
   memset(channel_frame_id, 0, pstArgs->channel_size * sizeof(uint64_t));
-
-#ifdef ENABLE_RTSP
-
-  TDLFace face_meta = {0};   // face
-  TDLObject obj_meta = {0};  // person
-  TDLObject pet_meta = {0};  // pet
-  VIDEO_FRAME_INFO_S *frame = NULL;
-
-  // 初始化RTSP参数
-  TDLRTSPContext rtsp_context = {0};
-  rtsp_context.chn = 0;
-  rtsp_context.pay_load_type = PT_H264;
-  rtsp_context.frame_width = VI_WIDTH;
-  rtsp_context.frame_height = VI_HEIGHT;
-#endif
 
   while (to_exit == false) {
     // 检查键盘输入
@@ -120,65 +99,21 @@ void *send_frame_thread(void *args) {
         continue;
       }
 
+      ret = TDL_Image_Enqueue(&image_queue, image);
+      if (ret != 0) {
+        printf("image TDL_Enqueue falied\n");
+        TDL_ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+        TDL_DestroyImage(image);
+        continue;
+      }
       channel_frame_id[i] += 1;
 
-      int ret = TDL_APP_SetFrame(pstArgs->tdl_handle, pstArgs->channel_names[i],
-                                 image, channel_frame_id[i], 3);
+      ret = TDL_APP_SetFrame(pstArgs->tdl_handle, pstArgs->channel_names[i],
+                             image, channel_frame_id[i], 3);
       if (ret != 0) {
         printf("TDL_APP_SetFrame failed with %d\n", ret);
         continue;
       }
-
-#ifdef ENABLE_RTSP
-      {
-        MutexAutoLock(ResultMutex, lock);
-        TDL_CopyFaceMeta(&g_face_meta, &face_meta);
-        TDL_CopyObjectMeta(&g_obj_meta, &obj_meta);
-        TDL_CopyObjectMeta(&g_pet_meta, &pet_meta);
-      }
-
-      TDL_WrapImage(image, &frame);
-
-      TDLBrush brush = {0};
-      brush.size = 5;
-      brush.color.r = 0;
-      brush.color.g = 255;
-      brush.color.b = 0;
-      for (int i = 0; i < obj_meta.size; i++) {
-        TDLObjectInfo *obj_info = &obj_meta.info[i];
-        snprintf(obj_info->name, sizeof(obj_info->name), "id:%d",
-                 obj_info->track_id);
-      }
-      TDL_DrawObjRect(&obj_meta, frame, true, brush);
-
-      brush.color.r = 255;
-      brush.color.g = 0;
-      brush.color.b = 0;
-      for (int i = 0; i < pet_meta.size; i++) {
-        TDLObjectInfo *pet_info = &pet_meta.info[i];
-        snprintf(pet_info->name, sizeof(pet_info->name), "score:%.2f",
-                 pet_info->score);
-      }
-      TDL_DrawObjRect(&pet_meta, frame, true, brush);
-
-      brush.color.r = 0;
-      brush.color.g = 0;
-      brush.color.b = 255;
-      for (int i = 0; i < face_meta.size; i++) {
-        TDLFaceInfo *face_info = &face_meta.info[i];
-        snprintf(face_info->name, sizeof(face_info->name), "id:%d",
-                 face_info->track_id);
-      }
-      TDL_DrawFaceRect(&face_meta, frame, true, brush);
-
-      ret = TDL_SendFrameRTSP(frame, &rtsp_context);
-      if (ret != 0) {
-        printf("TDL_SendFrameRTSP failed with %#x!\n", ret);
-        continue;
-      }
-#endif
-
-      TDL_DestroyImage(image);
     }
   }
 
@@ -191,6 +126,18 @@ void *run_tdl_thread(void *args) {
   uint64_t counter = 0;
   uint64_t last_counter = 0;
   uint32_t last_time_ms = get_time_in_ms();
+
+#ifdef ENABLE_RTSP
+
+  VIDEO_FRAME_INFO_S *frame = NULL;
+
+  // 初始化RTSP参数
+  TDLRTSPContext rtsp_context = {0};
+  rtsp_context.chn = 0;
+  rtsp_context.pay_load_type = PT_H264;
+  rtsp_context.frame_width = VI_WIDTH;
+  rtsp_context.frame_height = VI_HEIGHT;
+#endif
 
   while (to_exit == false) {
     for (size_t i = 0; i < pstArgs->channel_size; i++) {
@@ -228,15 +175,6 @@ void *run_tdl_thread(void *args) {
         printf("detect person size: %d, pet size: %d\n",
                capture_info.person_meta.size, capture_info.pet_meta.size);
       }
-
-#ifdef ENABLE_RTSP
-      {
-        MutexAutoLock(ResultMutex, lock);
-        TDL_CopyFaceMeta(&capture_info.face_meta, &g_face_meta);
-        TDL_CopyObjectMeta(&capture_info.person_meta, &g_obj_meta);
-        TDL_CopyObjectMeta(&capture_info.pet_meta, &g_pet_meta);
-      }
-#endif
 
       for (uint32_t j = 0; j < capture_info.snapshot_size; j++) {
         printf("snapshot[%d]: male:%d,glass:%d,age:%d,emotion:%s\n", j,
@@ -290,8 +228,61 @@ void *run_tdl_thread(void *args) {
         }
       }
 
+#ifdef ENABLE_RTSP
+      TDLImage image = capture_info.image;
+      TDL_WrapImage(image, &frame);
+
+      TDLBrush brush = {0};
+      brush.size = 5;
+      brush.color.r = 0;
+      brush.color.g = 255;
+      brush.color.b = 0;
+      for (int i = 0; i < capture_info.person_meta.size; i++) {
+        TDLObjectInfo *obj_info = &capture_info.person_meta.info[i];
+        snprintf(obj_info->name, sizeof(obj_info->name), "id:%d",
+                 obj_info->track_id);
+      }
+      TDL_DrawObjRect(&capture_info.person_meta, frame, true, brush);
+
+      brush.color.r = 255;
+      brush.color.g = 0;
+      brush.color.b = 0;
+      for (int i = 0; i < capture_info.pet_meta.size; i++) {
+        TDLObjectInfo *pet_info = &capture_info.pet_meta.info[i];
+        snprintf(pet_info->name, sizeof(pet_info->name), "score:%.2f",
+                 pet_info->score);
+      }
+      TDL_DrawObjRect(&capture_info.pet_meta, frame, true, brush);
+
+      brush.color.r = 0;
+      brush.color.g = 0;
+      brush.color.b = 255;
+      for (int i = 0; i < capture_info.face_meta.size; i++) {
+        TDLFaceInfo *face_info = &capture_info.face_meta.info[i];
+        snprintf(face_info->name, sizeof(face_info->name), "id:%d",
+                 face_info->track_id);
+      }
+      TDL_DrawFaceRect(&capture_info.face_meta, frame, true, brush);
+
+      brush.color.g = 255;
+      brush.color.b = 0;
+      char text[128] = {0};
+      snprintf(text, sizeof(text), "frame id:%d", capture_info.frame_id);
+      TDL_ObjectWriteText(text, 50, 50, frame, brush);
+
+      ret = TDL_SendFrameRTSP(frame, &rtsp_context);
+      if (ret != 0) {
+        printf("TDL_SendFrameRTSP failed with %#x!\n", ret);
+        continue;
+      }
+#endif
+
       TDL_ReleaseCaptureInfo(&capture_info);
       TDL_ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+      TDLImage img = TDL_Image_Dequeue(&image_queue);
+      if (img) {
+        TDL_DestroyImage(img);
+      }
     }
 
     if (to_exit) {
@@ -363,6 +354,8 @@ int main(int argc, char *argv[]) {
   printf("  output_dir:  %s\n", output_dir);
   printf("  vi_chn:        %d\n", chn);
 
+  TDL_InitQueue(&image_queue);
+
   TDLFeatureInfo gallery_feature = {0};
   int ret = TDL_GetGalleryFeature(gallery_dir, &gallery_feature, FEATURE_SIZE);
   if (ret != 0) {
@@ -429,7 +422,7 @@ exit1:
   free(channel_names);
 
 exit0:
-
+  TDL_DestroyQueue(&image_queue);
   for (int i = 0; i < gallery_feature.size; i++) {
     TDL_ReleaseFeatureMeta(&gallery_feature.feature[i]);
   }

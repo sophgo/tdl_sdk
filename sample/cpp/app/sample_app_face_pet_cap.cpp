@@ -171,6 +171,13 @@ void visualizeDetections(const std::string &dst_dir, uint32_t frame_id,
     int cty = (box.y1 + box.y2) / 2;
     cv::putText(mat, szinfo, cv::Point(ctx, cty), cv::FONT_HERSHEY_SIMPLEX, 0.5,
                 cv::Scalar(0, 255, 0), 2);
+
+    for (size_t j = 0; j < box.landmarks_x.size(); j++) {
+      cv::circle(mat,
+                 cv::Point(int(box.landmarks_x[j]), int(box.landmarks_y[j])), 3,
+                 cv::Scalar(0, 0, 255), -1);
+    }
+
     obj_idx++;
   }
   for (auto &box : person_boxes) {

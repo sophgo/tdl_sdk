@@ -128,20 +128,43 @@ std::string pack_det_results(
   return str_content;
 }
 
-std::string pack_features(
+std::string pack_features_attributes(
     const std::map<uint64_t, std::vector<float>> &face_features,
-    std::vector<ObjectSnapshotInfo> &face_snapshots) {
+    std::vector<ObjectSnapshotInfo> &face_snapshots,
+    std::vector<std::map<TDLObjectAttributeType, float>> &face_attributes) {
   std::stringstream str_content;
 
   for (int i = 0; i < face_snapshots.size(); i++) {
     std::vector<float> fea = face_features.at(face_snapshots[i].track_id);
-    str_content << face_snapshots[i].track_id << ":"
-                << face_snapshots[i].snapshot_frame_id << ":";
+    str_content << face_snapshots[i].track_id << "#"
+                << face_snapshots[i].snapshot_frame_id << "#";
     for (size_t i = 0; i < fea.size(); i++) {
       str_content << fea[i] << " ";
     }
 
-    str_content << "\n";
+    str_content << "#";
+
+    auto face_attribute = face_attributes[i];
+    int pred_gender =
+        face_attribute[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER] >
+                0.5
+            ? 1
+            : 0;
+    int pred_age =
+        (int)(face_attribute
+                  [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
+              100);
+    int pred_glass =
+        face_attribute[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES] >
+                0.5
+            ? 1
+            : 0;
+    int pred_emotion = (int)
+        face_attribute[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION];
+
+    str_content << "pred_gender:" << pred_gender << "|pred_age:" << pred_age
+                << "|pred_glass:" << pred_glass
+                << "|pred_emotion:" << pred_emotion << "\n";
   }
 
   return str_content.str();
@@ -305,8 +328,9 @@ int main(int argc, char **argv) {
                           cap_result->frame_height);
 
         if (cap_result->face_features.size() > 0) {
-          std::string fea_content = pack_features(cap_result->face_features,
-                                                  cap_result->face_snapshots);
+          std::string fea_content = pack_features_attributes(
+              cap_result->face_features, cap_result->face_snapshots,
+              cap_result->face_attributes);
           char sz_fea_name[1024];
           sprintf(sz_fea_name, "%s/feature_%08lu.txt", output_dir.c_str(),
                   frame_id);

@@ -315,6 +315,10 @@ int32_t TDL_ReleaseCaptureInfo(TDLCaptureInfo *capture_info) {
   TDL_ReleaseObjectMeta(&capture_info->pet_meta);
   TDL_ReleaseTrackMeta(&capture_info->track_meta);
 
+  if (capture_info->image) {
+    TDL_DestroyImage(capture_info->image);
+  }
+
   for (uint32_t i = 0; i < capture_info->snapshot_size; i++) {
     if (capture_info->snapshot_info[i].object_image) {
       TDL_DestroyImage(capture_info->snapshot_info[i].object_image);

@@ -211,6 +211,7 @@ typedef struct {
   TDLTracker track_meta;
   TDLSnapshotInfo *snapshot_info;
   TDLFeature *features;
+  TDLImage image;
 } TDLCaptureInfo;
 
 typedef struct {
