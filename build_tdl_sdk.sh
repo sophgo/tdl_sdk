@@ -298,7 +298,7 @@ fi
 # set host-tool
 HOST_TOOL_PATH="${CROSS_COMPILE_PATH}"
 TARGET_MACHINE="$(${CROSS_COMPILE_PATH}/bin/${CROSS_COMPILE}gcc -dumpmachine)"
-TOOLCHAIN_FILE="${CVI_TDL_ROOT}"/toolchain/"${TARGET_MACHINE}".cmake
+export TOOLCHAIN_FILE="${CVI_TDL_ROOT}"/toolchain/"${TARGET_MACHINE}".cmake
 
 if [ -d "${BUILD_WORKING_DIR}" ]; then
     echo "BUILD_WORKING_DIR=${BUILD_WORKING_DIR}"
