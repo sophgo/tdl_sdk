@@ -97,6 +97,20 @@ bool ImageEncoder::encodeFrame(const std::shared_ptr<BaseImage>& image,
   stAttr.stVencAttr.u32PicWidth = src_frame->stVFrame.u32Width;
   if (src_frame->stVFrame.u32Height >= 1080) {
     stAttr.stVencAttr.u32BufSize = 1024 * 512;  // Encoded bitstream buffer大小
+  } else {
+    VENC_JPEG_PARAM_S stJpegParam, *pstJpegParam = &stJpegParam;
+    CVI_S32 s32Ret = CVI_SUCCESS;
+
+    s32Ret = CVI_VENC_GetJpegParam(VeChn_, pstJpegParam);
+    if (s32Ret != CVI_SUCCESS) {
+      return false;
+    }
+    pstJpegParam->u32Qfactor = 90;
+
+    s32Ret = CVI_VENC_SetJpegParam(VeChn_, pstJpegParam);
+    if (s32Ret != CVI_SUCCESS) {
+      return false;
+    }
   }
   CVI_VENC_SetChnAttr(VeChn_, &stAttr);
   // Send frame to hardware
