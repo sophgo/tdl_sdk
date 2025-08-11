@@ -198,7 +198,6 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_YOLOV8_SEG, CREATOR(YoloV8Seg)},
 #endif
 
-    {CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, CREATOR(IspImageClassification)},
     {CVI_TDL_SUPPORTED_MODEL_IRLIVENESS, CREATOR(IrLiveness)},
     {CVI_TDL_SUPPORTED_MODEL_YOLO, CREATOR(Yolo)},
     {CVI_TDL_SUPPORTED_MODEL_YOLOV3, CREATOR(Yolov3)},
@@ -214,7 +213,6 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_RETINAFACE_IR, CREATOR_P1(RetinaFace, PROCESS, PYTORCH)},
     {CVI_TDL_SUPPORTED_MODEL_FACEATTRIBUTE, CREATOR_P1(FaceAttribute, bool, true)},
     {CVI_TDL_SUPPORTED_MODEL_FACERECOGNITION, CREATOR_P1(FaceAttribute, bool, false)},
-    {CVI_TDL_SUPPORTED_MODEL_OCCLUSION_CLASSIFICATION, CREATOR(OcclusionClassification)},
 
     {CVI_TDL_SUPPORTED_MODEL_HAND_DETECTION,
      CREATOR_P1(YoloV8Detection, PAIR_INT, std::make_pair(64, 1))},
@@ -290,6 +288,8 @@ unordered_map<int, CreatorFunc> MODEL_CREATORS = {
     {CVI_TDL_SUPPORTED_MODEL_YOLO_WORLD_V2,
      CREATOR_P1(Yolo_World_V2, PAIR_INT, std::make_pair(64, 80))},
     {CVI_TDL_SUPPORTED_MODEL_RAW_IMAGE_CLASSIFICATION, CREATOR(RawImageClassification)},
+    {CVI_TDL_SUPPORTED_MODEL_OCCLUSION_CLASSIFICATION, CREATOR(OcclusionClassification)},
+    {CVI_TDL_SUPPORTED_MODEL_ISP_IMAGE_CLASSIFICATION, CREATOR(IspImageClassification)},
 
     {CVI_TDL_SUPPORTED_MODEL_POLYLANE, CREATOR(Polylanenet)},
     {CVI_TDL_SUPPORTED_MODEL_SUPER_RESOLUTION, CREATOR(SuperResolution)},
@@ -361,10 +361,12 @@ inline void __attribute__((always_inline)) removeCtx(cvitdl_context_t *ctx) {
     ctx->smooth_keypoints_model = nullptr;
   }
 
+#ifndef CONFIG_ALIOS
   if (ctx->word_piece_tokenizer) {
     delete ctx->word_piece_tokenizer;
     ctx->word_piece_tokenizer = nullptr;
   }
+#endif
 
   for (auto it : ctx->vec_vpss_engine) {
     delete it;
@@ -1368,6 +1370,7 @@ CVI_S32 CVI_TDL_Blip_Vqa_Tdec(const cvitdl_handle_t handle, cvtdl_image_embeds *
 }
 
 CVI_S32 CVI_TDL_WordPieceInit(const cvitdl_handle_t handle, const char *vocabFile) {
+#ifndef CONFIG_ALIOS
   cvitdl_context_t *ctx = static_cast<cvitdl_context_t *>(handle);
 
   if (ctx->word_piece_tokenizer == nullptr) {
@@ -1376,6 +1379,7 @@ CVI_S32 CVI_TDL_WordPieceInit(const cvitdl_handle_t handle, const char *vocabFil
 
     return CVI_TDL_SUCCESS;
   }
+#endif
 }
 
 CVI_S32 CVI_TDL_WordPieceToken(const cvitdl_handle_t handle, const char *textFile,

@@ -38,8 +38,8 @@ inline void CVI_TDL_MemAlloc(const uint32_t size, cvtdl_face_t *meta) {
   if (meta->size != size) {
     for (uint32_t i = 0; i < meta->size; i++) {
       CVI_TDL_FreeCpp(&meta->info[i]);
-      free(meta->info);
     }
+    free(meta->info);
     meta->size = size;
     meta->info = (cvtdl_face_info_t *)malloc(sizeof(cvtdl_face_info_t) * meta->size);
     meta->dms = NULL;
@@ -50,8 +50,8 @@ inline void CVI_TDL_MemAlloc(const uint32_t size, cvtdl_object_t *meta) {
   if (meta->size != size) {
     for (uint32_t i = 0; i < meta->size; i++) {
       CVI_TDL_FreeCpp(&meta->info[i]);
-      free(meta->info);
     }
+    free(meta->info);
     meta->size = size;
     meta->info = (cvtdl_object_info_t *)malloc(sizeof(cvtdl_object_info_t) * meta->size);
   }

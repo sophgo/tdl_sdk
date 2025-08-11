@@ -118,6 +118,7 @@ int FaceAttribute::dump_bgr_pack(const char *p_img_file, VIDEO_FRAME_INFO_S *p_i
 }
 int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *meta, int face_idx) {
   if (m_use_wrap_hw) {
+#ifndef NO_OPENCV
 #if defined(__CV181X__) || defined(__CV186X__)
     if (stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_RGB_888_PLANAR &&
         stOutFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
@@ -142,6 +143,7 @@ int FaceAttribute::inference(VIDEO_FRAME_INFO_S *stOutFrame, cvtdl_face_t *meta,
       outputParser(&meta->info[i]);
       CVI_TDL_FreeCpp(&face_info);
     }
+#endif
 #endif
   } else {
     if (false == IS_SUPPORTED_FORMAT(stOutFrame)) {
