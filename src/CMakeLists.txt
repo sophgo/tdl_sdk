@@ -30,12 +30,13 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:encoder>
                )
 
+set(EX_SRCS
+               $<TARGET_OBJECTS:video_decoder>
+               $<TARGET_OBJECTS:c_apis_ex>
+               )
+
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm>)
-endif()
-
-if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
-   set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:network>)
 endif()
 
 if("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
@@ -46,10 +47,9 @@ if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X" OR
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:motion_detect>)
 endif()
 
-set(EX_SRCS
-               $<TARGET_OBJECTS:video_decoder>
-               $<TARGET_OBJECTS:c_apis_ex>
-               )
+if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
+   set(EX_SRCS ${EX_SRCS} $<TARGET_OBJECTS:network>)
+endif()
 
 # shared library
 add_library(tdl_core SHARED ${CORES_SRCS})
@@ -57,9 +57,7 @@ target_link_libraries(tdl_core
    ${MLIR_LIBS} 
    ${OPENCV_LIBS_IMCODEC} 
    ${IVE_LIBS}
-   ${CURL_LIBRARY}
    ${LIBWEBSOCKETS_LIBS}
-   ${MIDDLEWARE_OBJ}
    ${OPENSSL_LIBRARY}
    ${ZLIB_LIBRARY}
 )
@@ -70,15 +68,15 @@ target_link_libraries(tdl_core
 #    )
 # endif()
 
-add_library(tdl_ex SHARED ${EX_SRCS} ${MIDDLEWARE_OBJ})
-target_link_libraries(tdl_ex)
+add_library(tdl_ex SHARED ${EX_SRCS})
+target_link_libraries(tdl_ex ${CURL_LIBRARY})
 
 # static library
 add_library(tdl_core-static STATIC ${CORES_SRCS})
-target_link_libraries(tdl_core-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC} ${CURL_LIBRARY_STATIC} ${LIBWEBSOCKETS_LIBS_STATIC} ${OPENSSL_LIBRARY_STATIC} ${ZLIB_LIBRARY_STATIC})
+target_link_libraries(tdl_core-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC} ${LIBWEBSOCKETS_LIBS_STATIC} ${OPENSSL_LIBRARY_STATIC} ${ZLIB_LIBRARY_STATIC})
 
-add_library(tdl_ex-static STATIC ${EX_SRCS} ${MIDDLEWARE_OBJ})
-target_link_libraries(tdl_ex-static)
+add_library(tdl_ex-static STATIC ${EX_SRCS})
+target_link_libraries(tdl_ex-static ${CURL_LIBRARY_STATIC})
 
 if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)
     add_subdirectory(python)

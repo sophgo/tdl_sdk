@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include "cvi_comm_video.h"
 #include "cvi_vi.h"
+#include "rtsp_utils.h"
 #include "tdl_sdk.h"
 
 #define FEATURE_SIZE 256

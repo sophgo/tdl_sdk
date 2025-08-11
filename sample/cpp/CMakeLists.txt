@@ -14,17 +14,19 @@ set(SAMPLE_INCLUDES
 )
 
 if(BUILD_SHARED)
-    set(SAMPLE_LIBS tdl_core tdl_ex ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES} ${IVE_LIBS})
+    set(EX_LIBS tdl_ex)
+    set(CORE_LIBS tdl_utils tdl_core ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 else()
-    set(SAMPLE_LIBS
+    set(CORE_LIBS
         "-Wl,--start-group"
+        tdl_utils-static
         tdl_core-static
-        tdl_ex-static
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
         ${IVE_LIBS_STATIC}
         "-Wl,--end-group")
+    set(EX_LIBS tdl_ex-static)
 endif()
 include_directories(${SAMPLE_INCLUDES})
 
@@ -64,7 +66,13 @@ foreach (fname ${SAMPLE_SRC_FILES})
   set(EXAMPLE_SRC_FILES ${EXAMPLE_SRC_FILES} ${fname})
   get_filename_component(name ${fname} NAME_WE)
   add_executable(${name} ${fname})
-  target_link_libraries(${name} ${SAMPLE_LIBS}  dl rt stdc++fs)
+
+  set(SAMPLE_LIBS ${CORE_LIBS} dl rt stdc++fs)
+  if(name STREQUAL "sample_api_client")
+    set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt stdc++fs)
+  endif()
+
+  target_link_libraries(${name} ${SAMPLE_LIBS})
   #strip
   if(NOT BUILD_SHARED)
     add_custom_command(TARGET ${name} POST_BUILD

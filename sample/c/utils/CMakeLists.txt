@@ -12,18 +12,23 @@ set(UTILS_INCLUDES
     ${SAMPLE_INCLUDES}
     ${REPO_DIR}/src/c_apis/include
     ${REPO_DIR}/include/components
+    ${REPO_DIR}/include/components/video_decoder
+    ${REPO_DIR}/src/components/video_decoder
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 set(UTILS_INCLUDES ${UTILS_INCLUDES} PARENT_SCOPE)
 
-file(GLOB UTILS_SOURCES 
+file(GLOB UTILS_SOURCES
     *.cpp
 )
 
 if(${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
     list(APPEND UTILS_INCLUDES ${RTSP_INCLUDE})
     list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/encoder/rtsp/rtsp.cpp)
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/video_decoder_factory.cpp)
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/image_folder/image_folder_decoder.cpp)
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/vi_decoder/vi_decoder.cpp)
 endif()
 
 if(NOT ${CVI_PLATFORM} STREQUAL "CV181X" AND NOT ${CVI_PLATFORM} STREQUAL "CV184X")
@@ -32,15 +37,15 @@ endif()
 
 include_directories(${UTILS_INCLUDES})
 # Add shared library
-add_library(tdl_utils SHARED ${UTILS_SOURCES})
-set_target_properties(tdl_utils PROPERTIES 
+add_library(tdl_utils SHARED ${UTILS_SOURCES}  ${MIDDLEWARE_OBJ})
+set_target_properties(tdl_utils PROPERTIES
     ENABLE_EXPORTS ON
     POSITION_INDEPENDENT_CODE ON
 )
 
 # Add static library
-add_library(tdl_utils-static STATIC ${UTILS_SOURCES} ${RTSP_LIBS_STATIC})
-set_target_properties(tdl_utils-static PROPERTIES 
+add_library(tdl_utils-static STATIC ${UTILS_SOURCES} ${RTSP_LIBS_STATIC} ${MIDDLEWARE_OBJ})
+set_target_properties(tdl_utils-static PROPERTIES
     OUTPUT_NAME tdl_utils
     ENABLE_EXPORTS ON
     POSITION_INDEPENDENT_CODE ON

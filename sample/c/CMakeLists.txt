@@ -16,26 +16,27 @@ set(SAMPLE_INCLUDES
 
 # Add subdirectories
 add_subdirectory(utils)
-if (${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X" OR ${CVI_PLATFORM} STREQUAL "SOPHON")
+if (${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
     add_subdirectory(camera)
 endif()
 
 if(BUILD_SHARED)
-    set(SAMPLE_LIBS tdl_core tdl_ex tdl_utils ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
+    set(EX_LIBS tdl_ex)
+    set(CORE_LIBS tdl_utils tdl_core ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 else()
-    set(SAMPLE_STATIC_LIBS
-        tdl_core-static
-        tdl_ex-static
+    set(CORE_STATIC_LIBS
         tdl_utils-static
+        tdl_core-static
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
         ${IVE_LIBS_STATIC}
     )
-    
+
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--start-group")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--whole-archive")
-    set(SAMPLE_LIBS ${SAMPLE_STATIC_LIBS})
+    set(EX_LIBS tdl_ex-static)
+    set(CORE_LIBS ${CORE_STATIC_LIBS})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-whole-archive")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--end-group")
 endif()
@@ -67,7 +68,13 @@ foreach (fname ${SAMPLE_SRC_FILES})
   set(EXAMPLE_SRC_FILES ${EXAMPLE_SRC_FILES} ${fname})
   get_filename_component(name ${fname} NAME_WE)
   add_executable(${name} ${fname})
-  target_link_libraries(${name} ${SAMPLE_LIBS} dl rt atomic m)
+
+  set(SAMPLE_LIBS ${CORE_LIBS} dl rt atomic m)
+  if(name STREQUAL "sample_llm_api")
+    set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt atomic m)
+  endif()
+
+  target_link_libraries(${name} ${SAMPLE_LIBS})
   #strip
   if(NOT BUILD_SHARED)
     add_custom_command(TARGET ${name} POST_BUILD

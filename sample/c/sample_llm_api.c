@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "tdl_ex.h"
 #include "tdl_sdk.h"
 
 // 缓冲区大小定义
@@ -57,7 +58,7 @@ int main(int argc, char* argv[]) {
   }
 
   // 1. 创建主上下文
-  TDLHandle api_handle = TDL_CreateHandle(0);  // 传入合适的 device id
+  TDLHandle api_handle = TDL_CreateHandleEx(0);  // 传入合适的 device id
   if (!api_handle) {
     fprintf(stderr, "创建API上下文失败\n");
     return 1;
@@ -104,6 +105,6 @@ int main(int argc, char* argv[]) {
   }
 
   // 5. 释放资源
-  TDL_DestroyHandle(api_handle);
+  TDL_DestroyHandleEx(api_handle);
   return ret;
 }

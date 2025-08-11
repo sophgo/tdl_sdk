@@ -113,8 +113,8 @@ include_directories(${REPO_DIR}/include/framework/utils
                     ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
-buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS tdl_core tdl_ex ${REG_LIBS} gtest_main stdc++fs )
-buildninstallcpp(NAME generate_regression_info INC ${REG_INCLUDES} SRCS generate_regression_info.cpp DEPS tdl_core tdl_ex ${REG_LIBS} gtest_main stdc++fs )
+buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS tdl_core tdl_ex tdl_utils ${REG_LIBS} gtest_main stdc++fs )
+buildninstallcpp(NAME generate_regression_info INC ${REG_INCLUDES} SRCS generate_regression_info.cpp DEPS tdl_core tdl_ex tdl_utils ${REG_LIBS} gtest_main stdc++fs )
 
 
 if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688"))

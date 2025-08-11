@@ -23,7 +23,7 @@ TDLHandle TDL_CreateHandle(const int32_t tpu_device_id);
 /**
  * @brief 销毁一个 TDLHandle 对象
  *
- * @param context_handle 需要销毁的 TDLHandle 对象
+ * @param handle 需要销毁的 TDLHandle 对象
  */
 int32_t TDL_DestroyHandle(TDLHandle handle);
 
@@ -44,52 +44,6 @@ TDLImage TDL_WrapFrame(void *frame, bool own_memory);
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_WrapImage(TDLImage image, void *frame);
-
-#if !defined(__BM168X__) && !defined(__CMODEL_CV181X__)
-/**
- * @brief 初始化Camera，板端的/mnt/data路径下需要有sensor_cfg.ini
- * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
- * @param w Camera图像的输出长度
- * @param h Camera图像的输出宽度
- * @param image_fmt Camera图像的输出格式
- * @param vb_buffer_num Camera模块使用的vb buffer数量
- * @return 成功返回 0，失败返回-1
- */
-int32_t TDL_InitCamera(TDLHandle handle, int w, int h,
-                       TDLImageFormatE image_fmt, int vb_buffer_num);
-
-/**
- * @brief 获取camera的一帧图像
- *
- * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
- * @param chn Camera图像的chn通道
- * @return 返回包装的TDLImageHandle对象, 如果失败返回 NULL
- */
-TDLImage TDL_GetCameraFrame(TDLHandle handle, int chn);
-
-/**
- * @brief 释放图像资源
- *
- * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
- * @param chn Camera图像的chn通道
- * @return 成功返回 0，失败返回-1
- */
-int32_t TDL_ReleaseCameraFrame(TDLHandle handle, int chn);
-
-/**
- * @brief 销毁Camera
- *
- * @return 成功返回 0，失败返回-1
- */
-int32_t TDL_DestoryCamera(TDLHandle handle);
-
-/**
- * @brief 初始化移动侦测任务
- *
- * @param handle TDLHandle 对象
- * @return 成功返回 0，失败返回-1
- */
-#endif
 
 /**
  * @brief 读取一张图片为 TDLImageHandle 对象
@@ -400,23 +354,6 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
                             TDLObject *obj_meta,
                             uint32_t background_update_interval);
 
-#endif
-
-#if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
-/**
- * @brief 调用API服务
- *
- * @param handle TDLHandle 对象
- * @param client_type 客户端类型（如"sophnet"）
- * @param method_name 方法名（如"chat"）
- * @param params_json 参数JSON字符串
- * @param result_buf 用于接收结果的缓冲区
- * @param buf_size 结果缓冲区大小
- * @return 0成功，非0失败
- */
-int32_t TDL_LLMApiCall(TDLHandle handle, const char *client_type,
-                       const char *method_name, const char *params_json,
-                       char *result_buf, size_t buf_size);
 #endif
 
 /*******************************************
