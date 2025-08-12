@@ -586,16 +586,20 @@ int DrawMeta(const MetaType *meta, VIDEO_FRAME_INFO_S *drawFrame,
                       drawFrame->stVFrame.u32Length[2];
 
   bool do_unmap = false;
-  if (drawFrame->stVFrame.pu8VirAddr[0] == NULL) {
-    drawFrame->stVFrame.pu8VirAddr[0] =
-        (uint8_t *)CVI_SYS_Mmap(drawFrame->stVFrame.u64PhyAddr[0], image_size);
+  for (int i = 0; i < 3; ++i) {
+    CVI_U32 u32DataLen =
+        drawFrame->stVFrame.u32Stride[i] * drawFrame->stVFrame.u32Height;
+    if (u32DataLen == 0) {
+      continue;
+    }
+
+    drawFrame->stVFrame.pu8VirAddr[i] = (uint8_t *)CVI_SYS_Mmap(
+        drawFrame->stVFrame.u64PhyAddr[i], drawFrame->stVFrame.u32Length[i]);
+
+    CVI_SYS_IonFlushCache(drawFrame->stVFrame.u64PhyAddr[i],
+                          drawFrame->stVFrame.pu8VirAddr[i],
+                          drawFrame->stVFrame.u32Length[i]);
     do_unmap = true;
-  } else if (drawFrame->stVFrame.pu8VirAddr[1] == NULL) {
-    drawFrame->stVFrame.pu8VirAddr[1] =
-        drawFrame->stVFrame.pu8VirAddr[0] + drawFrame->stVFrame.u32Length[0];
-  } else if (drawFrame->stVFrame.pu8VirAddr[2] == NULL) {
-    drawFrame->stVFrame.pu8VirAddr[2] =
-        drawFrame->stVFrame.pu8VirAddr[1] + drawFrame->stVFrame.u32Length[1];
   }
 
   for (size_t i = 0; i < meta->size; i++) {
@@ -623,10 +627,17 @@ int DrawMeta(const MetaType *meta, VIDEO_FRAME_INFO_S *drawFrame,
     }
   }
 
-  CVI_SYS_IonFlushCache(drawFrame->stVFrame.u64PhyAddr[0],
-                        drawFrame->stVFrame.pu8VirAddr[0], image_size);
   if (do_unmap) {
-    CVI_SYS_Munmap((void *)drawFrame->stVFrame.pu8VirAddr[0], image_size);
+    for (int i = 0; i < 3; i++) {
+      CVI_U32 u32DataLen =
+          drawFrame->stVFrame.u32Stride[i] * drawFrame->stVFrame.u32Height;
+      if (u32DataLen == 0) {
+        continue;
+      }
+      CVI_SYS_Munmap((void *)drawFrame->stVFrame.pu8VirAddr[i],
+                     drawFrame->stVFrame.u32Length[i]);
+    }
+
     drawFrame->stVFrame.pu8VirAddr[0] = NULL;
     drawFrame->stVFrame.pu8VirAddr[1] = NULL;
     drawFrame->stVFrame.pu8VirAddr[2] = NULL;
