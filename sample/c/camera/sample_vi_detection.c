@@ -175,6 +175,14 @@ int main(int argc, char *argv[]) {
       TDL_DrawObjRect(&obj_meta, frame, true, brush);
     }
 
+    // 在左上角添加文本
+    TDLBrush brush_text = {0};
+    brush_text.size = 2;
+    brush_text.color.r = 255;
+    brush_text.color.g = 0;
+    brush_text.color.b = 0;
+    TDL_ObjectWriteText("Detect...", 10, 30, frame, brush_text);
+
     // 发送帧
     ret = TDL_SendFrameRTSP(frame, &rtsp_context);
     if (ret != 0) {

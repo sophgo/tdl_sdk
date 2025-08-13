@@ -13,10 +13,9 @@
 extern "C" {
 #endif
 
-#define DEFAULT_RECT_COLOR_R (53. / 255.)
-#define DEFAULT_RECT_COLOR_G (208. / 255.)
-#define DEFAULT_RECT_COLOR_B (217. / 255.)
-#define DEFAULT_TEXT_THICKNESS 1
+#define DEFAULT_RECT_COLOR_R 53
+#define DEFAULT_RECT_COLOR_G 208
+#define DEFAULT_RECT_COLOR_B 217
 
 typedef struct {
   float x1;
@@ -60,8 +59,8 @@ int32_t TDL_DrawObjRect(const TDLObject *meta, void *frame, const bool drawText,
 
 int32_t TDL_DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
                          TDLBrush brush);
-int32_t TDL_ObjectWriteText(char *name, int x, int y, void *frame, float r,
-                            float g, float b);
+int32_t TDL_ObjectWriteText(char *name, int x, int y, void *frame,
+                            TDLBrush brush);
 #endif
 
 #ifdef __cplusplus

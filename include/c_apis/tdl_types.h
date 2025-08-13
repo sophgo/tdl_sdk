@@ -220,9 +220,9 @@ typedef struct {
 } TDLIspMeta;
 
 typedef struct {
-  float r;
-  float g;
-  float b;
+  int r;
+  int g;
+  int b;
 } color_rgb;
 
 typedef struct {

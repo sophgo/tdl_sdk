@@ -206,9 +206,6 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name,
   x = max(min(x, width - 1), 0);
   y = max(min(y, height - 1), 0);
 
-  color.r *= 255;
-  color.g *= 255;
-  color.b *= 255;
   char color_y = GetYuvColor(PLANE_Y, &color);
   char color_u = GetYuvColor(PLANE_U, &color);
   char color_v = GetYuvColor(PLANE_V, &color);
@@ -217,13 +214,19 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name,
                       frame->stVFrame.u32Length[1] +
                       frame->stVFrame.u32Length[2];
   bool do_unmap = false;
-  if (frame->stVFrame.pu8VirAddr[0] == NULL) {
-    frame->stVFrame.pu8VirAddr[0] =
-        (uint8_t *)CVI_SYS_Mmap(frame->stVFrame.u64PhyAddr[0], image_size);
-    frame->stVFrame.pu8VirAddr[1] =
-        frame->stVFrame.pu8VirAddr[0] + frame->stVFrame.u32Length[0];
-    frame->stVFrame.pu8VirAddr[2] =
-        frame->stVFrame.pu8VirAddr[1] + frame->stVFrame.u32Length[1];
+  for (int i = 0; i < 3; ++i) {
+    CVI_U32 u32DataLen =
+        frame->stVFrame.u32Stride[i] * frame->stVFrame.u32Height;
+    if (u32DataLen == 0) {
+      continue;
+    }
+
+    frame->stVFrame.pu8VirAddr[i] = (uint8_t *)CVI_SYS_Mmap(
+        frame->stVFrame.u64PhyAddr[i], frame->stVFrame.u32Length[i]);
+
+    CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[i],
+                          frame->stVFrame.pu8VirAddr[i],
+                          frame->stVFrame.u32Length[i]);
     do_unmap = true;
   }
 
@@ -290,10 +293,16 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name,
       }
     }
   }
-  CVI_SYS_IonFlushCache(frame->stVFrame.u64PhyAddr[0],
-                        frame->stVFrame.pu8VirAddr[0], image_size);
   if (do_unmap) {
-    CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[0], image_size);
+    for (int i = 0; i < 3; i++) {
+      CVI_U32 u32DataLen =
+          frame->stVFrame.u32Stride[i] * frame->stVFrame.u32Height;
+      if (u32DataLen == 0) {
+        continue;
+      }
+      CVI_SYS_Munmap((void *)frame->stVFrame.pu8VirAddr[i],
+                     frame->stVFrame.u32Length[i]);
+    }
     frame->stVFrame.pu8VirAddr[0] = NULL;
     frame->stVFrame.pu8VirAddr[1] = NULL;
     frame->stVFrame.pu8VirAddr[2] = NULL;
@@ -547,22 +556,14 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2,
   }
 }
 
-int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame, float r,
-              float g, float b) {
-  color_rgb rgb_color;
-  if (r == -1)
-    rgb_color.r = DEFAULT_RECT_COLOR_R;
-  else
-    rgb_color.r = r;
-  if (g == -1)
-    rgb_color.g = DEFAULT_RECT_COLOR_G;
-  else
-    rgb_color.g = g;
-  if (b == -1)
-    rgb_color.b = DEFAULT_RECT_COLOR_B;
-  else
-    rgb_color.b = b;
-  return _WriteText(drawFrame, x, y, name, rgb_color, DEFAULT_TEXT_THICKNESS);
+int WriteText(char *name, int x, int y, VIDEO_FRAME_INFO_S *drawFrame,
+              TDLBrush brush) {
+  color_rgb rgb_color = brush.color;
+  if (rgb_color.r == -1) rgb_color.r = DEFAULT_RECT_COLOR_R;
+  if (rgb_color.g == -1) rgb_color.g = DEFAULT_RECT_COLOR_G;
+  if (rgb_color.b == -1) rgb_color.b = DEFAULT_RECT_COLOR_B;
+
+  return _WriteText(drawFrame, x, y, name, rgb_color, brush.size);
 }
 
 template <typename MetaType>
@@ -661,8 +662,8 @@ int32_t TDL_DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
   return DrawMeta(meta, (VIDEO_FRAME_INFO_S *)frame, drawText, brushes);
 }
 
-int32_t TDL_ObjectWriteText(char *name, int x, int y, void *frame, float r,
-                            float g, float b) {
-  return WriteText(name, x, y, (VIDEO_FRAME_INFO_S *)frame, r, g, b);
+int32_t TDL_ObjectWriteText(char *name, int x, int y, void *frame,
+                            TDLBrush brush) {
+  return WriteText(name, x, y, (VIDEO_FRAME_INFO_S *)frame, brush);
 }
 #endif
