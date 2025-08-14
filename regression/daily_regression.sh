@@ -124,8 +124,8 @@ if [ ${CHIP_ARCH} != "CV184X" ]; then  #tpu-milr bug
   det_json="${det_json}:yolov5m_det_coco80_640_640_INT8.json"
   det_json="${det_json}:yolov5s_det_coco80_640_640_INT8.json"
   det_json="${det_json}:yolov7_tiny_det_coco80_640_640_INT8.json"
-  det_json="${det_json}:yolox_m_det_coco80_640_640_INT8.json"
-  det_json="${det_json}:yolox_s_det_coco80_640_640_INT8.json"
+  # det_json="${det_json}:yolox_m_det_coco80_640_640_INT8.json"
+  # det_json="${det_json}:yolox_s_det_coco80_640_640_INT8.json"
 fi
 
 
