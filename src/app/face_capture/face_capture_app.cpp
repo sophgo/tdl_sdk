@@ -366,18 +366,10 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getLandmarkDetectionNode(
         float vel = std::hypot(t.velocity_x_, t.velocity_y_);
         std::map<std::string, float> other_info = {{"vel", vel}};
 
-        printf(
-            "[0]face_info size: %d, t.obj_idx_: %d, "
-            "box_landmark.landmarks_x.size(): %d\n",
-            face_infos.size(), t.obj_idx_,
-            face_infos[t.obj_idx_].landmarks_x.size());
         float face_quality = ObjectQualityHelper::getFaceQuality(
             face_infos[t.obj_idx_], image->getWidth(), image->getHeight(),
             other_info);
         face_qaulity_scores[t.obj_idx_] = face_quality;
-
-        printf("!! track id: %ld, face_qaulity_scores: %f\n", t.track_id_,
-               face_quality);
 
         if (face_quality > 0.4) {
           ObjectBoxLandmarkInfo face_info = rescale_face_infos[t.obj_idx_];
@@ -447,6 +439,8 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getLandmarkDetectionNode(
               landmark_meta->landmarks_x;
           rescale_face_infos[t.obj_idx_].landmarks_y =
               landmark_meta->landmarks_y;
+          rescale_face_infos[t.obj_idx_].landmarks_score =
+              landmark_meta->landmarks_score;
 
           face_infos[t.obj_idx_].landmarks_x.clear();
           face_infos[t.obj_idx_].landmarks_y.clear();
@@ -458,16 +452,23 @@ std::shared_ptr<PipelineNode> FaceCaptureApp::getLandmarkDetectionNode(
             face_infos[t.obj_idx_].landmarks_y.push_back(
                 landmark_meta->landmarks_y[i] / scale + crop_y);
           }
+          face_infos[t.obj_idx_].landmarks_score =
+              landmark_meta->landmarks_score;
 
           t.blurness =
               landmark_meta->attributes
                   [TDLObjectAttributeType::OBJECT_CLS_ATTRIBUTE_FACE_BLURNESS];
           std::map<std::string, float> other_info = {{"vel", vel},
                                                      {"blr", t.blurness}};
+          float face_quality;
 
-          float face_quality = ObjectQualityHelper::getFaceQuality(
-              face_infos[t.obj_idx_], image->getWidth(), image->getHeight(),
-              other_info);
+          if (face_infos[t.obj_idx_].landmarks_score[0] < 0.4) {
+            face_quality = -1.0f;  // skip directly
+          } else {
+            face_quality = ObjectQualityHelper::getFaceQuality(
+                face_infos[t.obj_idx_], image->getWidth(), image->getHeight(),
+                other_info);
+          }
 
           LOGI("track_id:%lu,frame_id:%lu,face_quality:%f\n", t.track_id_,
                frame_info->frame_id_, face_quality);

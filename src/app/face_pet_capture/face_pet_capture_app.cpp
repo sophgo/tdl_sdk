@@ -466,14 +466,17 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
               landmark_meta->landmarks_x;
           rescale_face_infos[t.obj_idx_].landmarks_y =
               landmark_meta->landmarks_y;
+          rescale_face_infos[t.obj_idx_].landmarks_score =
+              landmark_meta->landmarks_score;
 
-          for (int i = 0; i < landmark_meta->landmarks_x.size();
-               i++) {  // for eval
+          for (int i = 0; i < landmark_meta->landmarks_x.size(); i++) {
             face_infos[t.obj_idx_].landmarks_x.push_back(
                 landmark_meta->landmarks_x[i] / scale + crop_x);
             face_infos[t.obj_idx_].landmarks_y.push_back(
                 landmark_meta->landmarks_y[i] / scale + crop_y);
           }
+          face_infos[t.obj_idx_].landmarks_score =
+              landmark_meta->landmarks_score;
         }
       }
     }
@@ -547,7 +550,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
                             face_info.y1, face_info.x2, face_info.y2);
           float vel = std::hypot(t.velocity_x_, t.velocity_y_);
 
-          if (face_head_quality[t.obj_idx_] < 0.4) {
+          if (face_head_quality[t.obj_idx_] < 0.4 ||
+              face_infos[t.obj_idx_].landmarks_score[0] < 0.4) {
             face_qaulity_scores[t.track_id_] = -1.0f;  // skip directly
           } else {
             std::map<std::string, float> other_info = {{"vel", vel},
