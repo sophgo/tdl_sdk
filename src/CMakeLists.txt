@@ -30,13 +30,10 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:encoder>
                )
 
-set(EX_SRCS
-               $<TARGET_OBJECTS:video_decoder>
-               $<TARGET_OBJECTS:c_apis_ex>
-               )
+set(EX_SRCS $<TARGET_OBJECTS:c_apis_ex>)
 
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))
-   set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm>)
+   set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm> $<TARGET_OBJECTS:video_decoder>)
 endif()
 
 if("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
