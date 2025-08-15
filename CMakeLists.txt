@@ -168,7 +168,7 @@ include(cmake/thirdparty.cmake)
 include(cmake/ive.cmake)
 
 # ===========need remove this=============
-include(cmake/cvi_rtsp.cmake)
+# include(cmake/cvi_rtsp.cmake)
 # ===========need remove this=============
 
 # 3rdpart includes
@@ -181,11 +181,11 @@ if("${BUILD_OPTION}" STREQUAL "")
   add_subdirectory(modules)
 elseif("${BUILD_OPTION}" STREQUAL "sample")
   add_subdirectory(sample)
-  add_subdirectory(sample_video)
+  # add_subdirectory(sample_video)
 elseif("${BUILD_OPTION}" STREQUAL "all")
   add_subdirectory(modules)
   add_subdirectory(sample)
-  add_subdirectory(sample_video)
+  # add_subdirectory(sample_video)
   if(IS_LOCAL AND NOT DEFINED NO_OPENCV )
     add_subdirectory(regression)
   endif()
