@@ -18,7 +18,7 @@ void init_vpss_chn_attr(VPSS_CHN_ATTR_S* pastVpssChnAttr, CVI_U32 dst_width,
 VpssContext::VpssContext() {
   CVI_S32 s32Ret = CVI_SUCCESS;
 
-#ifdef __CV181X__
+#if defined(__CV181X__) || defined(__CV180X__)
   if (!CVI_VB_IsInited()) {
     CVI_VB_Exit();
     VB_CONFIG_S stVbConf;

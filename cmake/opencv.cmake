@@ -87,9 +87,9 @@ set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_core.so
                         ${OPENCV_ROOT}/lib/libopencv_imgproc.so
                         ${OPENCV_ROOT}/lib/libopencv_imgcodecs.so)
 
-set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_core.a
-                               ${OPENCV_ROOT}/lib/libopencv_imgproc.a
+set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_imgproc.a
                                ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a
+                               ${OPENCV_ROOT}/lib/libopencv_core.a
                                ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibjpeg-turbo.a
                                ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibpng.a
                                ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibopenjp2.a

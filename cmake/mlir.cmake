@@ -38,8 +38,8 @@ elseif("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X
       ${MLIR_SDK_ROOT}/lib/libcviruntime.so
       )
   set(MLIR_LIBS_STATIC
-      ${MLIR_SDK_ROOT}/lib/libcvikernel-static.a
       ${MLIR_SDK_ROOT}/lib/libcviruntime-static.a
+      ${MLIR_SDK_ROOT}/lib/libcvikernel-static.a
       ${MLIR_SDK_ROOT}/lib/libcnpy.a
 )
 elseif("${CVI_PLATFORM}" STREQUAL "CV184X")
