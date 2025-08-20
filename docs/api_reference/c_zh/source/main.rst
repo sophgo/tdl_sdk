@@ -137,89 +137,6 @@
      - 文本特征提取模型
 
 结构体参考
-
-================
-
-TDLDataTypeE
-~~~~~~~~~~~~~~~
-
-【说明】
-
-数据类型枚举类
-
-【定义】
-
-.. code-block:: c
-
-  typedef enum {
-    TDL_IMAGE_GRAY = 0,
-    TDL_IMAGE_RGB_PLANAR,
-    TDL_IMAGE_RGB_PACKED,
-    TDL_IMAGE_BGR_PLANAR,
-    TDL_IMAGE_BGR_PACKED,
-    TDL_IMAGE_YUV420SP_UV,  // NV12,semi-planar,one Y plane,one interleaved UV
-                            // plane,size = width * height * 1.5
-    TDL_IMAGE_YUV420SP_VU,  // NV21,semi-planar,one Y plane,one interleaved VU
-                            // plane,size = width * height * 1.5
-    TDL_IMAGE_YUV420P_UV,  // I420,planar,one Y plane(w*h),one U
-                          // plane(w/2*h/2),one V plane(w/2*h/2),size = width *
-                          // height * 1.5
-    TDL_IMAGE_YUV420P_VU,   // YV12,size = width * height * 1.5
-    TDL_IMAGE_YUV422P_UV,   // I422_16,size = width * height * 2
-    TDL_IMAGE_YUV422P_VU,   // YV12_16,size = width * height * 2
-    TDL_IMAGE_YUV422SP_UV,  // NV16,size = width * height * 2
-    TDL_IMAGE_YUV422SP_VU,  // NV61,size = width * height * 2
-
-    TDL_IMAGE_UNKOWN
-  } TDLImageFormatE;
-
-【成员】
-
-.. list-table::
-   :widths: 1 1
-
-   * - 数据类型枚举类
-     - 注释
-
-   * - TDL_IMAGE_GRAY
-     - GRAY的像素格式
-
-   * - TDL_IMAGE_RGB_PLANAR
-     - RGB_PLANAR的像素格式
-
-   * - TDL_IMAGE_RGB_PACKED
-     - RGB_PACKED的像素格式
-
-   * - TDL_IMAGE_BGR_PLANAR
-     - BGR_PLANAR的像素格式
-
-   * - TDL_IMAGE_BGR_PACKED
-     - BGR_PACKED的像素格式
-
-   * - TDL_IMAGE_YUV420SP_UV
-     - YUV420SP_UV的像素格式
-
-   * - TDL_IMAGE_YUV420SP_VU
-     - YUV420SP_VU的像素格式
-
-   * - TDL_IMAGE_YUV420P_UV
-     - YUV420P_UV的像素格式
-
-   * - TDL_IMAGE_YUV420P_VU
-     - YUV420P_VU的像素格式
-
-   * - TDL_IMAGE_YUV422P_UV
-     - YUV422P_UV的像素格式
-
-   * - TDL_IMAGE_YUV422P_VU
-     - YUV422P_VU的像素格式
-
-   * - TDL_IMAGE_YUV422SP_UV
-     - YUV422SP_UV的像素格式
-
-   * - TDL_IMAGE_YUV422SP_VU
-     - YUV422SP_VU的像素格式
-
 ================
 
 TDLDataTypeE
@@ -389,7 +306,7 @@ TDLPoints
 
    * - size
      - 坐标队列的大小
-  
+
    * - score
      - 分数
 
@@ -423,7 +340,7 @@ TDLLandmarkInfo
 
    * - y
      - 特征点的y坐标
-  
+
    * - score
      - 分数
 
@@ -460,7 +377,7 @@ TDLObjectInfo
 
    * - class_id
      - 目标检测的类别id
-  
+
    * - landmark_size
      - 目标检测的特征点大小
 
@@ -502,7 +419,7 @@ TDLObject
 
    * - width
      - 目标检测图像的宽度
-  
+
    * - height
      - 目标检测图像的高度
 
@@ -554,7 +471,7 @@ TDLFaceInfo
 
    * - score
      - 人脸的分数
-  
+
    * - track_id
      - 人脸的追踪id
 
@@ -566,7 +483,7 @@ TDLFaceInfo
 
    * - feature
      - 人脸的特征值
-  
+
    * - gender_score
      - 人脸的性别分数
 
@@ -578,7 +495,7 @@ TDLFaceInfo
 
    * - liveness_score
      - 人脸的活体分数
-  
+
    * - hardhat_score
      - 人脸的是否带安全帽分数
 
@@ -590,7 +507,7 @@ TDLFaceInfo
 
    * - pose_score
      - 人脸的姿态分数
-  
+
    * - blurness
      - 人脸的模糊度
 
@@ -625,7 +542,7 @@ TDLFace
 
    * - width
      - 人脸图像的宽度
-  
+
    * - height
      - 人脸图像的高度
 
@@ -661,7 +578,7 @@ TDLClassInfo
 
    * - score
      - 分类的分数
-  
+
 TDLClass
 ~~~~~~~~~~~~~~~
 
@@ -757,7 +674,7 @@ TDLKeypoint
 
    * - width
      - 图像的宽度
-  
+
    * - height
      - 图像的高度
 
@@ -794,13 +711,13 @@ TDLSegmentation
 
    * - width
      - 图像的宽度
-  
+
    * - height
      - 图像的高度
 
    * - output_width
      - 输出图像的宽度
-  
+
    * - output_height
      - 输出图像的高度
 
@@ -838,13 +755,13 @@ TDLInstanceSegInfo
 
    * - mask
      - 实例分割的mask队列
-  
+
    * - mask_point
      - 实例分割的mask_point队列
 
    * - mask_point_size
      - 实例分割的point个数
-  
+
    * - output_height
      - 输出图像的高度
 
@@ -884,13 +801,13 @@ TDLInstanceSeg
 
    * - width
      - 图像的宽度
-  
+
    * - height
      - 图像的高度
 
    * - mask_width
      - mask的宽度
-  
+
    * - mask_height
      - mask的高度
 
@@ -927,7 +844,7 @@ TDLLanePoint
 
    * - y
      - y坐标队列
-  
+
    * - score
      - 线检测的分数
 
@@ -963,13 +880,13 @@ TDLLane
 
    * - width
      - 图像的宽度
-  
+
    * - height
      - 图像的高度
 
    * - lane
      - 线检测坐标点
-  
+
    * - lane_state
      - 线条状态
 
@@ -1086,11 +1003,12 @@ API参考
 .. code-block:: c
   
   typedef void *TDLHandle;
+  typedef void *TDLHandleEx;
   typedef void *TDLImage;
 
 【描述】
 
-TDL SDK句柄，TDLHandle是核心操作句柄，TDLImage是图像数据抽象句柄。
+TDL SDK句柄，TDLHandle是核心操作句柄，TDLHandle是扩展操作句柄，TDLImage是图像数据抽象句柄。
 
 TDL_CreateHandle
 ~~~~~~~~~~~~~~~~~~
@@ -1104,6 +1022,35 @@ TDL_CreateHandle
 【描述】
 
 创建一个 TDLHandle 对象。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - const int32_t
+     - tpu_device_id
+     - 指定 TPU 设备的 ID
+
+TDL_CreateHandleEx
+~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  TDLHandleEx TDL_CreateHandleEx(const int32_t tpu_device_id);
+
+【描述】
+
+创建一个 TDLHandleEx 对象（在使用tdl_ex.h中的api时使用）。
 
 【参数】
 
@@ -1149,6 +1096,35 @@ TDL_DestroyHandle
      - TDLHandle
      - handle
      - 需要销毁的 TDLHandle 对象
+
+TDL_DestroyHandleEx
+~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_DestroyHandleEx(TDLHandleEx handle);
+
+【描述】
+
+销毁一个 TDLHandleEx 对象（在使用tdl_ex.h中的api时使用）。
+
+【参数】
+
+.. list-table::
+   :widths: 1 2 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandleEx
+     - handle
+     - 需要销毁的 TDLHandleEx 对象
 
 TDL_WrapVPSSFrame
 ~~~~~~~~~~~~~~~~~~

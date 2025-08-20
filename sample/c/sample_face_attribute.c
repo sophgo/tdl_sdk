@@ -7,6 +7,27 @@
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
 
+const char *emotion_to_text(int code) {
+  switch (code) {
+    case 0:
+      return "anger";
+    case 1:
+      return "disgust";
+    case 2:
+      return "fear";
+    case 3:
+      return "happy";
+    case 4:
+      return "neutral";
+    case 5:
+      return "sad";
+    case 6:
+      return "surprise";
+    default:
+      return "unknown";
+  }
+}
+
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
   printf("  %s -m <detect_model>,<attr_model> -i <input_image>\n", prog_name);
@@ -135,14 +156,18 @@ int main(int argc, char *argv[]) {
   if (ret != 0) {
     printf("TDL_FaceAttribute failed with %#x!\n", ret);
   } else {
-    printf("gender score:%f,age score:%f,glass score:%f,mask score:%f\n",
-           obj_meta.info->gender_score, obj_meta.info->age,
-           obj_meta.info->glass_score, obj_meta.info->mask_score);
+    printf(
+        "gender score:%f,age score:%f,glass score:%f,mask score:%f,emotion "
+        "score:%f\n",
+        obj_meta.info->gender_score, obj_meta.info->age,
+        obj_meta.info->glass_score, obj_meta.info->mask_score,
+        obj_meta.info->emotion_score);
     printf("Gender:%s\n",
            obj_meta.info->gender_score > 0.5 ? "Male" : "Female");
     printf("Age:%d\n", (int)round(obj_meta.info->age * 100.0));
     printf("Glass:%s\n", obj_meta.info->glass_score > 0.5 ? "Yes" : "No");
     printf("Mask:%s\n", obj_meta.info->mask_score > 0.5 ? "Yes" : "No");
+    printf("Emotion:%s\n", emotion_to_text(obj_meta.info->emotion_score));
   }
 
 exit3:

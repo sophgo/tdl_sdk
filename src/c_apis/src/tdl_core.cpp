@@ -461,6 +461,8 @@ int32_t TDL_FaceAttribute(TDLHandle handle, const TDLModel model_id,
         box_attribute_output->attributes[OBJECT_ATTRIBUTE_HUMAN_GLASSES];
     face_meta->info[i].mask_score =
         box_attribute_output->attributes[OBJECT_ATTRIBUTE_HUMAN_MASK];
+    face_meta->info[i].emotion_score =
+        box_attribute_output->attributes[OBJECT_ATTRIBUTE_HUMAN_EMOTION];
   }
 
   return ret;

@@ -90,7 +90,7 @@ typedef struct {
   float liveness_score;
   float hardhat_score;
   float mask_score;
-
+  float emotion_score;
   float recog_score;
   float face_quality;
   float pose_score;
