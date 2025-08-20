@@ -52,6 +52,7 @@
   /* image classification */                                                  \
   X(CLS_MASK, "0:mask,1:no mask")                                             \
   X(CLS_RGBLIVENESS, "0:fake,1:live")                                         \
+  X(CLS_YOLOV8, "")                                                           \
   X(CLS_ISP_SCENE, "0:snow, 1:fog, 2:backlight, 3:grass, 4:common")           \
   X(CLS_HAND_GESTURE, "0:fist,1:five,2:none,3:two")                           \
   X(CLS_KEYPOINT_HAND_GESTURE,                                                \

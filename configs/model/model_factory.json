@@ -153,6 +153,12 @@
       "mean":[0,0,0],
       "std":[255.0,255.0,255.0]
     },
+    "CLS_YOLOV8":{
+      "file_name":"yolov8_cls_384_640_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[255.0,255.0,255.0]
+    },
     "CLS_HAND_GESTURE":{
       "_comment":"output hand gesture(0:fist,1:five,2:none,3:two)",
       "types":["fist","five","none","two"],

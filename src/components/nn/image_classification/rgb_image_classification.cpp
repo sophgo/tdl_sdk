@@ -3,7 +3,7 @@
 #include <numeric>
 
 #include "utils/tdl_log.hpp"
-#define topK 2
+#define topK 5
 
 std::vector<int> top_indices(std::vector<float> &vec, int topk) {
   std::vector<int> topKIndex;

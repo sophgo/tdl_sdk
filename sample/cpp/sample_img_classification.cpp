@@ -2,13 +2,14 @@
 #include "tdl_model_factory.hpp"
 
 int main(int argc, char** argv) {
-  if (argc != 3) {
-    printf("Usage: %s <model_file> <image_path>\n", argv[0]);
+  if (argc != 4) {
+    printf("Usage: %s <model_file> <model_type> <image_path>\n", argv[0]);
     return -1;
   }
 
   std::string model_file = argv[1];
-  std::string image_path = argv[2];
+  std::string model_type = argv[2];
+  std::string image_path = argv[3];
 
   auto image = ImageFactory::readImage(image_path);
   if (!image) {
@@ -19,7 +20,7 @@ int main(int argc, char** argv) {
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();
 
   std::shared_ptr<BaseModel> model_cls =
-      model_factory.getModel(ModelType::CLS_RGBLIVENESS, model_file);
+      model_factory.getModel(model_type, model_file);
 
   if (!model_cls) {
     printf("Failed to load classification model\n");

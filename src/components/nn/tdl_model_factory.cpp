@@ -322,6 +322,7 @@ bool TDLModelFactory::isClassificationModel(const ModelType model_type) {
           model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK ||
           model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION ||
           model_type == ModelType::CLS_RGBLIVENESS ||
+          model_type == ModelType::CLS_YOLOV8 ||
           model_type == ModelType::CLS_ISP_SCENE ||
           model_type == ModelType::CLS_IMG);
 }
@@ -572,7 +573,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createClassificationModel(
 
   if (model_type == ModelType::CLS_HAND_GESTURE ||
       model_type == ModelType::CLS_RGBLIVENESS ||
-      model_type == ModelType::CLS_IMG) {
+      model_type == ModelType::CLS_YOLOV8 || model_type == ModelType::CLS_IMG) {
     model = std::make_shared<RgbImageClassification>();
   } else if (model_type == ModelType::CLS_KEYPOINT_HAND_GESTURE) {
     model = std::make_shared<HandKeypointClassification>();
