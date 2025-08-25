@@ -269,7 +269,8 @@ int32_t YoloV7Detection::outputParse(
       }
     }
     DetectionHelper::nmsObjects(lb_boxes, nms_threshold_);
-    std::vector<float> scale_params = batch_rescale_params_[b];
+    std::vector<float> scale_params =
+        batch_rescale_params_[input_tensor_name][b];
     LOGI("scale_params:%f,%f,%f,%f", scale_params[0], scale_params[1],
          scale_params[2], scale_params[3]);
     ss << "batch:" << b << "\n";

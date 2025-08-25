@@ -221,15 +221,14 @@ int32_t BaseModel::inference(
       preprocess_params_[input_layer_name];
   LOGI(
       "BaseModel::inference "
-      "preprocess_params:%f,%f,%f,mean:%f,%f,%f,scale:%f,%f,%f,dst_height:%"
+      "preprocess_params:mean:%f,%f,%f,scale:%f,%f,%f,dst_height:%"
       "d,"
       "dst_width:%d,dst_pixdata_type:%d",
-      preprocess_params.scale[0], preprocess_params.scale[1],
-      preprocess_params.scale[2], preprocess_params.mean[0],
-      preprocess_params.mean[1], preprocess_params.mean[2],
-      preprocess_params.scale[0], preprocess_params.scale[1],
-      preprocess_params.scale[2], preprocess_params.dst_height,
-      preprocess_params.dst_width, preprocess_params.dst_pixdata_type);
+      preprocess_params.mean[0], preprocess_params.mean[1],
+      preprocess_params.mean[2], preprocess_params.scale[0],
+      preprocess_params.scale[1], preprocess_params.scale[2],
+      preprocess_params.dst_height, preprocess_params.dst_width,
+      preprocess_params.dst_pixdata_type);
   model_timer_.TicToc("runstart");
   std::shared_ptr<BaseTensor> input_tensor =
       net_->getInputTensor(input_layer_name);
@@ -237,7 +236,7 @@ int32_t BaseModel::inference(
     int fit_batch_size = getFitBatchSize(batch_size - process_idx);
     setInputBatchSize(input_layer_name, fit_batch_size);
     std::vector<std::shared_ptr<BaseImage>> batch_images;
-    batch_rescale_params_.clear();
+    batch_rescale_params_[input_layer_name].clear();
 
     for (int i = 0; i < fit_batch_size; i++) {
       batch_images.push_back(images[process_idx + i]);
@@ -256,7 +255,95 @@ int32_t BaseModel::inference(
         std::vector<float> rescale_params = preprocessor_->getRescaleConfig(
             preprocess_params, images[process_idx + i]->getWidth(),
             images[process_idx + i]->getHeight());
-        batch_rescale_params_.push_back(rescale_params);
+        batch_rescale_params_[input_layer_name].push_back(rescale_params);
+      }
+    }
+    model_timer_.TicToc("preprocess");
+    net_->updateInputTensors();
+    net_->forward();
+    model_timer_.TicToc("tpu");
+    net_->updateOutputTensors();
+    std::vector<std::shared_ptr<ModelOutputInfo>> batch_results;
+    outputParse(batch_images, batch_results);
+    model_timer_.TicToc("post");
+    out_datas.insert(out_datas.end(), batch_results.begin(),
+                     batch_results.end());
+    process_idx += fit_batch_size;
+  }
+  return 0;
+}
+
+int32_t BaseModel::inference(
+    const std::vector<std::vector<std::shared_ptr<BaseImage>>>& images,
+    std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas,
+    const std::map<std::string, float>& parameters) {
+  if (images.empty()) {
+    LOGE("Input images is empty");
+    return -1;
+  }
+  if (preprocessor_ == nullptr) {
+    LOGE("Preprocessor is not set");
+    return -1;
+  }
+
+  int batch_size = images.size();
+  int process_idx = 0;
+  std::vector<std::string> input_layer_names;
+  std::vector<const PreprocessParams*> preprocess_params;
+  std::vector<std::shared_ptr<BaseTensor>> input_tensors;
+  for (auto& input_layer_name : net_->getInputNames()) {
+    input_layer_names.push_back(input_layer_name);
+    preprocess_params.push_back(&preprocess_params_[input_layer_name]);
+    input_tensors.push_back(net_->getInputTensor(input_layer_name));
+    LOGI(
+        "BaseModel::inference "
+        "preprocess_params:mean:%f,%f,%f,scale:%f,%f,%f,dst_height:%d,"
+        "dst_width:%d,dst_pixdata_type:%d",
+        preprocess_params_[input_layer_name].mean[0],
+        preprocess_params_[input_layer_name].mean[1],
+        preprocess_params_[input_layer_name].mean[2],
+        preprocess_params_[input_layer_name].scale[0],
+        preprocess_params_[input_layer_name].scale[1],
+        preprocess_params_[input_layer_name].scale[2],
+        preprocess_params_[input_layer_name].dst_height,
+        preprocess_params_[input_layer_name].dst_width,
+        preprocess_params_[input_layer_name].dst_pixdata_type);
+  }
+
+  model_timer_.TicToc("runstart");
+  while (process_idx < batch_size) {
+    int fit_batch_size = getFitBatchSize(batch_size - process_idx);
+    for (int i = 0; i < input_layer_names.size(); i++) {
+      setInputBatchSize(input_layer_names[i], fit_batch_size);
+      batch_rescale_params_[input_layer_names[i]].clear();
+    }
+    std::vector<std::vector<std::shared_ptr<BaseImage>>> batch_images;
+    batch_images.resize(fit_batch_size);
+    for (int i = 0; i < fit_batch_size; i++) {
+      for (int j = 0; j < input_layer_names.size(); j++) {
+        batch_images[i].push_back(images[process_idx + i][j]);
+      }
+      if (images[process_idx + i][0]->getImageType() ==
+          ImageType::TENSOR_FRAME) {
+        for (int j = 0; j < input_layer_names.size(); j++) {
+          if (images[process_idx + i][j]->getVirtualAddress()[0] !=
+              input_tensors[j]->getBatchPtr<uint8_t>(i)) {
+            LOGE(
+                "image memory address is not equal to input tensor memory "
+                "address");
+            assert(false);
+          }
+        }
+      } else {
+        for (int j = 0; j < input_layer_names.size(); j++) {
+          preprocessor_->preprocessToTensor(images[process_idx + i][j],
+                                            *preprocess_params[j], i,
+                                            input_tensors[j]);
+          std::vector<float> rescale_params = preprocessor_->getRescaleConfig(
+              *preprocess_params[j], images[process_idx + i][j]->getWidth(),
+              images[process_idx + i][j]->getHeight());
+          batch_rescale_params_[input_layer_names[j]].push_back(rescale_params);
+        }
       }
     }
     model_timer_.TicToc("preprocess");
@@ -295,6 +382,13 @@ int32_t BaseModel::inference(const std::shared_ptr<BaseImage>& image,
   }
   out_data = out_datas[0];
   return 0;
+}
+
+int32_t BaseModel::outputParse(
+    const std::vector<std::vector<std::shared_ptr<BaseImage>>>& images,
+    std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) {
+  LOGW("outputParse not implemented");
+  return -1;
 }
 
 void BaseModel::setTypeMapping(

@@ -95,6 +95,9 @@
   /* face feature extraction */                                               \
   X(FEATURE_CVIFACE, "cviface 256-dimensional feature")                       \
   X(FEATURE_BMFACE_R34, "resnet34 512-dimensional BMFace feature")            \
-  X(FEATURE_BMFACE_R50, "resnet50 512-dimensional BMFace feature")
+  X(FEATURE_BMFACE_R50, "resnet50 512-dimensional BMFace feature")            \
+                                                                              \
+  /* object tracking */                                                       \
+  X(TRACKING_FEARTRACK, "single object tracking")
 
 #endif

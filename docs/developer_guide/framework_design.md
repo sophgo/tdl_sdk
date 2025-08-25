@@ -370,7 +370,7 @@ BaseTensor类为张量（Tensor）的抽象封装，主要支持如下特性：
       int fit_batch_size = getFitBatchSize(batch_size - process_idx);
       setInputBatchSize(input_layer_name, fit_batch_size);
       std::vector<std::shared_ptr<BaseImage>> batch_images;
-      batch_rescale_params_.clear();
+      batch_rescale_params_[input_layer_name].clear();
 
       for (int i = 0; i < fit_batch_size; i++) {
         batch_images.push_back(images[process_idx + i]);  
@@ -380,7 +380,7 @@ BaseTensor类为张量（Tensor）的抽象封装，主要支持如下特性：
         std::vector<float> rescale_params = preprocessor_->getRescaleConfig(
             preprocess_params, images[process_idx + i]->getWidth(),
             images[process_idx + i]->getHeight());
-        batch_rescale_params_.push_back(rescale_params);    
+        batch_rescale_params_[input_layer_name].push_back(rescale_params);    
       }
       net_->updateInputTensors();
       net_->forward();

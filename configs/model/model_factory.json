@@ -298,6 +298,13 @@
       "rgb_order":"rgb",
       "mean":[0,0,0],
       "std":[1,1,1]
+    },
+    "TRACKING_FEARTRACK":{
+      "_comment":"single object tracking",
+      "file_name":"tracking_feartrack_128_128_256_256_INT8",
+      "rgb_order":"rgb",
+      "mean":[123.675,116.28,103.53],
+      "std":[58.395,57.12,57.375]
     }
     
   }

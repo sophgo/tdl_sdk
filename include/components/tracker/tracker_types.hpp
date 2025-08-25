@@ -4,6 +4,9 @@
 #include <memory>
 #include "common/model_output_types.hpp"
 #include "common/object_type_def.hpp"
+#include "image/base_image.hpp"
+#include "model/base_model.hpp"
+
 enum class TrackStatus { NEW = 0, TRACKED, LOST, REMOVED };
 class TrackerInfo {
  public:
@@ -34,18 +37,36 @@ class TrackerConfig {
 
 enum class TrackerType {
   TDL_MOT_SORT = 0,
+  TDL_SOT = 1,
 };
 class Tracker {
  public:
   Tracker() = default;
   ~Tracker() = default;
 
+  virtual int32_t setModel(std::shared_ptr<BaseModel> sot_model);
+
+  virtual int32_t initialize(const std::shared_ptr<BaseImage>& image,
+                             const std::vector<ObjectBoxInfo>& detect_boxes,
+                             const ObjectBoxInfo& bbox);
+
+  virtual int32_t initialize(const std::shared_ptr<BaseImage>& image,
+                             const std::vector<ObjectBoxInfo>& detect_boxes,
+                             float x, float y);
+
   virtual void setPairConfig(
       std::map<TDLObjectType, TDLObjectType> object_pair_config){};
-  void setTrackConfig(const TrackerConfig &track_config);
+
+  void setTrackConfig(const TrackerConfig& track_config);
+
   TrackerConfig getTrackConfig();
-  virtual int32_t track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
-                        std::vector<TrackerInfo> &trackers) = 0;
+
+  virtual int32_t track(std::vector<ObjectBoxInfo>& boxes, uint64_t frame_id,
+                        std::vector<TrackerInfo>& trackers);
+
+  virtual int32_t track(const std::shared_ptr<BaseImage>& image,
+                        uint64_t frame_id, TrackerInfo& tracker_info);
+
   void setImgSize(int width, int height);
 
  protected:

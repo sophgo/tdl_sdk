@@ -83,6 +83,7 @@ class TDLModelFactory {
   bool isSegmentationModel(const ModelType model_type);
   bool isFeatureExtractionModel(const ModelType model_type);
   bool isOCRModel(const ModelType model_type);
+  bool isObjectTrackingModel(const ModelType model_type);
 
   // 辅助函数：创建各类模型
   std::shared_ptr<BaseModel> createObjectDetectionModel(
@@ -100,6 +101,8 @@ class TDLModelFactory {
   std::shared_ptr<BaseModel> createFeatureExtractionModel(
       const ModelType model_type);
   std::shared_ptr<BaseModel> createOCRModel(const ModelType model_type);
+  std::shared_ptr<BaseModel> createObjectTrackingModel(
+      const ModelType model_type);
 
   std::string model_dir_;
   //   std::map<ModelType, std::string> model_path_map_;

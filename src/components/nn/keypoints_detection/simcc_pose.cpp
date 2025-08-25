@@ -85,7 +85,8 @@ int32_t SimccPose::outputParse(
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
     uint32_t image_height = images[b]->getHeight();
-    std::vector<float> scale_params = batch_rescale_params_[b];
+    std::vector<float> scale_params =
+        batch_rescale_params_[input_tensor_name][b];
     std::shared_ptr<ModelLandmarksInfo> obj =
         std::make_shared<ModelLandmarksInfo>();
 

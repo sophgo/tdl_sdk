@@ -10,8 +10,6 @@
 #include "utils/mot_box_helper.hpp"
 
 #define ABS(x) ((x) >= 0 ? (x) : (-(x)))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 struct FaceQualityConfig {
   // 硬阈值

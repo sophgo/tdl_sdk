@@ -25,6 +25,7 @@
 #include "object_detection/yolov7.hpp"
 #include "object_detection/yolov8.hpp"
 #include "object_detection/yolox.hpp"
+#include "object_tracking/feartrack.hpp"
 #include "segmentation/topformer_seg.hpp"
 #include "segmentation/yolov8_seg.hpp"
 #include "utils/common_utils.hpp"
@@ -254,7 +255,11 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModelInstance(
   else if (isFeatureExtractionModel(model_type)) {
     model = createFeatureExtractionModel(model_type);
   }
-  // 8. 其他模型
+  // 8. 目标跟踪模型
+  else if (isObjectTrackingModel(model_type)) {
+    model = createObjectTrackingModel(model_type);
+  }
+  // 9. 其他模型
   else if (isOCRModel(model_type)) {
     model = createOCRModel(model_type);
   } else {
@@ -344,6 +349,10 @@ bool TDLModelFactory::isFeatureExtractionModel(const ModelType model_type) {
 
 bool TDLModelFactory::isOCRModel(const ModelType model_type) {
   return (model_type == ModelType::RECOGNITION_LICENSE_PLATE);
+}
+
+bool TDLModelFactory::isObjectTrackingModel(const ModelType model_type) {
+  return (model_type == ModelType::TRACKING_FEARTRACK);
 }
 
 // 创建函数实现
@@ -606,6 +615,17 @@ std::shared_ptr<BaseModel> TDLModelFactory::createOCRModel(
 
   if (model_type == ModelType::RECOGNITION_LICENSE_PLATE) {
     model = std::make_shared<LicensePlateRecognition>();
+  }
+
+  return model;
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::createObjectTrackingModel(
+    const ModelType model_type) {
+  std::shared_ptr<BaseModel> model = nullptr;
+
+  if (model_type == ModelType::TRACKING_FEARTRACK) {
+    model = std::make_shared<FearTrack>();
   }
 
   return model;

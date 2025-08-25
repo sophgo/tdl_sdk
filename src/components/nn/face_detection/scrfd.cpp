@@ -122,7 +122,8 @@ int32_t SCRFD::outputParse(
     // float image_height_f = float(image_height);
     std::vector<ObjectBoxLandmarkInfo> vec_bbox;
     std::vector<ObjectBoxLandmarkInfo> vec_bbox_nms;
-    std::vector<float> &rescale_params = batch_rescale_params_[b];
+    std::vector<float> &rescale_params =
+        batch_rescale_params_[input_tensor_name][b];
 
     LOGI("stride size:%d", m_feat_stride_fpn.size());
     for (size_t i = 0; i < m_feat_stride_fpn.size(); i++) {

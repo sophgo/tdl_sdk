@@ -50,6 +50,37 @@ typedef struct {
   pthread_mutex_t mutex;
 } TDLImageQueue;
 
+/**
+ * @brief 初始化图像队列
+ *
+ * @param q 图像队列
+ */
+void TDL_InitQueue(TDLImageQueue *q);
+
+/**
+ * @brief 销毁图像队列
+ *
+ * @param q 图像队列
+ */
+void TDL_DestroyQueue(TDLImageQueue *q);
+
+/**
+ * @brief 从图像队列中获取图像
+ *
+ * @param q 图像队列
+ * @return 返回获取的图像
+ */
+TDLImage TDL_Image_Dequeue(TDLImageQueue *q);
+
+/**
+ * @brief 将图像加入队列
+ *
+ * @param q 图像队列
+ * @param img 要加入的图像
+ * @return 成功返回 0，失败返回-1
+ */
+int TDL_Image_Enqueue(TDLImageQueue *q, TDLImage img);
+
 #if !defined(__BM168X__) && !defined(__CMODEL_CV181X__)
 /**
  * @brief 初始化Camera，板端的/mnt/data路径下需要有sensor_cfg.ini

@@ -39,6 +39,18 @@ class BaseModel {
       std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas,
       const std::map<std::string, float>& parameters = {});
 
+  /*
+   * @brief 推理接口
+   * @param images 输入图像。外层 vector 表示 batch 维度，内层 vector
+   * 表示模型多输入的图像数据
+   * @param out_datas 输出数据
+   * @return 0 成功，其他 失败
+   */
+  virtual int32_t inference(
+      const std::vector<std::vector<std::shared_ptr<BaseImage>>>& images,
+      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas,
+      const std::map<std::string, float>& parameters = {});
+
   virtual int32_t inference(
       const std::shared_ptr<BaseImage>& image,
       const std::shared_ptr<ModelOutputInfo>& model_object_infos,
@@ -48,6 +60,10 @@ class BaseModel {
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>>& images,
       std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) = 0;
+
+  virtual int32_t outputParse(
+      const std::vector<std::vector<std::shared_ptr<BaseImage>>>& images,
+      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas);
 
   int32_t setPreprocessor(std::shared_ptr<BasePreprocessor> preprocessor);
   std::shared_ptr<BasePreprocessor> getPreprocessor() { return preprocessor_; }
@@ -87,7 +103,7 @@ class BaseModel {
   float model_threshold_ = 0.5;
   int export_feature = 0;
 
-  std::vector<std::vector<float>> batch_rescale_params_;
+  std::map<std::string, std::vector<std::vector<float>>> batch_rescale_params_;
 
   std::vector<std::shared_ptr<BaseImage>> tmp_preprocess_images_;
   std::map<int, TDLObjectType> type_mapping_;

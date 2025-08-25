@@ -237,7 +237,8 @@ int32_t PPYoloEDetection::outputParse(
       }
     }
     DetectionHelper::nmsObjects(lb_boxes, 0.5);
-    std::vector<float> scale_params = batch_rescale_params_[b];
+    std::vector<float> scale_params =
+        batch_rescale_params_[input_tensor_name][b];
     int num_obj = 0;
     std::shared_ptr<ModelBoxInfo> obj = std::make_shared<ModelBoxInfo>();
     obj->image_width = image_width;
