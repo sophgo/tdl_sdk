@@ -1098,7 +1098,7 @@ TDL_DestroyHandle
      - 需要销毁的 TDLHandle 对象
 
 TDL_DestroyHandleEx
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 【语法】
 
@@ -1482,6 +1482,7 @@ TDL_FaceLandmark
   int32_t TDL_FaceLandmark(TDLHandle handle,
                            const TDLModel model_id,
                            TDLImage image_handle,
+                           TDLImage *crop_image_handle,
                            TDLFace *face_meta);
 
 【描述】
@@ -1513,6 +1514,11 @@ TDL_FaceLandmark
      - TDLImage
      - image_handle
      - TDLImageHandle 对象
+
+   * - 输入
+     - TDLImage
+     - crop_image_handle
+     - TDLImageHandle 对象, 裁剪后的图像，为NULL时不生效
 
    * - 输入/输出
      - TDLFace\*

@@ -165,11 +165,13 @@ int32_t TDL_FaceAttribute(TDLHandle handle, const TDLModel model_id,
  * @param handle 已加载关键点模型的 TDLHandle 对象
  * @param model_id 使用的人脸关键点模型类型枚举值
  * @param image_handle TDLImageHandle 对象
+ * @param crop_image_handle TDLImageHandle 对象, 裁剪后的图像，为NULL时不生效
  * @param face_meta 输入/输出人脸数据，包含检测结果和关键点信息
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_FaceLandmark(TDLHandle handle, const TDLModel model_id,
-                         TDLImage image_handle, TDLFace *face_meta);
+                         TDLImage image_handle, TDLImage *crop_image_handle,
+                         TDLFace *face_meta);
 
 /**
  * @brief 执行图像分类任务

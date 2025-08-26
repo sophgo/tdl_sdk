@@ -290,6 +290,8 @@ void *run_tdl_thread(void *args) {
     }
   }
 
+  return;
+
 exit0:
   TDL_DestoryCamera(pstArgs->tdl_handle);
   TDL_DestroyHandle(pstArgs->tdl_handle);
@@ -370,7 +372,7 @@ int main(int argc, char *argv[]) {
   uint8_t channel_size = 0;
 
   ret =
-      TDL_InitCamera(tdl_handle, VI_WIDTH, VI_HEIGHT, TDL_IMAGE_YUV420SP_VU, 3);
+      TDL_InitCamera(tdl_handle, VI_WIDTH, VI_HEIGHT, TDL_IMAGE_YUV420SP_UV, 3);
   if (ret != 0) {
     printf("TDL_InitCamera %#x!\n", ret);
     return ret;

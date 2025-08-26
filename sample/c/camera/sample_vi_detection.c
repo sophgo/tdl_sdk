@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  ret = TDL_InitCamera(tdl_handle, WIDTH, HEIGHT, TDL_IMAGE_YUV420SP_VU, 3);
+  ret = TDL_InitCamera(tdl_handle, WIDTH, HEIGHT, TDL_IMAGE_YUV420SP_UV, 3);
   if (ret != 0) {
     printf("TDL_InitCamera %#x!\n", ret);
     TDL_DestroyHandle(tdl_handle);

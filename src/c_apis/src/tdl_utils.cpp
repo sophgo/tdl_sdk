@@ -131,11 +131,13 @@ int32_t TDL_ReleaseInstanceSegMeta(TDLInstanceSeg *inst_seg_meta) {
 
 int32_t TDL_InitFaceMeta(TDLFace *face_meta, int num_faces,
                          int num_landmark_per_face) {
-  if (face_meta->info != NULL) return 0;
-  face_meta->info = (TDLFaceInfo *)malloc(num_faces * sizeof(TDLFaceInfo));
-  memset(face_meta->info, 0, num_faces * sizeof(TDLFaceInfo));
+  if (face_meta->info == NULL) {
+    face_meta->info = (TDLFaceInfo *)malloc(num_faces * sizeof(TDLFaceInfo));
+    memset(face_meta->info, 0, num_faces * sizeof(TDLFaceInfo));
+    face_meta->size = num_faces;
+  }
 
-  if (num_landmark_per_face > 0) {
+  if (num_landmark_per_face > 0 && face_meta->info[0].landmarks.x == NULL) {
     for (int i = 0; i < num_faces; i++) {
       face_meta->info[i].landmarks.x =
           (float *)malloc(num_landmark_per_face * sizeof(float));
@@ -143,7 +145,7 @@ int32_t TDL_InitFaceMeta(TDLFace *face_meta, int num_faces,
           (float *)malloc(num_landmark_per_face * sizeof(float));
     }
   }
-  face_meta->size = num_faces;
+
   return 0;
 }
 

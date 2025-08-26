@@ -469,7 +469,8 @@ int32_t TDL_FaceAttribute(TDLHandle handle, const TDLModel model_id,
 }
 
 int32_t TDL_FaceLandmark(TDLHandle handle, const TDLModel model_id,
-                         TDLImage image_handle, TDLFace *face_meta) {
+                         TDLImage image_handle, TDLImage *crop_image_handle,
+                         TDLFace *face_meta) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
@@ -481,25 +482,80 @@ int32_t TDL_FaceLandmark(TDLHandle handle, const TDLModel model_id,
   if (model == nullptr) {
     return -1;
   }
-
   TDLImageContext *image_context = (TDLImageContext *)image_handle;
-
+  std::vector<std::shared_ptr<BaseImage>> images;
+  std::shared_ptr<BaseImage> target_img;
+  int32_t ret = 0;
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   TDL_InitFaceMeta(face_meta, 1, 0);
   std::shared_ptr<ModelBoxLandmarkInfo> face_info = convertFaceMeta(face_meta);
-  int32_t ret = model->inference(image_context->image, face_info, outputs);
+
+  if (face_meta->info->box.x1 != 0 || face_meta->info->box.x2 != 0 ||
+      face_meta->info->box.y1 != 0 || face_meta->info->box.y2 != 0) {
+    std::shared_ptr<BasePreprocessor> preprocessor = model->getPreprocessor();
+    int32_t img_width = (int32_t)image_context->image->getWidth();
+    int32_t img_height = (int32_t)image_context->image->getHeight();
+    // 1. 计算原始框的宽高和中心
+    float orig_w = face_meta->info->box.x2 - face_meta->info->box.x1;
+    float orig_h = face_meta->info->box.y2 - face_meta->info->box.y1;
+    float cx = face_meta->info->box.x1 + orig_w * 0.5f;
+    float cy = face_meta->info->box.y1 + orig_h * 0.5f;
+    // 2. 决定裁剪区域的方形区域
+    int32_t crop_w = int32_t(std::max(orig_w, orig_h) + 0.5f);
+    int32_t crop_h = crop_w;
+    // 3. 如果有最小裁剪限度，也可以在这里保证不小于它
+    float scale = crop_w < 128 ? 128.0f / crop_w : 256.0f / crop_w;
+
+    int32_t dst_width = int32_t(crop_w * scale + 0.5f);
+    int32_t dst_height = int32_t(crop_h * scale + 0.5f);
+
+    // 4. 以中心为基准，计算左上角
+    int32_t crop_x = int32_t(cx - crop_w * 0.5f + 0.5f);
+    int32_t crop_y = int32_t(cy - crop_h * 0.5f + 0.5f);
+
+    // 5. 边界控制：保证整个裁剪框在图像内部
+    if (crop_x < 0) crop_x = 0;
+    if (crop_y < 0) crop_y = 0;
+    if (crop_x + crop_w > img_width) crop_x = std::max(0, img_width - crop_w);
+    if (crop_y + crop_h > img_height) crop_y = std::max(0, img_height - crop_h);
+    target_img =
+        preprocessor->cropResize(image_context->image, crop_x, crop_y, crop_w,
+                                 crop_w, dst_width, dst_height);
+  } else {
+    target_img = image_context->image;
+  }
+
+  images.push_back(target_img);
+  ret = model->inference(images, outputs);
   if (ret != 0) {
     return ret;
   }
 
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
   ModelLandmarksInfo *box_landmark_output = (ModelLandmarksInfo *)output.get();
-  TDL_InitFaceMeta(face_meta, 1, box_landmark_output->landmarks_x.size());
-  for (size_t i = 0; i < box_landmark_output->landmarks_x.size(); i++) {
+  int32_t landmarks_cnt = box_landmark_output->landmarks_x.size();
+  TDL_InitFaceMeta(face_meta, 1, landmarks_cnt);
+  for (size_t i = 0; i < landmarks_cnt; i++) {
     face_meta->info->landmarks.x[i] = box_landmark_output->landmarks_x[i];
     face_meta->info->landmarks.y[i] = box_landmark_output->landmarks_y[i];
   }
   face_meta->info->landmarks.score = box_landmark_output->landmarks_score[0];
+  face_meta->info->landmarks.size = landmarks_cnt;
+
+  if (crop_image_handle != NULL) {
+    float dst_landmarks[landmarks_cnt * 2];
+    for (int i = 0; i < landmarks_cnt; i++) {
+      dst_landmarks[2 * i] = face_meta->info->landmarks.x[i];
+      dst_landmarks[2 * i + 1] = face_meta->info->landmarks.y[i];
+    }
+    std::shared_ptr<BaseImage> face_crop = ImageFactory::alignFace(
+        target_img, dst_landmarks, nullptr, landmarks_cnt, nullptr);
+
+    TDLImageContext *image_crop_context = new TDLImageContext();
+    image_crop_context->image = face_crop;
+    *crop_image_handle = reinterpret_cast<TDLImage>(image_crop_context);
+  }
+
   return 0;
 }
 

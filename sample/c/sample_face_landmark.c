@@ -6,6 +6,16 @@
 #include "tdl_sdk.h"
 #include "tdl_utils.h"
 
+int get_model_info(char *model_path, TDLModel *model_index) {
+  int ret = 0;
+  if (strstr(model_path, "keypoint_face_v2_64_64") != NULL) {
+    *model_index = TDL_MODEL_KEYPOINT_FACE_V2;
+  } else {
+    ret = -1;
+  }
+  return ret;
+}
+
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
   printf("  %s -m <model_path> -i <input_image>\n", prog_name);
@@ -58,7 +68,13 @@ int main(int argc, char *argv[]) {
 
   int ret = 0;
 
-  TDLModel model_id = TDL_MODEL_KEYPOINT_FACE_V2;
+  TDLModel model_id;
+  ret = get_model_info(model_path, &model_id);
+  if (ret != 0) {
+    printf("None model name to support\n");
+    return -1;
+  }
+
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
   ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
@@ -74,11 +90,11 @@ int main(int argc, char *argv[]) {
   }
 
   TDLFace obj_meta = {0};
-  ret = TDL_FaceLandmark(tdl_handle, model_id, image, &obj_meta);
+  ret = TDL_FaceLandmark(tdl_handle, model_id, image, NULL, &obj_meta);
   if (ret != 0) {
     printf("TDL_FaceLandmark failed with %#x!\n", ret);
   } else {
-    for (int i = 0; i < sizeof(obj_meta.info->landmarks.x); i++) {
+    for (int i = 0; i < obj_meta.info->landmarks.size; i++) {
       printf("landmarks id : %d, ", i);
       printf("landmarks x : %f, ", obj_meta.info->landmarks.x[i]);
       printf("landmarks y : %f\n", obj_meta.info->landmarks.y[i]);

@@ -1015,6 +1015,36 @@ Create a TDLHandle object.
      - tpu_device_id
      - Specified TPU device ID
 
+TDL_CreateHandleEx
+~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  TDLHandleEx TDL_CreateHandleEx(const int32_t tpu_device_id);
+
+【Description】
+
+Create a TDLHandleEx object.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - const int32_t
+     - tpu_device_id
+     - Specified TPU device ID
+
+
 TDL_DestroyHandle
 ~~~~~~~~~~~~~~~~~~
 
@@ -1043,6 +1073,35 @@ Destroy a TDLHandle object.
      - TDLHandle
      - handle
      - TDLHandle object to be destroyed
+
+TDL_DestroyHandleEx
+~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_DestroyHandle(TDLHandle handle);
+
+【Description】
+
+Destroy a TDLHandleEx object.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 2 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandleEx object to be destroyed
 
 TDL_WrapVPSSFrame
 ~~~~~~~~~~~~~~~~~~
@@ -1402,6 +1461,7 @@ TDL_FaceLandmark
   int32_t TDL_FaceLandmark(TDLHandle handle,
                            const TDLModel model_id,
                            TDLImage image_handle,
+                           TDLImage *crop_image_handle,
                            TDLFace *face_meta);
 
 【Description】
@@ -1433,6 +1493,11 @@ Execute face keypoint detection, supplementing keypoint coordinates to existing 
      - TDLImage
      - image_handle
      - TDLImageHandle object
+
+   * - Input
+     - TDLImage
+     - crop_image_handle
+     - TDLImageHandle object, the cropped image. It will not take effect if it is NULL.
 
    * - Input/Output
      - TDLFace\*
