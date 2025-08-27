@@ -4,6 +4,7 @@ include_directories(${REPO_DIR}/include
                     ${REPO_DIR}/include/components
                     ${REPO_DIR}/include/nn
                     ${REPO_DIR}/include/c_apis
+                    ${REPO_DIR}/src/app
                     ${CMAKE_CURRENT_SOURCE_DIR}/include
                 )
 

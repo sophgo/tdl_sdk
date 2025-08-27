@@ -5,11 +5,14 @@
       {
         "name": "consumer_counting",
         "nodes": {
-          "head_person_detection_node": {
-            "config_thresh": 0.5
+          "video_node": {
+            "video_type": "image_folder",
+            "video_path": "./images",
+            "is_loop": false
           },
-          "track_node": {
-            "fuse_track": true
+          "object_detection_node": {
+            "config_thresh": 0.5,
+            "model" : "head_person_detection"
           },
 
           "consumer_counting_node": {

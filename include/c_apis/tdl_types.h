@@ -60,6 +60,7 @@ typedef struct {
 typedef struct {
   char name[128];
   TDLBox box;
+  bool is_cross;
   float score;
   int class_id;
   uint64_t track_id;
@@ -213,6 +214,17 @@ typedef struct {
   TDLFeature *features;
   TDLImage image;
 } TDLCaptureInfo;
+
+typedef struct {
+  uint64_t frame_id;
+  uint32_t frame_width;
+  uint32_t frame_height;
+  uint32_t enter_num;
+  uint32_t miss_num;
+  int counting_line[4];
+  TDLObject object_meta;
+  TDLImage image;
+} TDLObjectCountingInfo;
 
 typedef struct {
   float awb[3];  // rgain, ggain, bgain

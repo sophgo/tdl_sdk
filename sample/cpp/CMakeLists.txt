@@ -81,5 +81,5 @@ foreach (fname ${SAMPLE_SRC_FILES})
   endif()
   install(TARGETS ${name} DESTINATION bin/cpp)
 endforeach ()
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/config DESTINATION .)
+
 

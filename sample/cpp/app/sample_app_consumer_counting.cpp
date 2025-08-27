@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
       // visualizeDetections(output_folder_path,
       // consumer_counting_result->frame_id,
       //                     consumer_counting_result->image,
-      //                     consumer_counting_result->head_person_boxes);
+      //                     consumer_counting_result->object_boxes);
 
       channel_counter[channel_name]++;
       std::cout << "export consumer counting result done" << std::endl;

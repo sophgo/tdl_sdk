@@ -298,7 +298,7 @@ exit0:
 }
 
 int main(int argc, char *argv[]) {
-  char *config_file = NULL;
+  char *config_file = NULL;  // sample/config/face_pet_cap_app_vi.json
   char *gallery_dir = NULL;
   char *output_dir = NULL;
   char *vi_chn = NULL;

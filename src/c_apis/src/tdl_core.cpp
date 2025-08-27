@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include "app/app_data_types.hpp"
 #include "common/common_types.hpp"
+#include "consumer_counting/consumer_counting_app.hpp"
 #include "tdl_type_internal.hpp"
 #include "tdl_utils.h"
 #include "tracker/tracker_types.hpp"
@@ -1369,9 +1370,8 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
   return 0;
 }
 
-int32_t TDL_APP_ConsumerCounting(TDLHandle handle, const char *channel_name,
-                                 TDLObject *object_meta, uint32_t *enter_num,
-                                 uint32_t *miss_num) {
+int32_t TDL_APP_ObjectCounting(TDLHandle handle, const char *channel_name,
+                               TDLObjectCountingInfo *object_counting_info) {
   TDLContext *context = (TDLContext *)handle;
   int ret = 0;
   if (context == nullptr) {
@@ -1379,6 +1379,12 @@ int32_t TDL_APP_ConsumerCounting(TDLHandle handle, const char *channel_name,
   }
   if (context->app_task == nullptr) {
     LOGE("app_task is not init\n");
+    return -1;
+  }
+
+  if (strstr(channel_name, "consumer_counting") == NULL &&
+      strstr(channel_name, "cross_detection") == NULL) {
+    LOGE("channel_name should contain consumer_counting or cross_detection\n");
     return -1;
   }
 
@@ -1405,32 +1411,91 @@ int32_t TDL_APP_ConsumerCounting(TDLHandle handle, const char *channel_name,
   std::shared_ptr<ConsumerCountingResult> consumer_counting_result =
       result.get<std::shared_ptr<ConsumerCountingResult>>();
   if (consumer_counting_result == nullptr) {
-    printf("capture_info is nullptr\n");
+    printf("consumer_counting_result is nullptr\n");
     return 1;
   }
 
-  if (consumer_counting_result->head_person_boxes.size() > 0) {
-    TDL_InitObjectMeta(object_meta,
-                       consumer_counting_result->head_person_boxes.size(), 0);
-    object_meta->width = consumer_counting_result->frame_width;
-    object_meta->height = consumer_counting_result->frame_height;
-    for (size_t i = 0; i < consumer_counting_result->head_person_boxes.size();
-         i++) {
-      object_meta->info[i].box.x1 =
-          consumer_counting_result->head_person_boxes[i].x1;
-      object_meta->info[i].box.y1 =
-          consumer_counting_result->head_person_boxes[i].y1;
-      object_meta->info[i].box.x2 =
-          consumer_counting_result->head_person_boxes[i].x2;
-      object_meta->info[i].box.y2 =
-          consumer_counting_result->head_person_boxes[i].y2;
-      object_meta->info[i].score =
-          consumer_counting_result->head_person_boxes[i].score;
+  object_counting_info->frame_id = consumer_counting_result->frame_id;
+  object_counting_info->frame_width = consumer_counting_result->frame_width;
+  object_counting_info->frame_height = consumer_counting_result->frame_height;
+  if (consumer_counting_result->image) {
+    TDLImageContext *image_context = new TDLImageContext();
+    image_context->image = consumer_counting_result->image;
+    object_counting_info->image = (TDLImage)image_context;
+  }
+
+  if (consumer_counting_result->object_boxes.size() > 0) {
+    TDL_InitObjectMeta(&object_counting_info->object_meta,
+                       consumer_counting_result->object_boxes.size(), 0);
+    object_counting_info->object_meta.width =
+        consumer_counting_result->frame_width;
+    object_counting_info->object_meta.height =
+        consumer_counting_result->frame_height;
+    for (size_t i = 0; i < consumer_counting_result->object_boxes.size(); i++) {
+      object_counting_info->object_meta.info[i].box.x1 =
+          consumer_counting_result->object_boxes[i].x1;
+      object_counting_info->object_meta.info[i].box.y1 =
+          consumer_counting_result->object_boxes[i].y1;
+      object_counting_info->object_meta.info[i].box.x2 =
+          consumer_counting_result->object_boxes[i].x2;
+      object_counting_info->object_meta.info[i].box.y2 =
+          consumer_counting_result->object_boxes[i].y2;
+      object_counting_info->object_meta.info[i].score =
+          consumer_counting_result->object_boxes[i].score;
+      object_counting_info->object_meta.info[i].is_cross = false;
     }
   }
 
-  *enter_num = consumer_counting_result->enter_num;
-  *miss_num = consumer_counting_result->miss_num;
+  for (int i = 0; i < consumer_counting_result->track_results.size(); i++) {
+    TrackerInfo track_info = consumer_counting_result->track_results[i];
+
+    if (track_info.obj_idx_ != -1) {
+      object_counting_info->object_meta.info[track_info.obj_idx_].track_id =
+          track_info.track_id_;
+
+      if (std::find(consumer_counting_result->cross_id.begin(),
+                    consumer_counting_result->cross_id.end(),
+                    track_info.track_id_) !=
+          consumer_counting_result->cross_id.end()) {
+        object_counting_info->object_meta.info[track_info.obj_idx_].is_cross =
+            true;
+      }
+    }
+  }
+
+  for (size_t i = 0; i < consumer_counting_result->counting_line.size(); i++) {
+    object_counting_info->counting_line[i] =
+        consumer_counting_result->counting_line[i];
+  }
+
+  object_counting_info->enter_num = consumer_counting_result->enter_num;
+  object_counting_info->miss_num = consumer_counting_result->miss_num;
 
   return 0;
+}
+
+int32_t TDL_APP_ObjectCountingSetLine(TDLHandle handle,
+                                      const char *channel_name, int x1, int y1,
+                                      int x2, int y2, int mode) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->app_task == nullptr) {
+    LOGE("app_task is not init\n");
+    return -1;
+  }
+
+  if (strstr(channel_name, "consumer_counting") != NULL) {
+    return (std::dynamic_pointer_cast<ConsumerCountingAPP>(context->app_task))
+        ->setLine(std::string(channel_name),
+                  std::string("consumer_counting_node"), x1, y1, x2, y2, mode);
+  } else if (strstr(channel_name, "cross_detection") != NULL) {
+    return (std::dynamic_pointer_cast<ConsumerCountingAPP>(context->app_task))
+        ->setLine(std::string(channel_name),
+                  std::string("cross_detection_node"), x1, y1, x2, y2, mode);
+  } else {
+    LOGE("channel_name should contain consumer_counting or cross_detection\n");
+    return -1;
+  }
 }

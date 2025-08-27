@@ -15,6 +15,7 @@ class PipelineNode {
   virtual ~PipelineNode();
   void setName(std::string name);
   std::string getNodeName() { return name_; }
+  Packet *getWorker() { return &worker_; }
   void setProcessFunc(
       std::function<int32_t(PtrFrameInfo &, Packet &)> process_func);
   virtual void registerChannel(PipelineChannel *p_chn);

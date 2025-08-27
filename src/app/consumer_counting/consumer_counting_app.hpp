@@ -15,17 +15,22 @@ class ConsumerCountingAPP : public AppTask {
                       int32_t frame_buffer_size,
                       const nlohmann::json &nodes_cfg);
   int32_t getResult(const std::string &pipeline_name, Packet &result) override;
+
+  int32_t setLine(const std::string &pipeline_name,
+                  const std::string &node_name, int x1, int y1, int x2, int y2,
+                  int mode);
   int32_t init() override;
   int32_t release() override;
 
  private:
   std::shared_ptr<PipelineNode> getVideoNode(const nlohmann::json &node_config);
-  std::shared_ptr<PipelineNode> getHeadPersonDetectionNode(
+  std::shared_ptr<PipelineNode> getObjectDetectionNode(
       const nlohmann::json &node_config);
   std::shared_ptr<PipelineNode> getTrackNode(const nlohmann::json &node_config);
   std::shared_ptr<PipelineNode> ConsumerCountingNode(
       const nlohmann::json &node_config);
-
+  std::shared_ptr<PipelineNode> CrossDetectionNode(
+      const nlohmann::json &node_config);
   std::string model_dir_;
 
   std::map<std::string, std::shared_ptr<BaseModel>> model_map_;

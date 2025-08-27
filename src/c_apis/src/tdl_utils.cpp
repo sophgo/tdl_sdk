@@ -340,6 +340,17 @@ int32_t TDL_ReleaseCaptureInfo(TDLCaptureInfo *capture_info) {
   return 0;
 }
 
+int32_t TDL_ReleaseObjectCountingInfo(
+    TDLObjectCountingInfo *obj_counting_info) {
+  TDL_ReleaseObjectMeta(&obj_counting_info->object_meta);
+
+  if (obj_counting_info->image) {
+    TDL_DestroyImage(obj_counting_info->image);
+  }
+
+  return 0;
+}
+
 int32_t TDL_CaculateSimilarity(const TDLFeature feature1,
                                const TDLFeature feature2, float *similarity) {
   *similarity = 0;

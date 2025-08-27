@@ -99,10 +99,10 @@ void *send_frame_thread(void *args) {
       ret = TDL_APP_SetFrame(pstArgs->tdl_handle, pstArgs->channel_names[i],
                              image, channel_frame_id[i], 3);
 
-      if (channel_frame_id[i] == 1000) {  // reset consumer counting line
+      if (channel_frame_id[i] == 1000) {  // reset cross detection line
         ret = TDL_APP_ObjectCountingSetLine(pstArgs->tdl_handle,
                                             pstArgs->channel_names[i], 480, 20,
-                                            480, 520, 0);
+                                            480, 520, 2);
         if (ret != 0) {
           printf("TDL_APP_ObjectCountingSetLine failed with %d\n", ret);
           continue;
@@ -138,13 +138,22 @@ void *run_tdl_thread(void *args) {
   rtsp_context.frame_height = VI_HEIGHT;
 #endif
 
+  int cross_count = 0;
   while (to_exit == false) {
     for (size_t i = 0; i < pstArgs->channel_size; i++) {
-      TDLObjectCountingInfo consumer_counting_info = {0};
+      TDLObjectCountingInfo cross_detection_info = {0};
 
       int ret =
           TDL_APP_ObjectCounting(pstArgs->tdl_handle, pstArgs->channel_names[i],
-                                 &consumer_counting_info);
+                                 &cross_detection_info);
+
+      for (int j = 0; j < cross_detection_info.object_meta.size; j++) {
+        TDLObjectInfo *obj_info = &cross_detection_info.object_meta.info[j];
+
+        if (obj_info->is_cross) {
+          cross_count += 1;
+        }
+      }
 
       if (ret == 1) {
         continue;
@@ -166,16 +175,16 @@ void *run_tdl_thread(void *args) {
         last_time_ms = cur_ts_ms;
         last_counter = counter;
 
-        printf("enter:%d, miss:%d\n", consumer_counting_info.enter_num,
-               consumer_counting_info.miss_num);
+        printf("cross num: %d\n", cross_count);
         printf(
             "+++++++++++++++++++++++++++++++++++ frame:%d, infer time:%.2f, "
             "fps:%.2f\n",
             (int)counter, infer_time, fps);
+        cross_count = 0;
       }
 
 #ifdef ENABLE_RTSP
-      TDLImage image = consumer_counting_info.image;
+      TDLImage image = cross_detection_info.image;
       TDL_WrapImage(image, &frame);
 
       TDLBrush brush = {0};
@@ -183,35 +192,25 @@ void *run_tdl_thread(void *args) {
       brush.color.r = 0;
       brush.color.g = 255;
       brush.color.b = 0;
-      for (int i = 0; i < consumer_counting_info.object_meta.size; i++) {
-        TDLObjectInfo *obj_info = &consumer_counting_info.object_meta.info[i];
-        snprintf(obj_info->name, sizeof(obj_info->name), "id:%d",
-                 obj_info->track_id);
+      for (int i = 0; i < cross_detection_info.object_meta.size; i++) {
+        TDLObjectInfo *obj_info = &cross_detection_info.object_meta.info[i];
+        snprintf(obj_info->name, sizeof(obj_info->name), "id:%d,is_cross:%d",
+                 obj_info->track_id, (int)obj_info->is_cross);
       }
-      TDL_DrawObjRect(&consumer_counting_info.object_meta, frame, true, brush);
+      TDL_DrawObjRect(&cross_detection_info.object_meta, frame, true, brush);
 
       brush.color.r = 255;
       brush.color.g = 0;
 
       char line_start[128] = {0};
       snprintf(line_start, sizeof(line_start), "start");  // TODO: TDL_DrawLine
-      TDL_ObjectWriteText(line_start, consumer_counting_info.counting_line[0],
-                          consumer_counting_info.counting_line[1], frame,
-                          brush);
+      TDL_ObjectWriteText(line_start, cross_detection_info.counting_line[0],
+                          cross_detection_info.counting_line[1], frame, brush);
 
       char line_end[128] = {0};
       snprintf(line_end, sizeof(line_end), "end");
-      TDL_ObjectWriteText(line_end, consumer_counting_info.counting_line[2],
-                          consumer_counting_info.counting_line[3], frame,
-                          brush);
-
-      brush.color.r = 0;
-      brush.color.g = 255;
-      char text[128] = {0};
-      snprintf(text, sizeof(text), "enter_num:%d, miss_num:%d",
-               consumer_counting_info.enter_num,
-               consumer_counting_info.miss_num);
-      TDL_ObjectWriteText(text, 50, 50, frame, brush);
+      TDL_ObjectWriteText(line_end, cross_detection_info.counting_line[2],
+                          cross_detection_info.counting_line[3], frame, brush);
 
       ret = TDL_SendFrameRTSP(frame, &rtsp_context);
       if (ret != 0) {
@@ -220,7 +219,7 @@ void *run_tdl_thread(void *args) {
       }
 #endif
 
-      TDL_ReleaseObjectCountingInfo(&consumer_counting_info);
+      TDL_ReleaseObjectCountingInfo(&cross_detection_info);
       TDL_ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
       TDLImage img = TDL_Image_Dequeue(&image_queue);
       if (img) {
@@ -239,7 +238,7 @@ exit0:
 }
 
 int main(int argc, char *argv[]) {
-  char *config_file = NULL;  // sample/config/consumer_counting_app_vi.json
+  char *config_file = NULL;  // sample/config/cross_detection_app_vi.json
   int vi_chn = 0;
 
   struct option long_options[] = {
@@ -285,14 +284,14 @@ int main(int argc, char *argv[]) {
   char **channel_names = NULL;
   uint8_t channel_size = 0;
   int ret =
-      TDL_InitCamera(tdl_handle, VI_WIDTH, VI_HEIGHT, TDL_IMAGE_YUV420SP_UV, 3);
+      TDL_InitCamera(tdl_handle, VI_WIDTH, VI_HEIGHT, TDL_IMAGE_YUV420SP_VU, 3);
   if (ret != 0) {
     printf("TDL_InitCamera %#x!\n", ret);
     return ret;
   }
 
-  ret = TDL_APP_Init(tdl_handle, "consumer_counting", config_file,
-                     &channel_names, &channel_size);
+  ret = TDL_APP_Init(tdl_handle, "cross_detection", config_file, &channel_names,
+                     &channel_size);
   if (ret != 0) {
     printf("TDL_APP_Init failed with %#x!\n", ret);
     goto exit0;

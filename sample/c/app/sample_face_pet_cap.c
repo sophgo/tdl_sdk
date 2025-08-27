@@ -28,7 +28,7 @@ void print_usage(const char *prog_name) {
 }
 
 int main(int argc, char *argv[]) {
-  char *config_file = NULL;
+  char *config_file = NULL;  // sample/config/face_pet_cap_app.json
   char *gallery_dir = NULL;
   char *output_dir = NULL;
 

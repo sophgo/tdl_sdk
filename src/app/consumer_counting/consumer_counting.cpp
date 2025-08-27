@@ -6,6 +6,11 @@
 
 ConsumerCounting::ConsumerCounting(int A_x, int A_y, int B_x, int B_y,
                                    int mode) {
+  set_counting_line(A_x, A_y, B_x, B_y, mode);
+}
+
+uint32_t ConsumerCounting::set_counting_line(int A_x, int A_y, int B_x, int B_y,
+                                             int mode) {
   A_x_ = A_x;
   A_y_ = A_y;
   B_x_ = B_x;
@@ -14,7 +19,10 @@ ConsumerCounting::ConsumerCounting(int A_x, int A_y, int B_x, int B_y,
 
   // 对于竖直线，从左到右为进入，对于非竖直线，从上到下为进入
 
-  assert(mode == 0 || mode == 1);
+  assert(mode == 0 || mode == 1 || mode == 2);
+  if (mode == 2) {
+    mode = 0;
+  }
 
   int dx = B_x_ - A_x_;
   int dy = B_y_ - A_y_;
@@ -38,6 +46,16 @@ ConsumerCounting::ConsumerCounting(int A_x, int A_y, int B_x, int B_y,
   }
 
   LOGI("normal_vector: x: %f. y: %f\n", normal_vector_x_, normal_vector_y_);
+
+  return 0;
+}
+
+uint32_t ConsumerCounting::get_counting_line(std::vector<int> &counting_line) {
+  counting_line.push_back(A_x_);
+  counting_line.push_back(A_y_);
+  counting_line.push_back(B_x_);
+  counting_line.push_back(B_y_);
+  return 0;
 }
 
 float ConsumerCounting::crossProduct(float A_x, float A_y, float B_x, float B_y,
@@ -79,7 +97,29 @@ int32_t ConsumerCounting::consumer_counting(float old_x, float old_y,
   return 0;
 }
 
-int32_t ConsumerCounting::update_state(
+bool ConsumerCounting::object_cross(float old_x, float old_y, float cur_x,
+                                    float cur_y, Consumer &it) {
+  bool is_cross = false;
+  if (isLineIntersect(old_x, old_y, cur_x, cur_y)) {
+    float tmp_x = cur_x - old_x;
+    float tmp_y = cur_y - old_y;
+
+    if ((tmp_x * normal_vector_x_ + tmp_y * normal_vector_y_ > 0) &&
+        !it.is_cross) {
+      it.counting_gap = 0;
+      is_cross = true;
+    } else if (mode_ == 2 &&
+               (tmp_x * normal_vector_x_ + tmp_y * normal_vector_y_ < 0) &&
+               !it.is_cross) {
+      it.counting_gap = 0;
+      is_cross = true;
+    }
+  }
+
+  return is_cross;
+}
+
+int32_t ConsumerCounting::update_consumer_counting_state(
     const std::vector<TrackerInfo> &track_results) {
   std::map<uint64_t, int> head_index;
   std::map<uint64_t, int> person_index;
@@ -196,6 +236,75 @@ int32_t ConsumerCounting::update_state(
       new_consumer.old_y = box_info.y1 * 1.2;
       persons_[track_id] = new_consumer;
     }
+  }
+
+  return 0;
+}
+
+int32_t ConsumerCounting::update_cross_detection_state(
+    const std::vector<TrackerInfo> &track_results,
+    std::vector<uint64_t> &cross_id) {
+  cross_id.clear();
+  std::map<uint64_t, int> object_index;
+  std::vector<int> new_index;
+
+  for (size_t i = 0; i < track_results.size(); i++) {
+    const TrackerInfo &t = track_results[i];
+
+    uint64_t track_id = t.track_id_;
+
+    if (t.status_ == TrackStatus::NEW) {
+      new_index.push_back(i);
+    } else {
+      object_index[track_id] = i;
+    }
+  }
+
+  for (auto it = objects_.begin(); it != objects_.end();) {
+    if (object_index.count(it->first) == 0) {
+      it->second.unmatched_times += 1;
+      it->second.counting_gap =
+          std::min(counting_gap_, it->second.counting_gap + 1);
+
+      if (it->second.unmatched_times == MAX_UNMATCHED_TIME) {
+        it = objects_.erase(it);
+      }
+
+    } else {
+      const TrackerInfo &track_info = track_results[object_index[it->first]];
+      uint64_t pair_id = track_info.pair_track_idx_;
+
+      if (it->second.counting_gap == counting_gap_ &&
+          track_info.obj_idx_ != -1) {
+        ObjectBoxInfo box_info = track_info.box_info_;
+        float cur_x = (box_info.x1 + box_info.x2) / 2.0;
+        float cur_y = (box_info.y1 + box_info.y2) / 2.0;
+
+        bool is_cross = object_cross(it->second.old_x, it->second.old_y, cur_x,
+                                     cur_y, it->second);
+        it->second.old_x = cur_x;
+        it->second.old_y = cur_y;
+        if (is_cross) {
+          cross_id.push_back(it->first);
+        }
+      }
+
+      it->second.unmatched_times = 0;
+      it->second.counting_gap =
+          std::min(counting_gap_, it->second.counting_gap + 1);
+      it++;
+    }
+  }
+
+  for (uint32_t i = 0; i < new_index.size(); i++) {
+    const TrackerInfo &t = track_results[new_index[i]];
+    ObjectBoxInfo box_info = t.box_info_;
+
+    uint64_t track_id = t.track_id_;
+    Consumer new_consumer = {0};
+    new_consumer.old_x = (box_info.x1 + box_info.x2) / 2.0;
+
+    objects_[track_id] = new_consumer;
   }
 
   return 0;

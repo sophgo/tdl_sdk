@@ -29,6 +29,7 @@ class PipelineChannel {
     clear_frame_func_ = clear_frame_func;
   }
   std::string name() { return name_; }
+  std::shared_ptr<PipelineNode> getNode(const std::string &node_name);
 
  private:
   BlockingQueue<PtrFrameInfo> final_queue_;

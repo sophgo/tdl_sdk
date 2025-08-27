@@ -113,6 +113,16 @@ std::string PipelineChannel::getNodeName(size_t index) {
   }
 }
 
+std::shared_ptr<PipelineNode> PipelineChannel::getNode(
+    const std::string &node_name) {
+  for (auto &node : nodes_) {
+    if (node->getNodeName() == node_name) {
+      return node;
+    }
+  }
+  return nullptr;
+}
+
 int32_t PipelineChannel::setPipelineFrame(PtrFrameInfo frame_info) {
   if (nodes_[0]->getNodeName() == "video_node") {
     LOGE("failed to setPipelineFrame with nodes_[0] = video_node\n");

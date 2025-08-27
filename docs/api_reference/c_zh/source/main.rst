@@ -1098,7 +1098,7 @@ TDL_DestroyHandle
      - 需要销毁的 TDLHandle 对象
 
 TDL_DestroyHandleEx
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 【语法】
 
@@ -2525,22 +2525,61 @@ TDL_APP_Capture
      - capture_info
      - 抓拍结果
 
-TDL_APP_ConsumerCounting
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+TDL_APP_ObjectCounting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 【语法】
 
 .. code-block:: c
 
-  int32_t TDL_APP_ConsumerCounting(TDLHandle handle,
+  int32_t TDL_APP_ObjectCounting(TDLHandle handle,
                                    const char *channel_name,
-                                   TDLObject *object_meta,
-                                   uint32_t *enter_num,
-                                   uint32_t *miss_num);
+                                   TDLObjectCountingInfo *object_counting_info);
 
 【描述】
 
-执行客流统计任务。
+执行客流统计(TDL_APP_Init task 为consumer_counting)或越界检测任务(TDL_APP_Init task 为cross_detection)
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据类型
+     - 参数名称
+     - 描述
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const char*
+     - channel_name
+     - 当前通道名称
+
+   * - 输出
+     - TDLObjectCountingInfo*
+     - object_counting_info
+     - 统计/检测结果
+
+TDL_APP_ObjectCountingSetLine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_APP_ObjectCountingSetLine(TDLHandle handle,
+                                          const char *channel_name, int x1,
+                                          int y1, int x2, int y2, int mode);
+
+【描述】
+
+客流统计或越界检测运行过程中重新设置画线位置。
 
 【参数】
 
@@ -2564,19 +2603,29 @@ TDL_APP_ConsumerCounting
      - 当前通道名称
 
    * - 输入
-     - TDLObject*
-     - object_meta
-     - 检测结果
+     - int
+     - x1
+     - 端点1横坐标
 
-   * - 输出
-     - uint32_t*
-     - enter_num
-     - 进入人数
+   * - 输入
+     - int
+     - y1
+     - 端点1纵坐标
 
-   * - 输出
-     - uint32_t*
-     - miss_num
-     - 离开人数
+   * - 输入
+     - int
+     - x2
+     - 端点2横坐标
+
+   * - 输入
+     - int
+     - y2
+     - 端点2纵坐标
+
+   * - 输入
+     - int
+     - mode
+     - 对于客流统计: mode为0时, 对于竖直线, 从左到右为进入, 对于非竖直线,从上到下为进入, mode为1相反。对于越界检测: mode为0时, 对于竖直线, 从左到右为越过, 对于非竖直线,从上到下为越过, mode为1相反, mode为2双向检测
 
 TDL_WrapImage
 ~~~~~~~~~~~~~~~~~~~~~

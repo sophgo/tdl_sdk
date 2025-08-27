@@ -53,8 +53,10 @@ struct ConsumerCountingResult {
   uint32_t enter_num;
   uint32_t miss_num;
   std::shared_ptr<BaseImage> image;
-  std::vector<ObjectBoxInfo> head_person_boxes;
+  std::vector<ObjectBoxInfo> object_boxes;
   std::vector<TrackerInfo> track_results;
+  std::vector<uint64_t> cross_id;
+  std::vector<int> counting_line;
 };
 
 #endif

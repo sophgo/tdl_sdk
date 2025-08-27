@@ -42,10 +42,25 @@ int32_t ConsumerCountingAPP::init() {
   return 0;
 }
 
+int32_t ConsumerCountingAPP::setLine(const std::string &pipeline_name,
+                                     const std::string &node_name, int x1,
+                                     int y1, int x2, int y2, int mode) {
+  std::shared_ptr<PipelineNode> node =
+      pipeline_channels_[pipeline_name]->getNode(node_name);
+
+  Packet *packet = node->getWorker();
+
+  std::shared_ptr<ConsumerCounting> consumer_counting =
+      packet->get<std::shared_ptr<ConsumerCounting>>();
+
+  consumer_counting->set_counting_line(x1, y1, x2, y2, mode);
+  return 0;
+}
+
 int32_t ConsumerCountingAPP::addPipeline(const std::string &pipeline_name,
                                          int32_t frame_buffer_size,
                                          const nlohmann::json &nodes_cfg) {
-  std::shared_ptr<PipelineChannel> face_capture_channel =
+  std::shared_ptr<PipelineChannel> consumer_counting_channel =
       std::make_shared<PipelineChannel>(pipeline_name, frame_buffer_size);
   auto get_config = [](const std::string &key, const nlohmann::json &node_cfg) {
     if (node_cfg.contains(key)) {
@@ -56,20 +71,27 @@ int32_t ConsumerCountingAPP::addPipeline(const std::string &pipeline_name,
 
 #ifdef VIDEO_ENABLE
   if (nodes_cfg.contains("video_node")) {
-    face_capture_channel->addNode(
+    consumer_counting_channel->addNode(
         getVideoNode(get_config("video_node", nodes_cfg)));
-    face_capture_channel->setExternalFrame(false);
+    consumer_counting_channel->setExternalFrame(false);
   }
 #endif
 
-  face_capture_channel->addNode(getHeadPersonDetectionNode(
-      get_config("head_person_detection_node", nodes_cfg)));
-  face_capture_channel->addNode(
+  consumer_counting_channel->addNode(
+      getObjectDetectionNode(get_config("object_detection_node", nodes_cfg)));
+  consumer_counting_channel->addNode(
       getTrackNode(get_config("track_node", nodes_cfg)));
-  face_capture_channel->addNode(
-      ConsumerCountingNode(get_config("consumer_counting_node", nodes_cfg)));
-  face_capture_channel->start();
-  pipeline_channels_[pipeline_name] = face_capture_channel;
+
+  if (nodes_cfg.contains("consumer_counting_node")) {
+    consumer_counting_channel->addNode(
+        ConsumerCountingNode(get_config("consumer_counting_node", nodes_cfg)));
+  } else if (nodes_cfg.contains("cross_detection_node")) {
+    consumer_counting_channel->addNode(
+        CrossDetectionNode(get_config("cross_detection_node", nodes_cfg)));
+  }
+
+  consumer_counting_channel->start();
+  pipeline_channels_[pipeline_name] = consumer_counting_channel;
 
   auto lambda_clear_func = [](PtrFrameInfo &frame_info) {
     frame_info->frame_id_ = 0;
@@ -83,7 +105,7 @@ int32_t ConsumerCountingAPP::addPipeline(const std::string &pipeline_name,
       }
     }
   };
-  face_capture_channel->setClearFrameFunc(lambda_clear_func);
+  consumer_counting_channel->setClearFrameFunc(lambda_clear_func);
   LOGI("add pipeline %s", pipeline_name.c_str());
   return 0;
 }
@@ -105,14 +127,25 @@ int32_t ConsumerCountingAPP::getResult(const std::string &pipeline_name,
   consumer_counting_result->frame_id = frame_info->frame_id_;
   consumer_counting_result->frame_width = image->getWidth();
   consumer_counting_result->frame_height = image->getHeight();
-  consumer_counting_result->head_person_boxes =
-      getNodeData<std::vector<ObjectBoxInfo>>("head_person_meta", frame_info);
+  consumer_counting_result->object_boxes =
+      getNodeData<std::vector<ObjectBoxInfo>>("object_meta", frame_info);
   consumer_counting_result->track_results =
       getNodeData<std::vector<TrackerInfo>>("track_results", frame_info);
-  std::vector<uint32_t> counting_result =
-      getNodeData<std::vector<uint32_t>>("counting_result", frame_info);
-  consumer_counting_result->enter_num = counting_result[0];
-  consumer_counting_result->miss_num = counting_result[1];
+  consumer_counting_result->counting_line =
+      getNodeData<std::vector<int>>("counting_line", frame_info);
+
+  if (frame_info->node_data_.find("counting_result") !=
+      frame_info->node_data_.end()) {
+    std::vector<uint32_t> counting_result =
+        getNodeData<std::vector<uint32_t>>("counting_result", frame_info);
+    consumer_counting_result->enter_num = counting_result[0];
+    consumer_counting_result->miss_num = counting_result[1];
+  }
+
+  if (frame_info->node_data_.find("cross_id") != frame_info->node_data_.end()) {
+    consumer_counting_result->cross_id =
+        getNodeData<std::vector<uint64_t>>("cross_id", frame_info);
+  }
 
   if (getChannelNodeName(pipeline_name, 0) == "video_node") {
     pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));
@@ -176,22 +209,31 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::getVideoNode(
 }
 #endif
 
-std::shared_ptr<PipelineNode> ConsumerCountingAPP::getHeadPersonDetectionNode(
+std::shared_ptr<PipelineNode> ConsumerCountingAPP::getObjectDetectionNode(
     const nlohmann::json &node_config) {
-  std::shared_ptr<BaseModel> head_person_detection_model = nullptr;
-  if (model_map_.count("head_person_detection")) {
-    head_person_detection_model = model_map_["head_person_detection"];
+  std::shared_ptr<BaseModel> object_detection_model = nullptr;
+  if (model_map_.count(node_config["model"])) {
+    object_detection_model = model_map_[node_config["model"]];
   } else {
-    head_person_detection_model = TDLModelFactory::getInstance().getModel(
-        ModelType::YOLOV8N_DET_HEAD_PERSON);
-    model_map_["head_person_detection"] = head_person_detection_model;
+    if (node_config.at("model") == "head_person_detection") {
+      object_detection_model = TDLModelFactory::getInstance().getModel(
+          ModelType::YOLOV8N_DET_HEAD_PERSON);
+    } else if (node_config.at("model") == "person_vehicle_detection") {
+      object_detection_model = TDLModelFactory::getInstance().getModel(
+          ModelType::YOLOV8N_DET_PERSON_VEHICLE);
+    } else {
+      LOGE("Unsupported model type: %s\n",
+           node_config.at("model").get<std::string>().c_str());
+      return NULL;
+    }
+    model_map_[node_config.at("model")] = object_detection_model;
   }
-  std::shared_ptr<PipelineNode> head_person_detection_node =
-      node_factory_.createModelNode(head_person_detection_model);
-  head_person_detection_node->setName("head_person_detection_node");
+  std::shared_ptr<PipelineNode> object_detection_node =
+      node_factory_.createModelNode(object_detection_model);
+  object_detection_node->setName("object_detection_node");
 
   auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
-    std::shared_ptr<BaseModel> head_person_detection_model =
+    std::shared_ptr<BaseModel> object_detection_model =
         packet.get<std::shared_ptr<BaseModel>>();
     auto image =
         frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
@@ -200,25 +242,24 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::getHeadPersonDetectionNode(
       return -1;
     }
     std::shared_ptr<ModelOutputInfo> out_data = nullptr;
-    int32_t ret = head_person_detection_model->inference(image, out_data);
+    int32_t ret = object_detection_model->inference(image, out_data);
     if (ret != 0) {
-      std::cout << "head_person_detection_model process failed" << std::endl;
+      std::cout << "object_detection_model process failed" << std::endl;
       assert(false);
     }
-    std::shared_ptr<ModelBoxInfo> head_person_meta =
+    std::shared_ptr<ModelBoxInfo> object_meta =
         std::dynamic_pointer_cast<ModelBoxInfo>(out_data);
-    frame_info->node_data_["head_person_meta"] =
-        Packet::make(head_person_meta->bboxes);
+    frame_info->node_data_["object_meta"] = Packet::make(object_meta->bboxes);
     return 0;
   };
-  head_person_detection_node->setProcessFunc(lambda_func);
+  object_detection_node->setProcessFunc(lambda_func);
 
   if (node_config.contains("config_thresh")) {
     double thresh = node_config.at("config_thresh");
-    head_person_detection_model->setModelThreshold(thresh);
+    object_detection_model->setModelThreshold(thresh);
   }
 
-  return head_person_detection_node;
+  return object_detection_node;
 }
 
 std::shared_ptr<PipelineNode> ConsumerCountingAPP::getTrackNode(
@@ -242,12 +283,11 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::getTrackNode(
     std::shared_ptr<Tracker> tracker = packet.get<std::shared_ptr<Tracker>>();
     tracker->setImgSize(image->getWidth(), image->getHeight());
 
-    const std::vector<ObjectBoxInfo> &head_person_infos =
-        frame_info->node_data_["head_person_meta"]
-            .get<std::vector<ObjectBoxInfo>>();
+    const std::vector<ObjectBoxInfo> &object_infos =
+        frame_info->node_data_["object_meta"].get<std::vector<ObjectBoxInfo>>();
 
     std::vector<ObjectBoxInfo> bbox_infos;
-    for (auto &obj_info : head_person_infos) {
+    for (auto &obj_info : object_infos) {
       bbox_infos.push_back(obj_info);
     }
     std::vector<TrackerInfo> track_results;
@@ -268,6 +308,8 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::ConsumerCountingNode(
   int x2 = node_config["x2"];
   int y2 = node_config["y2"];
 
+  std::vector<int> counting_line = {x1, y1, x2, y2};
+
   std::shared_ptr<ConsumerCounting> consumer_counting =
       std::make_shared<ConsumerCounting>(x1, y1, x2, y2, mode);
 
@@ -282,7 +324,11 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::ConsumerCountingNode(
     std::shared_ptr<ConsumerCounting> consumer_counting =
         packet.get<std::shared_ptr<ConsumerCounting>>();
 
-    consumer_counting->update_state(track_results);
+    std::vector<int> counting_line;
+    consumer_counting->get_counting_line(counting_line);
+    frame_info->node_data_["counting_line"] = Packet::make(counting_line);
+
+    consumer_counting->update_consumer_counting_state(track_results);
 
     std::vector<uint32_t> counting_result;
 
@@ -295,4 +341,40 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::ConsumerCountingNode(
   };
   consumer_counting_node->setProcessFunc(lambda_func);
   return consumer_counting_node;
+}
+
+std::shared_ptr<PipelineNode> ConsumerCountingAPP::CrossDetectionNode(
+    const nlohmann::json &node_config) {
+  int mode = node_config["mode"];
+  int x1 = node_config["x1"];
+  int y1 = node_config["y1"];
+  int x2 = node_config["x2"];
+  int y2 = node_config["y2"];
+
+  std::shared_ptr<ConsumerCounting> cross_detection =
+      std::make_shared<ConsumerCounting>(x1, y1, x2, y2, mode);
+
+  std::shared_ptr<PipelineNode> cross_detection_node =
+      std::make_shared<PipelineNode>(Packet::make(cross_detection));
+  cross_detection_node->setName("cross_detection_node");
+
+  auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
+    const std::vector<TrackerInfo> &track_results =
+        frame_info->node_data_["track_results"].get<std::vector<TrackerInfo>>();
+
+    std::shared_ptr<ConsumerCounting> cross_detection =
+        packet.get<std::shared_ptr<ConsumerCounting>>();
+    std::vector<int> counting_line;
+    cross_detection->get_counting_line(counting_line);
+    frame_info->node_data_["counting_line"] = Packet::make(counting_line);
+
+    std::vector<uint64_t> cross_id;
+    cross_detection->update_cross_detection_state(track_results, cross_id);
+
+    frame_info->node_data_["cross_id"] = Packet::make(cross_id);
+
+    return 0;
+  };
+  cross_detection_node->setProcessFunc(lambda_func);
+  return cross_detection_node;
 }

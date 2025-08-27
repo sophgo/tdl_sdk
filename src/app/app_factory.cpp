@@ -14,6 +14,8 @@ std::shared_ptr<AppTask> AppFactory::createAppTask(
     return std::make_shared<FallDetectionApp>(task_name, json_config_file);
   } else if (task_name == "consumer_counting") {
     return std::make_shared<ConsumerCountingAPP>(task_name, json_config_file);
+  } else if (task_name == "cross_detection") {
+    return std::make_shared<ConsumerCountingAPP>(task_name, json_config_file);
   }
   return nullptr;
 }
