@@ -4,15 +4,6 @@
 #include <bmruntime_interface.h>
 
 #include "net/base_net.hpp"
-class ModelInstance {
- public:
-  ModelInstance() {}
-
-  ~ModelInstance();
-
-  static void* get_model_bmrt(const std::string& model_path, int device_id);
-  std::map<std::string, void*> model_bmrts_;
-};
 
 class BM168xNet : public BaseNet {
  public:

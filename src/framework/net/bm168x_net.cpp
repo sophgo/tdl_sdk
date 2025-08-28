@@ -9,43 +9,8 @@
 #include "memory/bm_memory_pool.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
-ModelInstance::~ModelInstance() {
-  for (auto kv : model_bmrts_) {
-    if (kv.second) {
-      bmrt_destroy(kv.second);
-      LOGI("model %s destroyed", kv.first.c_str());
-    }
-  }
-  model_bmrts_.clear();
-}
 
-void *ModelInstance::get_model_bmrt(const std::string &model_path,
-                                    int device_id) {
-  static ModelInstance inst;
-  std::string str_model_flag =
-      model_path + std::string("_device_") + std::to_string(device_id);
-  LOGI("to get_model_bmrt: %s", str_model_flag.c_str());
-  if (inst.model_bmrts_.count(str_model_flag) == 0) {
-    bm_handle_t handle = BMContext::cnn_bm168x_handle(device_id);
-    if (handle == nullptr) {
-      LOGE("get handle failed,device_id:%d", device_id);
-    }
-    void *p_bmrt = bmrt_create(handle);
-    bool flag = bmrt_load_bmodel(p_bmrt, model_path.c_str());
-    if (!flag) {
-      LOGE("model %s load failed", model_path.c_str());
-    }
-    inst.model_bmrts_[str_model_flag] = p_bmrt;
-  }
-  LOGI("get_model_bmrt: %s,%0x", str_model_flag.c_str(),
-       inst.model_bmrts_[str_model_flag]);
-  return inst.model_bmrts_[str_model_flag];
-}
-
-BM168xNet::BM168xNet(const NetParam &net_param) : BaseNet(net_param) {
-  // p_bmrt_ = ModelInstance::get_model_bmrt(net_param.model_file_path,
-  //                                         net_param.device_id);
-}
+BM168xNet::BM168xNet(const NetParam &net_param) : BaseNet(net_param) {}
 
 BM168xNet::~BM168xNet() {
   if (input_tensors_) {
@@ -56,6 +21,7 @@ BM168xNet::~BM168xNet() {
     delete[] output_tensors_;
     output_tensors_ = 0;
   }
+  bmrt_destroy(p_bmrt_);
   p_bmrt_ = 0;
   net_info_ = 0;
   LOGI("destroy 168xnet:%s", net_name_.c_str());
@@ -76,8 +42,11 @@ int32_t BM168xNet::setup() {
   memory_pool_ = std::make_shared<BmMemoryPool>(bm_handle_);
 
   LOGI("toxxx get_model_bmrt: %s", net_param_.model_file_path.c_str());
-  p_bmrt_ =
-      ModelInstance::get_model_bmrt(net_param_.model_file_path, device_id);
+  p_bmrt_ = bmrt_create(bm_handle_);
+  bool flag = bmrt_load_bmodel(p_bmrt_, net_param_.model_file_path.c_str());
+  if (!flag) {
+    LOGE("model %s load failed", net_param_.model_file_path.c_str());
+  }
   LOGI("getxxx_model_bmrt: %s,%0x", net_param_.model_file_path.c_str(),
        p_bmrt_);
   // if name was not set,use the name inside bmodel as default
