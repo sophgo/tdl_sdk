@@ -3,17 +3,72 @@
 模型列表
 ================
 
+检测类模型列表
+~~~~~~~~~~~~~~~
+
 .. list-table::
-   :widths: 1 1 
+   :widths: 10 9
 
    * - 模型名称
      - 注释
 
    * - TDL_MODEL_MBV2_DET_PERSON
-     - 人体检测模型
+     - 人体检测模型(0:person)
+
+   * - TDL_MODEL_YOLOV8N_DET_HAND
+     - 手部检测模型(0:hand)
+
+   * - TDL_MODEL_YOLOV8N_DET_PET \
+       _PERSON
+     - 宠物与人检测模型 (0:猫, 1:狗, 2:人)
+
+   * - TDL_MODEL_YOLOV8N_DET_PERSON \
+       _VEHICLE
+     - 人与车辆检测模型 (0:车, 1:公交, 2:卡车, 3:骑摩托车者, 4:人, 5:自行车, 6:摩托车)
+
+   * - TDL_MODEL_YOLOV8N_DET_HAND \
+       _FACE_PERSON
+     - 手、脸与人检测模型 (0:手, 1:脸, 2:人)
+
+   * - TDL_MODEL_YOLOV8N_DET_HEAD
+       _PERSON
+     - 人头检测模型 (0:人, 1:头)
+
+   * - TDL_MODEL_YOLOV8N_DET_HEAD \
+       _HARDHAT
+     - 头部与安全帽检测模型 (0:头, 1:安全帽)
+
+   * - TDL_MODEL_YOLOV8N_DET_FIRE \
+       _SMOKE
+     - 火与烟检测模型 (0:火, 1:烟)
+
+   * - TDL_MODEL_YOLOV8N_DET_FIRE
+     - 火检测模型 (0:火)
+
+   * - TDL_MODEL_YOLOV8N_DET_HEAD \
+       _SHOULDER
+     - 头肩检测模型 (0:头肩)
+
+   * - TDL_MODEL_YOLOV8N_DET_LICENSE \
+       _PLATE
+     - 车牌检测模型 (0:车牌)
+
+   * - TDL_MODEL_YOLOV8N_DET_TRAFFIC \
+       _LIGHT
+     - 交通信号灯检测模型 (0:红, 1:黄, 2:绿, 3:关闭, 4:等待)
+
+   * - TDL_MODEL_YOLOV8N_DET_MONITOR \
+       _PERSON
+     - 人体检测模型(0:person)
 
    * - TDL_MODEL_YOLOV5_DET_COCO80
      - YOLOv5 COCO80检测模型
+
+   * - TDL_MODEL_YOLOV6_DET_COCO80
+     - YOLOv6 COCO80检测模型
+
+   * - TDL_MODEL_YOLOV7_DET_COCO80
+     - YOLOv7 COCO80检测模型
 
    * - TDL_MODEL_YOLOV8_DET_COCO80
      - YOLOv8 COCO80检测模型
@@ -21,65 +76,64 @@
    * - TDL_MODEL_YOLOV10_DET_COCO80
      - YOLOv10 COCO80检测模型
 
-   * - TDL_MODEL_YOLOV8N_DET_HAND
-     - 手部检测模型
+   * - TDL_MODEL_PPYOLOE_DET_COCO80
+     - PPYOLOE COCO80检测模型
 
-   * - TDL_MODEL_YOLOV8N_DET_PET_PERSON
-     - 宠物与人检测模型 (0:猫, 1:狗, 2:人)
+   * - TDL_MODEL_YOLOX_DET_COCO80
+     - YOLOX COCO80检测模型
 
-   * - TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE
-     - 人与车辆检测模型 (0:车, 1:公交, 2:卡车, 3:骑摩托车者, 4:人, 5:自行车, 6:摩托车)
 
-   * - TDL_MODEL_YOLOV8N_DET_HAND_FACE_PERSON
-     - 手、脸与人检测模型 (0:手, 1:脸, 2:人)
+人脸识别类模型列表
+~~~~~~~~~~~~~~~~~~~
 
-   * - TDL_MODEL_YOLOV8N_DET_HEAD_PERSON
-     - 人头检测模型 (0:人, 1:头)
+.. list-table::
+   :widths: 10 9
 
-   * - TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT
-     - 头部与安全帽检测模型 (0:头, 1:安全帽)
-
-   * - TDL_MODEL_YOLOV8N_DET_FIRE_SMOKE
-     - 火与烟检测模型 (0:火, 1:烟)
-
-   * - TDL_MODEL_YOLOV8N_DET_FIRE
-     - 火检测模型 (0:火)
-
-   * - TDL_MODEL_YOLOV8N_DET_HEAD_SHOULDER
-     - 头肩检测模型 (0:头肩)
-
-   * - TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE
-     - 车牌检测模型 (0:车牌)
-
-   * - TDL_MODEL_YOLOV8N_DET_TRAFFIC_LIGHT
-     - 交通信号灯检测模型 (0:红, 1:黄, 2:绿, 3:关闭, 4:等待)
+   * - 模型名称
+     - 注释
 
    * - TDL_MODEL_SCRFD_DET_FACE
-     - 人脸检测模型 (0:人脸 + 关键点)
+     - SCRFD 人脸检测模型 (0:人脸 + 关键点)
 
    * - TDL_MODEL_RETINA_DET_FACE
-     - 人脸检测模型
+     - RETINA 人脸检测模型
 
    * - TDL_MODEL_RETINA_DET_FACE_IR
-     - 红外人脸检测模型
+     - RETINA 红外人脸检测模型
+
+人脸属性和特征点类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - 模型名称
+     - 注释
 
    * - TDL_MODEL_KEYPOINT_FACE_V2
      - 5个关键点 + 模糊评分的人脸检测模型
 
-   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER \
+       _AGE_GLASS
      - 人脸属性分类模型 (年龄, 性别, 眼镜)
 
-   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER \
+       _AGE_GLASS_MASK
      - 人脸属性分类模型 (年龄, 性别, 眼镜, 口罩)
 
-   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER \
+       _AGE_GLASS_EMOTION
      - 人脸属性分类模型 (年龄, 性别, 眼镜, 情绪)
 
-   * - TDL_MODEL_FEATURE_BMFACE_R34
-     - ResNet34 512维特征提取模型
 
-   * - TDL_MODEL_FEATURE_BMFACE_R50
-     - ResNet50 512维特征提取模型
+图像分类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - 模型名称
+     - 注释
 
    * - TDL_MODEL_CLS_MASK
      - 口罩检测模型 (0:戴口罩, 1:不戴口罩)
@@ -88,53 +142,129 @@
      - 活体检测模型 (0:活体, 1:伪造)
 
    * - TDL_MODEL_CLS_ISP_SCENE
-     - ISP场景分类模型
+     - ISP场景分类模型("0:雪, 1:雾, 2:逆光, 3:草, 4:普通场景")
 
    * - TDL_MODEL_CLS_HAND_GESTURE
      - 手势分类模型 (0:拳头, 1:五指, 2:无, 3:二)
 
-   * - TDL_MODEL_CLS_KEYPOINT_HAND_GESTURE
+   * - TDL_MODEL_CLS_KEYPOINT_HAND \
+       _GESTURE
      - 手势关键点分类模型 (0:拳头, 1:五指, 2:四指, 3:无, 4:好, 5:一, 6:三, 7:三2, 8:二)
+
+声音分类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - 模型名称
+     - 注释
 
    * - TDL_MODEL_CLS_SOUND_BABAY_CRY
      - 婴儿哭声分类模型 (0:背景, 1:哭声)
 
-   * - TDL_MODEL_CLS_SOUND_COMMAND
-     - 命令声音分类模型 
+   * - TDL_MODEL_CLS_SOUND_COMMAND \
+       _NIHAOSHIYUN
+     - 命令声音分类模型 (0:背景, 1:nihaoshiyun)
 
-   * - TDL_MODEL_KEYPOINT_LICENSE_PLATE
+   * - TDL_MODEL_CLS_SOUND_COMMAND \
+       _NIHAOSUANNENG
+     - 命令声音分类模型 (0:背景, 1:nihaosuanneng)
+
+   * - TDL_MODEL_CLS_SOUND_COMMAND \
+       _XIAOAIXIAOAI
+     - 命令声音分类模型 (0:背景, 1:xiaoaixiaoai)
+
+   * - TDL_MODEL_CLS_SOUND_COMMAND
+     - 命令声音分类模型 (0:背景, 1:命令1, 2:命令2)
+
+关键点识别类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 1 1
+
+   * - 模型名称
+     - 注释
+
+   * - TDL_MODEL_KEYPOINT_LICENSE \
+       PLATE
      - 车牌关键点检测模型
 
    * - TDL_MODEL_KEYPOINT_HAND
      - 手部关键点检测模型
 
-   * - TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17
+   * - TDL_MODEL_KEYPOINT \
+       _YOLOV8POSE_PERSON17
      - 人体17个关键点检测模型
 
-   * - TDL_MODEL_KEYPOINT_SIMCC_PERSON17
+   * - TDL_MODEL_KEYPOINT_SIMCC \
+       _PERSON17
      - SIMCC 17个关键点检测模型
+
+线识别类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - 模型名称
+     - 注释
 
    * - TDL_MODEL_LSTR_DET_LANE
      - 车道检测模型
 
-   * - TDL_MODEL_RECOGNITION_LICENSE_PLATE
+车牌识别类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - 模型名称
+     - 注释
+
+   * - TDL_MODEL_RECOGNITION_LICENSE \
+       _PLATE
      - 车牌识别模型
+
+分割类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 12 9
 
    * - TDL_MODEL_YOLOV8_SEG_COCO80
      - YOLOv8 COCO80分割模型
 
-   * - TDL_MODEL_SEG_PERSON_FACE_VEHICLE \
-       _VEHICLE
+   * - TDL_MODEL_SEG_PERSON_FACE_VEHICLE
      - 人、脸与车辆分割模型 (0:背景, 1:人, 2:脸, 3:车辆, 4:车牌)
 
    * - TDL_MODEL_SEG_MOTION
      - 动作分割模型 (0:静态, 2:过渡, 3:运动)
 
-   * - TDL_MODEL_IMG_FEATURE_CLIP
+特征值提取类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - TDL_MODEL_FEATURE_IMG
      - 图像特征提取模型
 
-   * - TDL_MODELTEXT_FEATURE_CLIP
-     - 文本特征提取模型
+   * - TDL_MODEL_IMG_FEATURE_CLIP
+     - CLIP图像嵌入模型
+
+   * - TDL_MODEL_TEXT_FEATURE_CLIP
+     - CLIP文本嵌入模型
+
+   * - TDL_MODEL_FEATURE_CVIFACE
+     - Cviface 256维特征提取模型
+
+   * - TDL_MODEL_FEATURE_BMFACE_R34
+     - ResNet34 512维特征提取模型
+
+   * - TDL_MODEL_FEATURE_BMFACE_R50
+     - ResNet50 512维特征提取模型
 
 结构体参考
 ================

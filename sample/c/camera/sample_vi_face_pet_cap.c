@@ -290,7 +290,7 @@ void *run_tdl_thread(void *args) {
     }
   }
 
-  return;
+  return NULL;
 
 exit0:
   TDL_DestoryCamera(pstArgs->tdl_handle);

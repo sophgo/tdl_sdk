@@ -17,16 +17,19 @@ if(BUILD_SHARED)
     set(EX_LIBS tdl_ex)
     set(CORE_LIBS tdl_utils tdl_core ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 else()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--start-group")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--whole-archive")
     set(CORE_LIBS
-        "-Wl,--start-group"
         tdl_utils-static
         tdl_core-static
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
         ${IVE_LIBS_STATIC}
-        "-Wl,--end-group")
+       )
     set(EX_LIBS tdl_ex-static)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-whole-archive")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--end-group")
 endif()
 include_directories(${SAMPLE_INCLUDES})
 

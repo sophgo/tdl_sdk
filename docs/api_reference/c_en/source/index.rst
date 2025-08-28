@@ -14,6 +14,7 @@ Date                      Description                                           
 2025/03/28            Initial draft                                                      Zhang Siyi
 2025/03/31            Added API definitions                                              Liu Junfei
 2025/04/02            Added model list and structure definitions                         Zheng Xinye
+2025/08/29            Updated model list and structure definitions                       Zheng Xinye
 ============       ================================================================    ===============
 
 .. Add table of contents

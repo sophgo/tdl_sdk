@@ -3,17 +3,72 @@
 Model List
 ===============
 
+Object detection model list 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. list-table::
-   :widths: 1 1 
+   :widths: 10 9
 
    * - Model Name
      - Description
 
    * - TDL_MODEL_MBV2_DET_PERSON
-     - Human Detection Model
+     - Human Detection Model(0:person)
+
+   * - TDL_MODEL_YOLOV8N_DET_HAND
+     - Hand Detection Model(0:hand)
+
+   * - TDL_MODEL_YOLOV8N_DET_PET \
+       _PERSON
+     - Pet and Person Detection Model (0:cat, 1:dog, 2:person)
+
+   * - TDL_MODEL_YOLOV8N_DET_PERSON \
+       _VEHICLE
+     - Person and Vehicle Detection Model (0:car, 1:bus, 2:truck, 3:motorcyclist, 4:person, 5:bicycle, 6:motorcycle)
+
+   * - TDL_MODEL_YOLOV8N_DET_HAND  \
+       _FACE_PERSON
+     - Hand, Face and Person Detection Model (0:hand, 1:face, 2:person)
+
+   * - TDL_MODEL_YOLOV8N_DET_HEAD \
+       _PERSON
+     - Head Detection Model (0:person, 1:head)
+
+   * - TDL_MODEL_YOLOV8N_DET_HEAD \
+       _HARDHAT
+     - Head and Hardhat Detection Model (0:head, 1:hardhat)
+
+   * - TDL_MODEL_YOLOV8N_DET_FIRE \
+       _SMOKE
+     - Fire and Smoke Detection Model (0:fire, 1:smoke)
+
+   * - TDL_MODEL_YOLOV8N_DET_FIRE
+     - Fire Detection Model (0:fire)
+
+   * - TDL_MODEL_YOLOV8N_DET_HEAD \
+       _SHOULDER
+     - Head and Shoulder Detection Model (0:head-shoulder)
+
+   * - TDL_MODEL_YOLOV8N_DET_LICENSE \
+       _PLATE
+     - License Plate Detection Model (0:license plate)
+
+   * - TDL_MODEL_YOLOV8N_DET_TRAFFIC \
+       _LIGHT
+     - Traffic Light Detection Model (0:red, 1:yellow, 2:green, 3:off, 4:waiting)
+
+   * - TDL_MODEL_YOLOV8N_DET_MONITOR \
+       _PERSON
+     - Person Detection Model(0:person)
 
    * - TDL_MODEL_YOLOV5_DET_COCO80
      - YOLOv5 COCO80 Detection Model
+
+   * - TDL_MODEL_YOLOV6_DET_COCO80
+     - YOLOv6 COCO80 Detection Model
+
+   * - TDL_MODEL_YOLOV7_DET_COCO80
+     - YOLOv7 COCO80 Detection Model
 
    * - TDL_MODEL_YOLOV8_DET_COCO80
      - YOLOv8 COCO80 Detection Model
@@ -21,38 +76,20 @@ Model List
    * - TDL_MODEL_YOLOV10_DET_COCO80
      - YOLOv10 COCO80 Detection Model
 
-   * - TDL_MODEL_YOLOV8N_DET_HAND
-     - Hand Detection Model
+   * - TDL_MODEL_PPYOLOE_DET_COCO80
+     - PPYOLOE COCO80 Detection Model
 
-   * - TDL_MODEL_YOLOV8N_DET_PET_PERSON
-     - Pet and Person Detection Model (0:cat, 1:dog, 2:person)
+   * - TDL_MODEL_YOLOX_DET_COCO80
+     - YOLOX COCO80 Detection Model
 
-   * - TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE
-     - Person and Vehicle Detection Model (0:car, 1:bus, 2:truck, 3:motorcyclist, 4:person, 5:bicycle, 6:motorcycle)
+Face detection model list 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   * - TDL_MODEL_YOLOV8N_DET_HAND_FACE_PERSON
-     - Hand, Face and Person Detection Model (0:hand, 1:face, 2:person)
+.. list-table::
+   :widths: 10 9
 
-   * - TDL_MODEL_YOLOV8N_DET_HEAD_PERSON
-     - Head Detection Model (0:person, 1:head)
-
-   * - TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT
-     - Head and Hardhat Detection Model (0:head, 1:hardhat)
-
-   * - TDL_MODEL_YOLOV8N_DET_FIRE_SMOKE
-     - Fire and Smoke Detection Model (0:fire, 1:smoke)
-
-   * - TDL_MODEL_YOLOV8N_DET_FIRE
-     - Fire Detection Model (0:fire)
-
-   * - TDL_MODEL_YOLOV8N_DET_HEAD_SHOULDER
-     - Head and Shoulder Detection Model (0:head-shoulder)
-
-   * - TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE
-     - License Plate Detection Model (0:license plate)
-
-   * - TDL_MODEL_YOLOV8N_DET_TRAFFIC_LIGHT
-     - Traffic Light Detection Model (0:red, 1:yellow, 2:green, 3:off, 4:waiting)
+   * - Model Name
+     - Description
 
    * - TDL_MODEL_SCRFD_DET_FACE
      - Face Detection Model (0:face + keypoints)
@@ -63,23 +100,38 @@ Model List
    * - TDL_MODEL_RETINA_DET_FACE_IR
      - Infrared Face Detection Model
 
+Face attribute and keypoint model list 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Description
+
    * - TDL_MODEL_KEYPOINT_FACE_V2
      - Face Detection Model with 5 Keypoints and Blur Score
 
-   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER \
+       _AGE_GLASS
      - Face Attribute Classification Model (age, gender, glasses)
 
-   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER \
+       _AGE_GLASS_MASK
      - Face Attribute Classification Model (age, gender, glasses, mask)
 
-   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION
+   * - TDL_MODEL_CLS_ATTRIBUTE_GENDER \
+       _AGE_GLASS_EMOTION
      - Face Attribute Classification Model (age, gender, glasses, emotion)
 
-   * - TDL_MODEL_FEATURE_BMFACE_R34
-     - ResNet34 512-dimensional Feature Extraction Model
+Image classification model list 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   * - TDL_MODEL_FEATURE_BMFACE_R50
-     - ResNet50 512-dimensional Feature Extraction Model
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Description
 
    * - TDL_MODEL_CLS_MASK
      - Mask Detection Model (0:wearing mask, 1:not wearing mask)
@@ -93,48 +145,131 @@ Model List
    * - TDL_MODEL_CLS_HAND_GESTURE
      - Hand Gesture Classification Model (0:fist, 1:five fingers, 2:none, 3:two)
 
-   * - TDL_MODEL_CLS_KEYPOINT_HAND_GESTURE
+   * - TDL_MODEL_CLS_KEYPOINT_HAND \
+       _GESTURE
      - Hand Gesture Keypoint Classification Model (0:fist, 1:five fingers, 2:four fingers, 3:none, 4:ok, 5:one, 6:three, 7:three2, 8:two)
+
+Sound classification model list 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Description
 
    * - TDL_MODEL_CLS_SOUND_BABAY_CRY
      - Baby Cry Sound Classification Model (0:background, 1:crying)
 
+   * - TDL_MODEL_CLS_SOUND_COMMAND \
+       _NIHAOSHIYUN
+     - Command Sound Classification Model (0:background, 1:nihaoshiyun)
+
+   * - TDL_MODEL_CLS_SOUND_COMMAND \
+       _NIHAOSUANNENG
+     - Command Sound Classification Model (0:background, 1:nihaosuanneng)
+
+   * - TDL_MODEL_CLS_SOUND_COMMAND \
+       _XIAOAIXIAOAI
+     - Command Sound Classification Model (0:background, 1:xiaoaixiaoai)
+
    * - TDL_MODEL_CLS_SOUND_COMMAND
      - Command Sound Classification Model
 
-   * - TDL_MODEL_KEYPOINT_LICENSE_PLATE
+Keypoint model list 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 1 1 
+
+   * - Model Name
+     - Description
+
+   * - TDL_MODEL_KEYPOINT_LICENSE \
+       _PLATE
      - License Plate Keypoint Detection Model
 
    * - TDL_MODEL_KEYPOINT_HAND
      - Hand Keypoint Detection Model
 
-   * - TDL_MODEL_KEYPOINT_YOLOV8POSE_PERSON17
+   * - TDL_MODEL_KEYPOINT \
+       _YOLOV8POSE_PERSON17
      - Human 17 Keypoint Detection Model
 
-   * - TDL_MODEL_KEYPOINT_SIMCC_PERSON17
+   * - TDL_MODEL_KEYPOINT \
+       _SIMCC_PERSON17
      - SIMCC 17 Keypoint Detection Model
+
+Lane detection model list 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Descriptio
 
    * - TDL_MODEL_LSTR_DET_LANE
      - Lane Detection Model
 
-   * - TDL_MODEL_RECOGNITION_LICENSE_PLATE
+License plate recognition model list 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Descriptio
+
+   * - TDL_MODEL_RECOGNITION_LICENSE \
+       _PLATE
      - License Plate Recognition Model
+
+Segmentation model list 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 12 9
+
+   * - Model Name
+     - Descriptio
 
    * - TDL_MODEL_YOLOV8_SEG_COCO80
      - YOLOv8 COCO80 Segmentation Model
 
-   * - TDL_MODEL_SEG_PERSON_FACE_VEHICLE \
-       _VEHICLE
+   * - TDL_MODEL_SEG_PERSON_FACE_VEHICLE
      - Person, Face and Vehicle Segmentation Model (0:background, 1:person, 2:face, 3:vehicle, 4:license plate)
 
    * - TDL_MODEL_SEG_MOTION
      - Motion Segmentation Model (0:static, 2:transition, 3:motion)
 
-   * - TDL_MODEL_IMG_FEATURE_CLIP
+Feature extraction model list
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Descriptio
+
+   * - TDL_MODEL_FEATURE_IMG
      - Image Feature Extraction Model
 
-   * - TDL_MODELTEXT_FEATURE_CLIP
-     - Text Feature Extraction Model
+   * - TDL_MODEL_IMG_FEATURE_CLIP
+     - Image Clip Feature Extraction Model
+
+   * - TDL_MODEL_TEXT_FEATURE_CLIP
+     - Text Clip Feature Extraction Model
+
+   * - TDL_MODEL_FEATURE_CVIFACE
+     - cviface 256-dimensional Feature Extraction Model
+
+   * - TDL_MODEL_FEATURE_BMFACE_R34
+     - ResNet34 512-dimensional Feature Extraction Model
+
+   * - TDL_MODEL_FEATURE_BMFACE_R50
+     - ResNet50 512-dimensional Feature Extraction Model
+
 
 Structure Reference
 ======================

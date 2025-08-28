@@ -62,7 +62,7 @@
   X(CLS_SOUND_BABAY_CRY, "0:background,1:cry")                                \
   X(CLS_SOUND_COMMAND_NIHAOSHIYUN, "0:background,1:nihaoshiyun")              \
   X(CLS_SOUND_COMMAND_NIHAOSUANNENG, "0:background,1:nihaosuanneng")          \
-  X(CLS_SOUND_COMMAND_XIAOAIXIAOAI, "0:background,1:nihaosuanneng")           \
+  X(CLS_SOUND_COMMAND_XIAOAIXIAOAI, "0:background,1:xiaoaixiaoai")            \
   X(CLS_SOUND_COMMAND, "0:background,1:command1,2:command2")                  \
                                                                               \
   /* custom classification */                                                 \
