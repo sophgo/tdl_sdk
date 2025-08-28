@@ -9,12 +9,12 @@ if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X
   set(OPENCV_LIBS_IMCODEC ${OpenCV_LIB_DIR}/libopencv_core.so ${OpenCV_LIB_DIR}/libopencv_imgproc.so
     ${OpenCV_LIB_DIR}/libopencv_highgui.so ${OpenCV_LIB_DIR}/libopencv_imgcodecs.so
     ${OpenCV_LIB_DIR}/libopencv_videoio.so ${OpenCV_LIB_DIR}/libopencv_calib3d.so
-    ${OpenCV_LIB_DIR}/libopencv_flann.so ${OpenCV_LIB_DIR}/libopencv_features2d.so) 
+    ${OpenCV_LIB_DIR}/libopencv_flann.so ${OpenCV_LIB_DIR}/libopencv_features2d.so)
 
   set(OPENCV_LIBS_IMCODEC_STATIC ${OpenCV_LIB_DIR}/libopencv_core.a ${OpenCV_LIB_DIR}/libopencv_imgproc.a
     ${OpenCV_LIB_DIR}/libopencv_highgui.a ${OpenCV_LIB_DIR}/libopencv_imgcodecs.a
     ${OpenCV_LIB_DIR}/libopencv_videoio.a ${OpenCV_LIB_DIR}/libopencv_calib3d.a
-    ${OpenCV_LIB_DIR}/libopencv_flann.a ${OpenCV_LIB_DIR}/libopencv_features2d.a) 
+    ${OpenCV_LIB_DIR}/libopencv_flann.a ${OpenCV_LIB_DIR}/libopencv_features2d.a)
 
   return()
 endif()
@@ -42,6 +42,8 @@ elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "arm-none-linux-gnueabihf.cmake")
   set(ARCHITECTURE "glibc_arm")
 elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "arm-none-linux-musleabihf.cmake")
   set(ARCHITECTURE "musl_arm")
+elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "aarch64-none-linux-musl.cmake")
+  set(ARCHITECTURE "musl_arm64")
 elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "aarch64-linux-gnu.cmake")
   set(ARCHITECTURE "64bit")
 elseif("${CMAKE_TOOLCHAIN_FILE}" MATCHES "aarch64-none-linux-gnu.cmake")
