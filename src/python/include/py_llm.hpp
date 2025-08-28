@@ -1,6 +1,7 @@
 #ifndef TDL_SDK_PYTHON_PY_LLM_HPP
 #define TDL_SDK_PYTHON_PY_LLM_HPP
 
+#include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <iostream>

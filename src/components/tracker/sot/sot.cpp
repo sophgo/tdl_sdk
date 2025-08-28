@@ -324,6 +324,7 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
   tracker_info.box_info_.x2 = scaled_bbox[0] + scaled_bbox[2];
   tracker_info.box_info_.y2 = scaled_bbox[1] + scaled_bbox[3];
   tracker_info.box_info_.score = score;
+  tracker_info.box_info_.class_id = 0;
   tracker_info.status_ = TrackStatus::TRACKED;
   if (status_ == TrackStatus::TRACKED) {
     if (sot_info_.is_occluded) {

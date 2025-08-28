@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 #include "tdl_model_factory.hpp"
+#include "tracker/tracker_types.hpp"
 #include "utils/common_utils.hpp"
 namespace fs = std::experimental::filesystem;
 using ordered_json = nlohmann::ordered_json;
@@ -361,12 +362,12 @@ void saveResultsCommon(
   std::cout << "更新JSON至 " << json_path << std::endl;
 }
 
-void process_face_feature(const std::string& model_id,
-                          const std::string& model_name,
-                          const std::string& json_path,
-                          const std::string& img_dir, const std::string& chip,
-                          std::shared_ptr<BaseModel> model,
-                          float score_threshold) {
+void processFaceFeature(const std::string& model_id,
+                        const std::string& model_name,
+                        const std::string& json_path,
+                        const std::string& img_dir, const std::string& chip,
+                        std::shared_ptr<BaseModel> model,
+                        float reg_score_diff_threshold) {
   // 1. 收集所有图片，分组
   std::map<std::string, std::pair<std::string, std::string>> pair_map;
   std::vector<std::string> pair_indices;
@@ -415,7 +416,7 @@ void process_face_feature(const std::string& model_id,
   root["model_id"] = model_id;
   root["model_name"] = model_name;
   root["image_dir"] = image_dir_name;
-  root["score_threshold"] = round1(score_threshold);
+  root["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
   ordered_json chip_json;
 
   for (size_t i = 0; i < all_pairs.size(); ++i) {
@@ -458,11 +459,70 @@ void process_face_feature(const std::string& model_id,
             << std::endl;
 }
 
+void processTrack(const std::string& model_id, const std::string& model_name,
+                  const std::string& json_path, const std::string& img_dir,
+                  const std::string& chip, std::shared_ptr<BaseModel> model,
+                  float reg_nms_threshold, float reg_score_diff_threshold) {
+  std::shared_ptr<Tracker> tracker =
+      TrackerFactory::createTracker(TrackerType::TDL_SOT);
+  tracker->setModel(model);
+  std::vector<std::string> files;
+  for (const auto& entry : fs::directory_iterator(img_dir)) {
+    std::string fname = entry.path().filename().string();
+    files.push_back(entry.path().string());
+  }
+  std::sort(files.begin(), files.end());
+
+  std::shared_ptr<BaseImage> image;
+  for (size_t i = 0; i < files.size(); ++i) {
+    auto fill_func = [](ordered_json& bboxes_json,
+                        const std::shared_ptr<ModelOutputInfo>& out_data) {
+      auto obj_meta = std::static_pointer_cast<ModelBoxInfo>(out_data);
+      for (const auto& bbox : obj_meta->bboxes) {
+        ordered_json bbox_j;
+
+        bbox_j["bbox"] = {round2(bbox.x1), round2(bbox.y1), round2(bbox.x2),
+                          round2(bbox.y2)};
+        bbox_j["score"] = round2(bbox.score);
+        bbox_j["class_id"] = bbox.class_id;
+
+        bboxes_json.push_back(bbox_j);
+      }
+    };
+    auto fill_global = [reg_nms_threshold,
+                        reg_score_diff_threshold](ordered_json& data) {
+      data["reg_nms_threshold"] = round1(reg_nms_threshold);
+      data["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
+    };
+    std::string img_name = fs::path(files[i]).filename().string();
+    std::shared_ptr<ModelBoxInfo> out_data = std::make_shared<ModelBoxInfo>();
+    if (i == 0) {
+      image = ImageFactory::readImage(files[0]);
+      ObjectBoxInfo init_bbox;
+      init_bbox.x1 = 393.0;
+      init_bbox.y1 = 328.0;
+      init_bbox.x2 = 548.0;
+      init_bbox.y2 = 647.0;
+      init_bbox.score = 1.0f;
+      init_bbox.class_id = 0;
+      tracker->initialize(image, {}, init_bbox);
+      out_data->bboxes.push_back(init_bbox);
+    } else {
+      image = ImageFactory::readImage(files[i]);
+      TrackerInfo tracker_info;
+      tracker->track(image, i, tracker_info);
+      out_data->bboxes.push_back(tracker_info.box_info_);
+    }
+    saveResultsCommon(model_id, model_name, json_path, img_dir, img_name, chip,
+                      fill_func, out_data, fill_global, true);
+  }
+}
+
 void processModel(const std::string& model_id, const std::string& model_name,
                   const std::string& json_path, const std::string& img_dir,
                   const std::string& chip, std::shared_ptr<BaseModel> model,
-                  float bbox_threshold, float score_threshold,
-                  float position_threshold, float model_threshold) {
+                  float reg_nms_threshold, float reg_score_diff_threshold,
+                  float reg_position_diff_threshold, float model_threshold) {
   if (model_threshold > 0 && model_threshold < 1.0f) {
     printf("setModelThreshold\n");
     getchar();
@@ -510,9 +570,10 @@ void processModel(const std::string& model_id, const std::string& model_name,
           bboxes_json.push_back(bbox_j);
         }
       };
-      auto fill_global = [bbox_threshold, score_threshold](ordered_json& data) {
-        data["bbox_threshold"] = round1(bbox_threshold);
-        data["score_threshold"] = round1(score_threshold);
+      auto fill_global = [reg_nms_threshold,
+                          reg_score_diff_threshold](ordered_json& data) {
+        data["reg_nms_threshold"] = round1(reg_nms_threshold);
+        data["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
       };
       saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
                         chip, fill_func, out_datas[0], fill_global, true);
@@ -531,8 +592,8 @@ void processModel(const std::string& model_id, const std::string& model_name,
         results_json.push_back(cls_j);
       };
 
-      auto fill_global = [score_threshold](ordered_json& data) {
-        data["score_threshold"] = round1(score_threshold);
+      auto fill_global = [reg_score_diff_threshold](ordered_json& data) {
+        data["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
       };
 
       saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
@@ -585,8 +646,8 @@ void processModel(const std::string& model_id, const std::string& model_name,
         }
       };
 
-      auto fill_global = [score_threshold](ordered_json& data) {
-        data["score_threshold"] = round1(score_threshold);
+      auto fill_global = [reg_score_diff_threshold](ordered_json& data) {
+        data["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
       };
 
       saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
@@ -635,10 +696,11 @@ void processModel(const std::string& model_id, const std::string& model_name,
 
         img_json["keypoints_score"] = round_vector(landmarks_score_d, 2);
       };
-      auto fill_global = [score_threshold,
-                          position_threshold](ordered_json& data) {
-        data["score_threshold"] = round1(score_threshold);
-        data["position_threshold"] = round1(position_threshold);
+      auto fill_global = [reg_score_diff_threshold,
+                          reg_position_diff_threshold](ordered_json& data) {
+        data["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
+        data["reg_position_diff_threshold"] =
+            round1(reg_position_diff_threshold);
       };
       saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
                         chip, fill_func, out_datas[0], fill_global);
@@ -682,10 +744,11 @@ void processModel(const std::string& model_id, const std::string& model_name,
           img_json["keypoints_y"] = round_vector(norm_y, 4);
           img_json["keypoints_score"] = round_vector(landmarks_score_d, 2);
         };
-        auto fill_global = [score_threshold,
-                            position_threshold](ordered_json& data) {
-          data["score_threshold"] = round1(score_threshold);
-          data["position_threshold"] = round1(position_threshold);
+        auto fill_global = [reg_score_diff_threshold,
+                            reg_position_diff_threshold](ordered_json& data) {
+          data["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
+          data["reg_position_diff_threshold"] =
+              round1(reg_position_diff_threshold);
         };
         saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
                           chip, fill_func, out_datas[0], fill_global);
@@ -702,10 +765,10 @@ void processModel(const std::string& model_id, const std::string& model_name,
             bboxes_json.push_back(bbox_j);
           }
         };
-        auto fill_global = [bbox_threshold,
-                            score_threshold](ordered_json& data) {
-          data["bbox_threshold"] = round1(bbox_threshold);
-          data["score_threshold"] = round1(score_threshold);
+        auto fill_global = [reg_nms_threshold,
+                            reg_score_diff_threshold](ordered_json& data) {
+          data["reg_nms_threshold"] = round1(reg_nms_threshold);
+          data["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
         };
         saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
                           chip, fill_func, out_datas[0], fill_global, true);
@@ -745,10 +808,11 @@ void processModel(const std::string& model_id, const std::string& model_name,
           img_json["keypoints_y"] = round_vector(norm_y, 4);
           img_json["keypoints_score"] = round_vector(landmarks_score_d, 2);
         };
-        auto fill_global = [score_threshold,
-                            position_threshold](ordered_json& data) {
-          data["score_threshold"] = round1(score_threshold);
-          data["position_threshold"] = round1(position_threshold);
+        auto fill_global = [reg_score_diff_threshold,
+                            reg_position_diff_threshold](ordered_json& data) {
+          data["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
+          data["reg_position_diff_threshold"] =
+              round1(reg_position_diff_threshold);
         };
         saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
                           chip, fill_func, out_datas[0], fill_global);
@@ -790,10 +854,11 @@ void processModel(const std::string& model_id, const std::string& model_name,
         img_json["detection"] = detection_array;
       };
 
-      auto fill_global = [bbox_threshold, score_threshold](ordered_json& data) {
-        data["bbox_threshold"] = round1(bbox_threshold);
-        data["score_threshold"] = round1(score_threshold);
-        data["mask_threshold"] = round1(0.1);
+      auto fill_global = [reg_nms_threshold,
+                          reg_score_diff_threshold](ordered_json& data) {
+        data["reg_nms_threshold"] = round1(reg_nms_threshold);
+        data["reg_score_diff_threshold"] = round1(reg_score_diff_threshold);
+        data["reg_mask_threshold"] = round1(0.1);
       };
 
       saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
@@ -820,8 +885,8 @@ void processModel(const std::string& model_id, const std::string& model_name,
         img_json["mask"] = mask_name;
       };
 
-      auto fill_global = [score_threshold](ordered_json& data) {
-        data["mask_threshold"] = round1(0.1);
+      auto fill_global = [reg_score_diff_threshold](ordered_json& data) {
+        data["reg_mask_threshold"] = round1(0.1);
       };
 
       saveResultsCommon(model_id, model_name, json_path, img_dir, img_name,
@@ -859,8 +924,8 @@ int main(int argc, char** argv) {
   if (argc < 5) {
     std::cerr << "Usage: " << argv[0]
               << "Required: model_dir image_dir json_dir chip\n"
-              << "Optional:[bbox_threshold] [score_threshold] "
-                 "[position_threshold] [model_threshold]"
+              << "Optional:[reg_nms_threshold] [reg_score_diff_threshold] "
+                 "[reg_position_diff_threshold] [model_threshold]"
               << std::endl;
     return -1;
   }
@@ -868,15 +933,15 @@ int main(int argc, char** argv) {
   std::string image_dir = argv[2];
   std::string json_dir = argv[3];
   std::string chip = argv[4];
-  float bbox_threshold = 0.5f;
-  float score_threshold = 0.1f;
-  float position_threshold = 0.1f;
+  float reg_nms_threshold = 0.5f;
+  float reg_score_diff_threshold = 0.1f;
+  float reg_position_diff_threshold = 0.1f;
   float model_threshold = -1.0f;
 
   if (argc >= 6) {
-    bbox_threshold = atof(argv[5]);
-    score_threshold = atof(argv[6]);
-    position_threshold = atof(argv[7]);
+    reg_nms_threshold = atof(argv[5]);
+    reg_score_diff_threshold = atof(argv[6]);
+    reg_position_diff_threshold = atof(argv[7]);
     model_threshold = atof(argv[8]);
   }
 
@@ -926,14 +991,19 @@ int main(int argc, char** argv) {
       continue;
     }
     if (model_id_name.find("FEATURE") != std::string::npos) {
-      process_face_feature(model_ids[i], model_names[i], json_path, img_dir,
-                           chip, model, score_threshold);
+      processFaceFeature(model_ids[i], model_names[i], json_path, img_dir, chip,
+                         model, reg_score_diff_threshold);
       std::cout << "Finished processing face recognition model: "
                 << model_id_name << std::endl;
+    } else if (model_id_name.find("TRACKING") != std::string::npos) {
+      processTrack(model_ids[i], model_names[i], json_path, img_dir, chip,
+                   model, reg_nms_threshold, reg_score_diff_threshold);
+      std::cout << "Finished processing track model: " << model_names[i]
+                << std::endl;
     } else {
       processModel(model_ids[i], model_names[i], json_path, img_dir, chip,
-                   model, bbox_threshold, score_threshold, position_threshold,
-                   model_threshold);
+                   model, reg_nms_threshold, reg_score_diff_threshold,
+                   reg_position_diff_threshold, model_threshold);
       std::cout << "Finished processing model " << model_names[i] << std::endl;
     }
 

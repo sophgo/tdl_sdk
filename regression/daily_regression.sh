@@ -76,6 +76,7 @@ kpt_test_suites="KeypointTestSuite.*"
 feature_test_suites="FeatureExtraTestSuite.*"
 segmentation_suites="SegmentationTestSuite.*"
 ocr_test_suites="OcrTestSuite.*"
+sot_test_suites="SotTestSuite.*"
 
 det_json=""
 cls_json=""
@@ -84,7 +85,7 @@ kpt_json=""
 feature_json=""
 segmentation_json=""
 ocr_json=""
-
+sot_json=""
 
 # det
 det_json="${det_json}:mbv2_det_person_256_448_INT8.json"
@@ -167,6 +168,9 @@ if [ ${CHIP_ARCH} != "CV184X" ]; then  #tpu-milr bug
   ocr_json="${ocr_json}:recognition_license_plate_24_96_MIX.json"
 fi
 
+#sot
+sot_json="${sot_json}:tracking_feartrack_128_128_256_256_INT8.json"
+
 
 failed_list="" 
 reg_num=0
@@ -214,7 +218,7 @@ run_test_main "${kpt_json}" "${kpt_test_suites}"
 run_test_main "${feature_json}" "${feature_test_suites}"
 run_test_main "${segmentation_json}" "${segmentation_suites}"
 run_test_main "${ocr_json}" "${ocr_test_suites}"
-
+run_test_main "${sot_json}" "${sot_test_suites}"
 
 set -- $failed_list
 failed_num=$#

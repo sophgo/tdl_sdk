@@ -14,8 +14,10 @@ set(SAMPLE_INCLUDES
 )
 
 if(BUILD_SHARED)
-    set(EX_LIBS tdl_ex)
-    set(CORE_LIBS tdl_utils tdl_core ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
+    set(EX_LIBS tdl_ex ${LIBWEBSOCKETS_LIBS}
+    ${OPENSSL_LIBRARY}
+    ${ZLIB_LIBRARY})
+    set(CORE_LIBS  tdl_core ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--start-group")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--whole-archive")
@@ -27,7 +29,9 @@ else()
         ${MLIR_LIBS_STATIC}
         ${IVE_LIBS_STATIC}
        )
-    set(EX_LIBS tdl_ex-static)
+    set(EX_LIBS tdl_ex-static ${LIBWEBSOCKETS_LIBS_STATIC}
+       ${OPENSSL_LIBRARY_STATIC}
+       ${ZLIB_LIBRARY_STATIC})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-whole-archive")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--end-group")
 endif()
@@ -51,9 +55,16 @@ if(NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X") AND NOT ("${CVI_PLATFORM}" S
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_img_blend.cpp)
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" OR "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
-  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_api_client.cpp)
+if(("${CVI_PLATFORM}" STREQUAL "CV180X") OR
+  ("${CVI_PLATFORM}" STREQUAL "CV181X") OR
+  ("${CVI_PLATFORM}" STREQUAL "CV182X") OR
+  ("${CVI_PLATFORM}" STREQUAL "CV183X") OR
+  ("${CVI_PLATFORM}" STREQUAL "CV184X"))
+  if(BUILD_SHARED)
+    set(EX_LIBS ${EX_LIBS} tdl_utils)
+  endif()
 endif()
+
 
 if (NOT ("${CVI_PLATFORM}" STREQUAL "CV181X") AND
     NOT ("${CVI_PLATFORM}" STREQUAL "CV184X") AND
@@ -61,6 +72,12 @@ if (NOT ("${CVI_PLATFORM}" STREQUAL "CV181X") AND
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_img_motion_detection.cpp)
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_img_motion_detection_test.cpp)
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/camera/sample_vi_md.cpp)
+endif()
+
+if ("${CVI_PLATFORM}" STREQUAL "SOPHON" OR
+    "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" OR
+    "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_api_client.cpp)
 endif()
 
 message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")
@@ -73,6 +90,8 @@ foreach (fname ${SAMPLE_SRC_FILES})
   set(SAMPLE_LIBS ${CORE_LIBS} dl rt stdc++fs)
   if(name STREQUAL "sample_api_client")
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt stdc++fs)
+  elseif(name STREQUAL "sample_vi_md")
+    set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS})
   endif()
 
   target_link_libraries(${name} ${SAMPLE_LIBS})

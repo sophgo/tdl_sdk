@@ -49,16 +49,19 @@ class OcrTestSuite : public CVI_TDLModelTestSuite {
 
 TEST_F(OcrTestSuite, accuracy) {
   std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
-  auto pairs = m_json_object[gen_platform()];
-
-  for (nlohmann::json::iterator iter = pairs.begin(); iter != pairs.end();
-       iter++) {
+  std::string platform = gen_platform();
+  CVI_TDLTestContext& context = CVI_TDLTestContext::getInstance();
+  TestFlag test_flag = context.getTestFlag();
+  nlohmann::ordered_json results;
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    return;
+  }
+  for (auto iter = results.begin(); iter != results.end(); iter++) {
     std::string image_path =
         (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
     LOGIP("image_path: %s\n", image_path.c_str());
 
     auto expected_results = iter.value();
-    std::string gt_str = std::string(expected_results["characters"]);
 
     std::shared_ptr<BaseImage> frame =
         ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
@@ -70,15 +73,23 @@ TEST_F(OcrTestSuite, accuracy) {
     std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
 
     model_->inference(input_images, out_data);
-    std::vector<std::vector<float>> features;
-    for (size_t i = 0; i < out_data.size(); i++) {
-      std::shared_ptr<ModelOcrInfo> ocr_meta =
-          std::static_pointer_cast<ModelOcrInfo>(out_data[i]);
+    std::shared_ptr<ModelOcrInfo> ocr_meta =
+        std::static_pointer_cast<ModelOcrInfo>(out_data[0]);
 
-      std::string pred_str = std::string(ocr_meta->text_info);
-      ASSERT_TRUE(gt_str == pred_str);
+    if (test_flag == TestFlag::GENERATE_FUNCTION_RES) {
+      iter.value()["characters"] = ocr_meta->text_info;
+      continue;
     }
+    std::string gt_str = std::string(expected_results["characters"]);
+
+    std::string pred_str = std::string(ocr_meta->text_info);
+    ASSERT_TRUE(gt_str == pred_str);
+  }  // end for
+
+  if (test_flag == TestFlag::GENERATE_FUNCTION_RES) {
+    m_json_object[platform] = results;
+    writeJsonFile(context.getJsonFilePath().string(), m_json_object);
   }
-}
+}  // end of TEST_F
 }  // namespace unitest
 }  // namespace cvitdl

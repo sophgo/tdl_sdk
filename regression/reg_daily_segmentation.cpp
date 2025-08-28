@@ -39,19 +39,77 @@ class SegmentationTestSuite : public CVI_TDLModelTestSuite {
   }
 
   virtual void TearDown() {}
+  nlohmann::ordered_json convertSegmentationResult(
+      const std::string &image_dir, const std::string &img_name,
+      const std::string &platform, std::shared_ptr<ModelOutputInfo> &out_data) {
+    nlohmann::ordered_json result;
+
+    std::string mask_img_name = img_name.substr(0, img_name.find_last_of(".")) +
+                                "_mask_" + platform + ".png";
+    std::string mask_img_path = image_dir + "/" + mask_img_name;
+    cv::Mat mask_pred;
+    if (out_data->getType() == ModelOutputType::SEGMENTATION) {
+      std::shared_ptr<ModelSegmentationInfo> seg_meta =
+          std::static_pointer_cast<ModelSegmentationInfo>(out_data);
+      uint32_t output_width = seg_meta->output_width;
+      uint32_t output_height = seg_meta->output_height;
+
+      mask_pred = cv::Mat(output_height, output_width, CV_8UC1,
+                          seg_meta->class_id, output_width * sizeof(uint8_t));
+      result["mask"] = mask_img_name;
+      cv::imwrite(mask_img_path, mask_pred);
+    } else if (out_data->getType() ==
+               ModelOutputType::OBJECT_DETECTION_WITH_SEGMENTATION) {
+      std::shared_ptr<ModelBoxSegmentationInfo> obj_meta =
+          std::static_pointer_cast<ModelBoxSegmentationInfo>(out_data);
+      cv::Mat mask_pred;
+      int mask_height = obj_meta->mask_height;
+      int mask_width = obj_meta->mask_width;
+
+      for (uint32_t det_index = 0; det_index < obj_meta->box_seg.size();
+           det_index++) {
+        cv::Mat mask_item(mask_height, mask_width, CV_8UC1,
+                          obj_meta->box_seg[det_index].mask,
+                          mask_width * sizeof(uint8_t));
+        if (det_index == 0) {
+          mask_pred = mask_item.clone();
+        } else {
+          cv::bitwise_or(mask_pred, mask_item, mask_pred);
+        }
+        result["mask"] = mask_img_name;
+        nlohmann::ordered_json item;
+        item["bbox"] = {
+            obj_meta->box_seg[det_index].x1, obj_meta->box_seg[det_index].y1,
+            obj_meta->box_seg[det_index].x2, obj_meta->box_seg[det_index].y2};
+        item["score"] = obj_meta->box_seg[det_index].score;
+        item["class_id"] = obj_meta->box_seg[det_index].class_id;
+        result["detection"].push_back(item);
+      }
+      cv::imwrite(mask_img_path, mask_pred);
+    } else {
+      LOGE("Unsupported output type: %d", out_data->getType());
+      return result;
+    }
+    return result;
+  }
 };
 
 TEST_F(SegmentationTestSuite, accuracy) {
-  const float mask_threshold = m_json_object["mask_threshold"];
+  const float reg_mask_threshold = m_json_object["reg_mask_threshold"];
 
   std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
-  auto results = m_json_object[gen_platform()];
-
-  for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
-       iter++) {
+  std::string platform = gen_platform();
+  CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
+  TestFlag test_flag = context.getTestFlag();
+  nlohmann::ordered_json results;
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    return;
+  }
+  size_t sample_num = results.size();
+  LOGIP("regression sample num: %zu", sample_num);
+  for (auto iter = results.begin(); iter != results.end(); iter++) {
     std::string image_path =
         (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
-    LOGIP("image_path: %s\n", image_path.c_str());
     printf("image_path: %s\n", image_path.c_str());
 
     std::shared_ptr<BaseImage> frame =
@@ -70,14 +128,18 @@ TEST_F(SegmentationTestSuite, accuracy) {
                 out_type ==
                     ModelOutputType::OBJECT_DETECTION_WITH_SEGMENTATION);
 
+    if (test_flag == TestFlag::GENERATE_FUNCTION_RES) {
+      nlohmann::ordered_json result = convertSegmentationResult(
+          image_dir, iter.key(), platform, out_data[0]);
+      iter.value() = result;
+      continue;
+    }
+
     auto expected_info = iter.value();
     std::string mask_path =
         (m_image_dir / m_json_object["image_dir"] / expected_info["mask"])
             .string();
-
-    cv::Mat mask_gt = cv::imread(mask_path, cv::IMREAD_GRAYSCALE);
     cv::Mat mask_pred;
-
     if (out_type == ModelOutputType::OBJECT_DETECTION_WITH_SEGMENTATION) {
       std::vector<std::vector<float>> gt_dets;
       std::vector<std::vector<float>> pred_dets;
@@ -97,11 +159,12 @@ TEST_F(SegmentationTestSuite, accuracy) {
              float(obj_meta->box_seg[det_index].class_id)});
       }
 
-      const float bbox_threshold = m_json_object["bbox_threshold"];
-      const float score_threshold = m_json_object["score_threshold"];
+      const float reg_nms_threshold = m_json_object["reg_nms_threshold"];
+      const float reg_score_diff_threshold =
+          m_json_object["reg_score_diff_threshold"];
 
-      EXPECT_TRUE(
-          matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
+      EXPECT_TRUE(matchObjects(gt_dets, pred_dets, reg_nms_threshold,
+                               reg_score_diff_threshold));
 
       int mask_height = obj_meta->mask_height;
       int mask_width = obj_meta->mask_width;
@@ -133,12 +196,17 @@ TEST_F(SegmentationTestSuite, accuracy) {
       EXPECT_TRUE(0);
       return;
     }
-
+    cv::Mat mask_gt = cv::imread(mask_path, cv::IMREAD_GRAYSCALE);
     EXPECT_TRUE(!mask_gt.empty() && !mask_pred.empty());
     EXPECT_TRUE(mask_gt.size() == mask_pred.size());
     EXPECT_TRUE(mask_gt.type() == mask_pred.type());
 
-    EXPECT_TRUE(matchSegmentation(mask_gt, mask_pred, mask_threshold));
+    EXPECT_TRUE(matchSegmentation(mask_gt, mask_pred, reg_mask_threshold));
+  }  // end for
+
+  if (test_flag == TestFlag::GENERATE_FUNCTION_RES) {
+    m_json_object[platform] = results;
+    writeJsonFile(context.getJsonFilePath().string(), m_json_object);
   }
 }
 

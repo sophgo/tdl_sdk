@@ -66,7 +66,7 @@ set(REG_INCLUDES
 )
 
 
-if(${CVI_PLATFORM} STREQUAL "BM1688")
+if(${CVI_PLATFORM} STREQUAL "BM1688" OR ${CVI_PLATFORM} STREQUAL "BM1684X")
   set(REG_LIBS
   ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES}
   )
@@ -75,7 +75,11 @@ else()
   ${MIDDLEWARE_LIBS}
   )
 endif()
-if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688") OR (${CVI_PLATFORM} STREQUAL "CV181X") OR (${CVI_PLATFORM} STREQUAL "CV184X")) 
+if((${CVI_PLATFORM} STREQUAL "SOPHON") OR 
+   (${CVI_PLATFORM} STREQUAL "BM1688") OR 
+   (${CVI_PLATFORM} STREQUAL "CV181X") OR 
+   (${CVI_PLATFORM} STREQUAL "CV184X") OR 
+   (${CVI_PLATFORM} STREQUAL "BM1684X")) 
   set(UnitTests
 
   # reg_daily_face_attribute_cls.cpp
@@ -93,6 +97,7 @@ if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688") OR
   reg_daily_feature.cpp
   reg_daily_segmentation.cpp
   reg_daily_ocr.cpp
+  reg_daily_sot.cpp
   )
 
 endif()
@@ -110,14 +115,15 @@ set(UnitTest_SRCS
 
 include_directories(${REPO_DIR}/include/framework/utils
                     ${REPO_DIR}/include/nn
+                    ${REPO_DIR}/include/components
                     ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
-buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS tdl_core tdl_ex tdl_utils ${REG_LIBS} gtest_main stdc++fs )
-buildninstallcpp(NAME generate_regression_info INC ${REG_INCLUDES} SRCS generate_regression_info.cpp DEPS tdl_core tdl_ex tdl_utils ${REG_LIBS} gtest_main stdc++fs )
+buildninstallcpp(NAME test_main INC ${REG_INCLUDES} SRCS ${UnitTest_SRCS} DEPS tdl_core  ${REG_LIBS} gtest_main stdc++fs )
+buildninstallcpp(NAME generate_regression_info INC ${REG_INCLUDES} SRCS generate_regression_info.cpp DEPS tdl_core  ${REG_LIBS} gtest_main stdc++fs )
 
 
-if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688"))
+if((${CVI_PLATFORM} STREQUAL "SOPHON") OR (${CVI_PLATFORM} STREQUAL "BM1688") OR (${CVI_PLATFORM} STREQUAL "BM1684X"))
   set(DAILY_REGRESSION_ASSETS "assets_186x")
 elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   set(DAILY_REGRESSION_ASSETS "assets_183x")
@@ -137,4 +143,6 @@ foreach(file ${asset_files})
   install(FILES ${asset_realpath} DESTINATION regression/assets)
 endforeach()
 
+install(DIRECTORY config DESTINATION regression)
 install(FILES daily_regression.sh PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_WRITE WORLD_EXECUTE DESTINATION regression)
+install(FILES daily_regression_v2.sh PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_WRITE WORLD_EXECUTE DESTINATION regression)

@@ -24,10 +24,10 @@ class KeypointTestSuite : public CVI_TDLModelTestSuite {
 
   std::string m_model_path;
   std::shared_ptr<BaseModel> keypoint_;
-  ModelType model_id_;
 
  protected:
   virtual void SetUp() {
+    float_precesion_num_ = 4;
     int32_t ret = TDLModelFactory::getInstance().loadModelConfig();
     if (ret != 0) {
       LOGE("load model config failed");
@@ -36,45 +36,95 @@ class KeypointTestSuite : public CVI_TDLModelTestSuite {
     TDLModelFactory::getInstance().setModelDir(m_model_dir);
 
     std::string model_id_str = std::string(m_json_object["model_id"]);
-    model_id_ = modelTypeFromString(model_id_str);
+
     std::string model_path =
         m_model_dir.string() + "/" + gen_model_dir() + "/" +
         m_json_object["model_name"].get<std::string>() + gen_model_suffix();
     keypoint_ = TDLModelFactory::getInstance().getModel(
-        model_id_, model_path);  // One model id may correspond to multiple
-                                 // models with different sizes
+        model_id_str, model_path);  // One model id may correspond to multiple
+                                    // models with different sizes
 
     ASSERT_NE(keypoint_, nullptr);
   }
 
   virtual void TearDown() {}
+
+  nlohmann::ordered_json convertKeypointResult(
+      const std::shared_ptr<ModelOutputInfo>& out_data, int img_width,
+      int img_height) {
+    nlohmann::ordered_json result;
+    std::vector<float> keypoints_x;
+    std::vector<float> keypoints_y;
+    std::vector<float> keypoints_score;
+    if (out_data->getType() == ModelOutputType::OBJECT_LANDMARKS) {
+      std::shared_ptr<ModelLandmarksInfo> obj_meta =
+          std::static_pointer_cast<ModelLandmarksInfo>(out_data);
+      keypoints_x = obj_meta->landmarks_x;
+      keypoints_y = obj_meta->landmarks_y;
+      if (!obj_meta->attributes.empty()) {
+        for (const auto& pair : obj_meta->attributes) {
+          keypoints_score.push_back(pair.second);
+        }
+      } else {
+        keypoints_score = obj_meta->landmarks_score;
+      }
+    } else if (out_data->getType() ==
+               ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
+      std::shared_ptr<ModelBoxLandmarkInfo> obj_meta =
+          std::static_pointer_cast<ModelBoxLandmarkInfo>(out_data);
+      keypoints_x = obj_meta->box_landmarks[0].landmarks_x;
+      keypoints_y = obj_meta->box_landmarks[0].landmarks_y;
+      keypoints_score = obj_meta->box_landmarks[0].landmarks_score;
+    } else {
+      std::cout << "Unsupported output type: "
+                << static_cast<int>(out_data->getType()) << std::endl;
+      return nlohmann::ordered_json();
+    }
+
+    for (size_t i = 0; i < keypoints_x.size(); i++) {
+      float kpt_xi = std::max(keypoints_x[i], 0.0f);
+      if (kpt_xi > 1.0) {
+        kpt_xi = kpt_xi / img_width;
+      }
+      result["keypoints_x"].push_back(kpt_xi);
+    }
+    for (size_t i = 0; i < keypoints_y.size(); i++) {
+      float kpt_yi = std::max(keypoints_y[i], 0.0f);
+      if (kpt_yi > 1.0) {
+        kpt_yi = kpt_yi / img_height;
+      }
+      result["keypoints_y"].push_back(kpt_yi);
+    }
+    result["keypoints_score"] = keypoints_score;
+    return result;
+  }
 };
 
 TEST_F(KeypointTestSuite, accuracy) {
-  const float score_threshold = m_json_object["score_threshold"];
-  const float position_threshold = m_json_object["position_threshold"];
+  const float reg_score_diff_threshold =
+      m_json_object["reg_score_diff_threshold"];
+  const float reg_position_diff_threshold =
+      m_json_object["reg_position_diff_threshold"];
   std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
-  auto results = m_json_object[gen_platform()];
+  std::string platform = gen_platform();
+  CVI_TDLTestContext& context = CVI_TDLTestContext::getInstance();
+  TestFlag test_flag = context.getTestFlag();
+  nlohmann::ordered_json results;
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    return;
+  }
 
-  for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
-       iter++) {
+  for (auto iter = results.begin(); iter != results.end(); iter++) {
     std::string image_path =
         (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
     printf("image_path: %s\n", image_path.c_str());
 
-    std::shared_ptr<BaseImage> frame = getInputData(image_path, model_id_);
+    std::shared_ptr<BaseImage> frame = loadInputData(image_path);
     ASSERT_NE(frame, nullptr);
     std::vector<std::shared_ptr<BaseImage>> input_images;
     input_images.push_back(frame);
 
     auto expected_keypoint = iter.value();
-    std::vector<float> gt_keypoints_x;
-    std::vector<float> gt_keypoints_y;
-    std::vector<float> gt_keypoints_score;
-    gt_keypoints_x = expected_keypoint["keypoints_x"].get<std::vector<float>>();
-    gt_keypoints_y = expected_keypoint["keypoints_y"].get<std::vector<float>>();
-    gt_keypoints_score =
-        expected_keypoint["keypoints_score"].get<std::vector<float>>();
 
     std::vector<float> pred_keypoints_x;
     std::vector<float> pred_keypoints_y;
@@ -87,6 +137,26 @@ TEST_F(KeypointTestSuite, accuracy) {
     ModelOutputType out_type = out_data[0]->getType();
     EXPECT_TRUE(out_type == ModelOutputType::OBJECT_LANDMARKS ||
                 out_type == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS);
+
+    int img_width = static_cast<int>(frame->getWidth());
+    int img_height = static_cast<int>(frame->getHeight());
+    LOGI("img_width: %d, img_height: %d,test_flag: %d,result_type: %d",
+         img_width, img_height, context.getTestFlag(),
+         static_cast<int>(out_type));
+    if (context.getTestFlag() == TestFlag::GENERATE_FUNCTION_RES) {
+      nlohmann::ordered_json result =
+          convertKeypointResult(out_data[0], img_width, img_height);
+      iter.value() = result;
+      continue;
+    }
+    // std::cout << "expected_keypoint: " << expected_keypoint << std::endl;
+    std::vector<float> gt_keypoints_x;
+    std::vector<float> gt_keypoints_y;
+    std::vector<float> gt_keypoints_score;
+    gt_keypoints_x = expected_keypoint["keypoints_x"].get<std::vector<float>>();
+    gt_keypoints_y = expected_keypoint["keypoints_y"].get<std::vector<float>>();
+    gt_keypoints_score =
+        expected_keypoint["keypoints_score"].get<std::vector<float>>();
 
     if (out_type == ModelOutputType::OBJECT_LANDMARKS) {
       std::shared_ptr<ModelLandmarksInfo> keypoint_meta =
@@ -122,9 +192,6 @@ TEST_F(KeypointTestSuite, accuracy) {
     }
 
     if (max_x > 1.0f || max_y > 1.0f) {
-      float img_width = frame->getWidth();
-      float img_height = frame->getHeight();
-
       for (auto& x : pred_keypoints_x) {
         x /= img_width;
       }
@@ -132,11 +199,14 @@ TEST_F(KeypointTestSuite, accuracy) {
         y /= img_height;
       }
     }
-
-    EXPECT_TRUE(matchKeypoints(gt_keypoints_x, gt_keypoints_y,
-                               gt_keypoints_score, pred_keypoints_x,
-                               pred_keypoints_y, pred_keypoints_score,
-                               position_threshold, score_threshold));
+    EXPECT_TRUE(
+        matchKeypoints(gt_keypoints_x, gt_keypoints_y, gt_keypoints_score,
+                       pred_keypoints_x, pred_keypoints_y, pred_keypoints_score,
+                       reg_position_diff_threshold, reg_score_diff_threshold));
+  }
+  if (context.getTestFlag() == TestFlag::GENERATE_FUNCTION_RES) {
+    m_json_object[platform] = results;
+    writeJsonFile(context.getJsonFilePath().string(), m_json_object);
   }
 }
 

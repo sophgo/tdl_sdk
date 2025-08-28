@@ -4,7 +4,6 @@
 #include <cvi_tdl_log.hpp>
 #include <fstream>
 #include <string>
-#include <unordered_map>
 
 #include "cvi_tdl_test.hpp"
 #include "image/base_image.hpp"
@@ -72,8 +71,8 @@ TEST_F(PreprocessorTestSuite, TestReadPreprocess) {
   int img_num = int(m_json_object["image_num"]);
   auto results = m_json_object["results"];
   LOGI("TestReadPreprocess start\n");
-  for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
-       iter++) {
+  for (nlohmann::ordered_json::iterator iter = results.begin();
+       iter != results.end(); iter++) {
     std::string image_path = (m_image_dir / iter.key()).string();
     std::shared_ptr<BaseImage> image = ImageFactory::readImage(image_path);
     EXPECT_NE(image, nullptr);

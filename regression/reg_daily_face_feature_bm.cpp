@@ -34,8 +34,8 @@ class FeatureExtraBmTestSuite : public CVI_TDLModelTestSuite {
 };
 
 TEST_F(FeatureExtraBmTestSuite, accuracy) {
-  const float bbox_threshold = 0.85;
-  const float score_threshold = 0.2;
+  const float reg_nms_threshold = 0.85;
+  const float reg_score_diff_threshold = 0.2;
   std::cout << "m_json_object: " << m_json_object << std::endl;
 
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {

@@ -1,7 +1,177 @@
-Checks:          'clang-diagnostic-*,clang-analyzer-*'
-WarningsAsErrors: ''
-HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
+# .clang-tidy
+# clang-tidy 配置文件，用于检查代码规范，包括命名约定
+
+---
+# 检查器列表（逗号分隔，支持 glob，前缀 '-' 表示排除）
+Checks: >
+  readability-identifier-naming,
+  readability-function-size,
+  readability-magic-numbers,
+  performance-*,
+  modernize-*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  google-*,
+  misc-*,
+  -cppcoreguidelines-narrowing-conversions,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -modernize-avoid-c-arrays,
+  -modernize-use-trailing-return-type,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers,
+  -google-readability-todo,
+  -misc-non-private-member-variables-in-classes,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -clang-diagnostic-error
+
+# 各检查器的自定义选项
 CheckOptions:
-  - key:             readability-braces-around-statements.ShortStatementLines
-    value:           '10'
+  # 定义一组 "缩写" 列表，clang-tidy 会把它们当作一个词来处理／忽略大小写检查
+  - key: readability-identifier-naming.Abbreviations
+    # 注意 value 要写成合法的 JSON 数组格式字符串
+    value: '["HTTP","URL","JSON","XML","TCP","UDP","ID","UI","IO","CFG","DMA","CPU","GPU","FP","PE","VC","MEM","AXI","PCIE","L2M","DDR","LMEM","C2C","CXP","WoW"]'
+
+  # 类命名规范：PascalCase
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.ClassPrefix
+    value: ''
+  - key: readability-identifier-naming.ClassSuffix
+    value: ''
+
+  # 结构体命名规范：PascalCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructPrefix
+    value: ''
+  - key: readability-identifier-naming.StructSuffix
+    value: ''
+
+  # 枚举命名规范：PascalCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumPrefix
+    value: ''
+  - key: readability-identifier-naming.EnumSuffix
+    value: ''
+
+  # 枚举常量命名规范：kPascalCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantPrefix
+    value: 'k'
+  - key: readability-identifier-naming.EnumConstantSuffix
+    value: ''
+
+  # 全局函数 & 普通函数命名规范：snake_case
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionPrefix
+    value: ''
+  - key: readability-identifier-naming.FunctionSuffix
+    value: ''
+  - key: readability-identifier-naming.GlobalFunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalFunctionPrefix
+    value: ''
+  - key: readability-identifier-naming.GlobalFunctionSuffix
+    value: ''
+
+  # 类方法命名规范：snake_case
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case
+  - key: readability-identifier-naming.MethodPrefix
+    value: ''
+  - key: readability-identifier-naming.MethodSuffix
+    value: ''
+
+  # 变量 & 参数命名规范：snake_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.VariablePrefix
+    value: ''
+  - key: readability-identifier-naming.VariableSuffix
+    value: ''
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterPrefix
+    value: ''
+  - key: readability-identifier-naming.ParameterSuffix
+    value: ''
+
+  # 成员变量命名规范：snake_case + 后缀 "_"
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberPrefix
+    value: ''
+  - key: readability-identifier-naming.MemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+
+  # 常量命名规范：kPascalCase（注释掉，避免与函数参数冲突）
+  # - key: readability-identifier-naming.ConstantCase
+  #   value: CamelCase
+  # - key: readability-identifier-naming.ConstantPrefix
+  #   value: 'k'
+  # - key: readability-identifier-naming.ConstantSuffix
+  #   value: ''
+  
+  # 忽略失败的标识符分割（用于处理 const 参数被误认为常量的情况）
+  - key: readability-identifier-naming.IgnoreFailedSplit
+    value: '1'
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: 'k'
+  - key: readability-identifier-naming.GlobalConstantSuffix
+    value: ''
+  - key: readability-identifier-naming.StaticConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.StaticConstantPrefix
+    value: 'k'
+  - key: readability-identifier-naming.StaticConstantSuffix
+    value: ''
+
+  # 宏命名规范：UPPER_CASE
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.MacroDefinitionPrefix
+    value: ''
+  - key: readability-identifier-naming.MacroDefinitionSuffix
+    value: ''
+
+  # 命名空间命名规范：snake_case
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.NamespacePrefix
+    value: ''
+  - key: readability-identifier-naming.NamespaceSuffix
+    value: ''
+
+  # 模板参数 & 类型别名：PascalCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterPrefix
+    value: ''
+  - key: readability-identifier-naming.TemplateParameterSuffix
+    value: ''
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasPrefix
+    value: ''
+  - key: readability-identifier-naming.TypeAliasSuffix
+    value: ''
+
+# 只对项目内文件输出诊断，排除第三方库
+HeaderFilterRegex: '^((?!dependency|build|_deps|\.\./).)*\.(h|hpp|hxx)$'
+
+# 用最近目录下的 .clang-format 文件来格式化 apply-fix 后的代码
+FormatStyle: file
+
+# 不将警告升级为错误
+WarningsAsErrors: ''

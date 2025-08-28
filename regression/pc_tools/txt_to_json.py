@@ -9,9 +9,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_id", type=str, default="")
     parser.add_argument("--model_name", type=str, default="")
-    parser.add_argument("--bbox_threshold", type=float, default=0.5)
-    parser.add_argument("--score_threshold", type=float, default=0.1)
-    parser.add_argument("--position_threshold", type=float, default=0.1)
+    parser.add_argument("--reg_nms_threshold", type=float, default=0.5)
+    parser.add_argument("--reg_score_diff_threshold", type=float, default=0.1)
+    parser.add_argument("--reg_position_diff_threshold", type=float, default=0.1)
     parser.add_argument("--image_dir", required=True, type=str)
     parser.add_argument("--chip", required=True, type=str)
     parser.add_argument("--txt_dir", required=True, type=str)
@@ -176,13 +176,13 @@ def update_json(data, args, annotations, json_status, task):
     if args.model_name:
         data["model_name"] = args.model_name
     if task == "detection":
-        data["bbox_threshold"] = args.bbox_threshold
-        data["score_threshold"] = args.score_threshold
+        data["reg_nms_threshold"] = args.reg_nms_threshold
+        data["reg_score_diff_threshold"] = args.reg_score_diff_threshold
     elif task == "classification":
-        data["score_threshold"] = args.score_threshold
+        data["reg_score_diff_threshold"] = args.reg_score_diff_threshold
     elif task == "keypoint":
-        data["score_threshold"] = args.score_threshold
-        data["position_threshold"] = args.position_threshold
+        data["reg_score_diff_threshold"] = args.reg_score_diff_threshold
+        data["reg_position_diff_threshold"] = args.reg_position_diff_threshold
     else:
         raise ValueError("未识别的task")
     img_dir = Path(args.image_dir).resolve()

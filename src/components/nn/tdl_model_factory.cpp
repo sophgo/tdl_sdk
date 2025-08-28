@@ -183,6 +183,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
   }
   net_param_default.model_config = model_config_merged;
   model->setNetParam(net_param_default);
+  LOGI("model_path: %s", model_path.c_str());
   int ret = model->modelOpen(model_path);
   if (ret != 0) {
     return nullptr;

@@ -32,8 +32,8 @@ class ScrfdDetBmTestSuite : public CVI_TDLModelTestSuite {
 };
 
 TEST_F(ScrfdDetBmTestSuite, accuracy) {
-  const float bbox_threshold = 0.8;
-  const float score_threshold = 0.2;
+  const float reg_nms_threshold = 0.8;
+  const float reg_score_diff_threshold = 0.2;
   std::cout << "m_json_object: " << m_json_object << std::endl;
 
   for (size_t test_index = 0; test_index < m_json_object.size(); test_index++) {
@@ -45,8 +45,8 @@ TEST_F(ScrfdDetBmTestSuite, accuracy) {
     scrfd_ = TDLModelFactory::getInstance().getModel(ModelType::SCRFD_DET_FACE,
                                                      model_path);
     ASSERT_NE(scrfd_, nullptr);
-    for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
-         iter++) {
+    for (nlohmann::ordered_json::iterator iter = results.begin();
+         iter != results.end(); iter++) {
       std::string image_path = (m_image_dir / iter.key()).string();
       std::cout << "image_path: " << image_path << std::endl;
       std::shared_ptr<BaseImage> frame =
@@ -79,8 +79,8 @@ TEST_F(ScrfdDetBmTestSuite, accuracy) {
                              face_meta->box_landmarks[det_index].score, 1});
       }
 
-      EXPECT_TRUE(
-          matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
+      EXPECT_TRUE(matchObjects(gt_dets, pred_dets, reg_nms_threshold,
+                               reg_score_diff_threshold));
     }
   }
 }

@@ -68,8 +68,8 @@ TEST_F(FaceLandmarkerDet2TestSuite, accuracy) {
     std::shared_ptr<BaseModel> m_model =
         model_factory.getModel(ModelType::KEYPOINT_FACE_V2, model_path);
     std::shared_ptr<BasePreprocessor> preprocessor = m_model->getPreprocessor();
-    for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
-         iter++) {
+    for (nlohmann::ordered_json::iterator iter = results.begin();
+         iter != results.end(); iter++) {
       float nme = 0.0;
       std::string image_path = (m_image_dir / iter.key()).string();
       std::cout << "image_path: " << image_path << std::endl;

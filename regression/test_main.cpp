@@ -12,14 +12,40 @@ int main(int argc, char *argv[]) {
     testing::AddGlobalTestEnvironment(
         new cvitdl::unitest::CVI_TDLTestEnvironment(argv[1], argv[2], argv[3]));
     return RUN_ALL_TESTS();
+  } else if (argc == 5) {
+    std::string test_flag = argv[4];
+    if (test_flag == "function") {
+      cvitdl::unitest::CVI_TDLTestContext::getInstance().setTestFlag(
+          cvitdl::unitest::TestFlag::FUNCTION);
+    } else if (test_flag == "performance") {
+      cvitdl::unitest::CVI_TDLTestContext::getInstance().setTestFlag(
+          cvitdl::unitest::TestFlag::PERFORMANCE);
+    } else if (test_flag == "generate_function_res") {
+      cvitdl::unitest::CVI_TDLTestContext::getInstance().setTestFlag(
+          cvitdl::unitest::TestFlag::GENERATE_FUNCTION_RES);
+    } else if (test_flag == "generate_performance_res") {
+      cvitdl::unitest::CVI_TDLTestContext::getInstance().setTestFlag(
+          cvitdl::unitest::TestFlag::GENERATE_PERFORMANCE_RES);
+    } else {
+      printf("Invalid test flag: %s\n", test_flag.c_str());
+      return -1;
+    }
+    printf("test_flag: %s,%d\n", test_flag.c_str(),
+           cvitdl::unitest::CVI_TDLTestContext::getInstance().getTestFlag());
+    testing::AddGlobalTestEnvironment(
+        new cvitdl::unitest::CVI_TDLTestEnvironment(argv[1], argv[2], argv[3]));
+    return RUN_ALL_TESTS();
   } else {
-    printf("Usage: %s <matcher_type> --gtest_filter=MatcherTestSuite.*\n",
+    printf("Usage: %s <model_dir> <regress_asset_dir> <json_file_name>\n",
            argv[0]);
     printf(
-        "Usage: %s <model_dir>\n"
-        "          <image_dir>\n"
-        "          <regression_json>\n",
+        "Usage: %s <model_dir> <regress_asset_dir> <json_file_name> "
+        "<test_flag>\n",
         argv[0]);
+    printf(
+        "test_flag: "
+        "function,performance,generate_function_res,generate_performance_"
+        "res\n");
     return -1;
   }
 }

@@ -21,7 +21,8 @@ if (${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
 endif()
 
 if(BUILD_SHARED)
-    set(EX_LIBS tdl_ex)
+    # 网络相关库只给需要的应用使用
+    set(EX_LIBS tdl_ex ${LIBWEBSOCKETS_LIBS} ${OPENSSL_LIBRARY} ${ZLIB_LIBRARY})
     set(CORE_LIBS tdl_utils tdl_core ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 else()
     set(CORE_STATIC_LIBS
@@ -61,7 +62,8 @@ endif()
 if(${CVI_PLATFORM} STREQUAL "CMODEL_CV181X" OR ${CVI_PLATFORM} STREQUAL "CMODEL_CV184X")
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_llm_api.c)
 endif()
-
+list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_llm_api.c)
+list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_api_client.c)
 message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")
 
 foreach (fname ${SAMPLE_SRC_FILES})
@@ -69,9 +71,13 @@ foreach (fname ${SAMPLE_SRC_FILES})
   get_filename_component(name ${fname} NAME_WE)
   add_executable(${name} ${fname})
 
+  # 默认只链接核心库，避免不必要的网络依赖
   set(SAMPLE_LIBS ${CORE_LIBS} dl rt atomic m)
+  
+  # 只有需要网络功能的应用才链接网络相关库
   if(name STREQUAL "sample_llm_api")
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt atomic m)
+    message(STATUS "SAMPLE_LIBS:${SAMPLE_LIBS} for ${name}")
   endif()
 
   target_link_libraries(${name} ${SAMPLE_LIBS})

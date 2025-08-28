@@ -1,4 +1,5 @@
 #include <gtest.h>
+#include <chrono>
 #include <fstream>
 #include <string>
 #include <unordered_map>
@@ -42,23 +43,71 @@ class DetectionTestSuite : public CVI_TDLModelTestSuite {
         model_id, model_path);  // One model id may correspond to multiple
                                 // models with different sizes
     ASSERT_NE(det_, nullptr);
+    det_->setModelThreshold(m_json_object["model_score_threshold"]);
+  }
+
+  nlohmann::ordered_json convertDetectionResult(
+      const std::shared_ptr<ModelOutputInfo> &out_data) {
+    nlohmann::ordered_json result;  // is a list,contains bbox,conf,class_id
+    if (out_data->getType() == ModelOutputType::OBJECT_DETECTION) {
+      std::shared_ptr<ModelBoxInfo> obj_meta =
+          std::static_pointer_cast<ModelBoxInfo>(out_data);
+      LOGI("obj_meta->bboxes.size: %d", obj_meta->bboxes.size());
+      for (const auto &box : obj_meta->bboxes) {
+        nlohmann::ordered_json item;
+        item["bbox"] = {box.x1, box.y1, box.x2, box.y2};
+        item["score"] = box.score;
+        item["class_id"] = box.class_id;
+        LOGI("bbox: %f %f %f %f, score: %f, class_id: %d", box.x1, box.y1,
+             box.x2, box.y2, box.score, box.class_id);
+        result.push_back(item);
+      }
+    } else if (out_data->getType() ==
+               ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS) {
+      std::shared_ptr<ModelBoxLandmarkInfo> obj_meta =
+          std::static_pointer_cast<ModelBoxLandmarkInfo>(out_data);
+      for (const auto &box : obj_meta->box_landmarks) {
+        nlohmann::ordered_json item;
+        item["bbox"] = {box.x1, box.y1, box.x2, box.y2};
+        item["score"] = box.score;
+        item["class_id"] = box.class_id;
+        LOGI("bbox: %f %f %f %f, conf: %f, class_id: %d", box.x1, box.y1,
+             box.x2, box.y2, box.score, box.class_id);
+        result.push_back(item);
+      }
+    } else {
+      std::cout << "Unsupported output type: "
+                << static_cast<int>(out_data->getType()) << std::endl;
+      return nlohmann::ordered_json();
+    }
+    return result;
   }
 
   virtual void TearDown() {}
 };
 
 TEST_F(DetectionTestSuite, accuracy) {
-  const float bbox_threshold = m_json_object["bbox_threshold"];
-  const float score_threshold = m_json_object["score_threshold"];
+  const float reg_nms_threshold = m_json_object["reg_nms_threshold"];
+  const float reg_score_diff_threshold =
+      m_json_object["reg_score_diff_threshold"];
+
+  CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
 
   std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
-  auto results = m_json_object[gen_platform()];
-
-  for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
-       iter++) {
+  std::string platform = gen_platform();
+  TestFlag test_flag = CVI_TDLTestContext::getInstance().getTestFlag();
+  nlohmann::ordered_json results;
+  LOGIP("test_flag: %d", static_cast<int>(test_flag));
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    LOGIP("checkToGetProcessResult failed");
+    return;
+  }
+  size_t sample_num = results.size();
+  LOGIP("regression sample num: %zu", sample_num);
+  for (auto iter = results.begin(); iter != results.end(); iter++) {
     std::string image_path =
         (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
-    LOGIP("image_path: %s\n", image_path.c_str());
+    printf("image_path: %s\n", image_path.c_str());
 
     std::shared_ptr<BaseImage> frame =
         ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
@@ -74,15 +123,46 @@ TEST_F(DetectionTestSuite, accuracy) {
     ModelOutputType out_type = out_data[0]->getType();
     EXPECT_TRUE(out_type == ModelOutputType::OBJECT_DETECTION ||
                 out_type == ModelOutputType::OBJECT_DETECTION_WITH_LANDMARKS);
+    LOGI("out_type: %d", static_cast<int>(out_type));
+    if (context.getTestFlag() == TestFlag::GENERATE_FUNCTION_RES) {
+      LOGI("generate function res,image_path: %s\n", image_path.c_str());
+      nlohmann::ordered_json result = convertDetectionResult(out_data[0]);
+      iter.value() = result;
+      continue;
+    }
+
     std::vector<std::vector<float>> gt_dets;
     std::vector<std::vector<float>> pred_dets;
+    auto expected_dets = iter.value();
+    // std::cout << "expected_dets: " << expected_dets << std::endl;
     if (out_type == ModelOutputType::OBJECT_DETECTION) {
       std::shared_ptr<ModelBoxInfo> obj_meta =
           std::static_pointer_cast<ModelBoxInfo>(out_data[0]);
-      auto expected_dets = iter.value();
+      LOGI("obj_meta->bboxes.size: %d", obj_meta->bboxes.size());
       for (const auto &det : expected_dets) {
-        gt_dets.push_back({det["bbox"][0], det["bbox"][1], det["bbox"][2],
-                           det["bbox"][3], det["score"], det["class_id"]});
+        // 先检查字段是否存在
+        if (!det.contains("bbox") || !det.contains("score") ||
+            !det.contains("class_id")) {
+          LOGE("Missing required fields in detection data");
+          continue;
+        }
+        if (det["bbox"].size() != 4) {
+          LOGE("Invalid bbox size: %zu", det["bbox"].size());
+          continue;
+        }
+
+        float bbox_x1 = det["bbox"][0];
+        float bbox_y1 = det["bbox"][1];
+        float bbox_x2 = det["bbox"][2];
+        float bbox_y2 = det["bbox"][3];
+        float score = det["score"];
+        int class_id = det["class_id"];
+
+        LOGI("det: bbox[%.2f, %.2f, %.2f, %.2f], score: %.3f, class_id: %d",
+             bbox_x1, bbox_y1, bbox_x2, bbox_y2, score, class_id);
+
+        gt_dets.push_back(
+            {bbox_x1, bbox_y1, bbox_x2, bbox_y2, score, float(class_id)});
       }
       for (uint32_t det_index = 0; det_index < obj_meta->bboxes.size();
            det_index++) {
@@ -96,10 +176,25 @@ TEST_F(DetectionTestSuite, accuracy) {
       float class_id = 0;
       std::shared_ptr<ModelBoxLandmarkInfo> obj_meta =
           std::static_pointer_cast<ModelBoxLandmarkInfo>(out_data[0]);
-      auto expected_dets = iter.value();
       for (const auto &det : expected_dets) {
-        gt_dets.push_back({det["bbox"][0], det["bbox"][1], det["bbox"][2],
-                           det["bbox"][3], det["score"], class_id});
+        // 检查字段是否存在
+        if (!det.contains("bbox") || !det.contains("score")) {
+          LOGE("Missing required fields in landmark detection data");
+          continue;
+        }
+        if (det["bbox"].size() != 4) {
+          LOGE("Invalid bbox size: %zu", det["bbox"].size());
+          continue;
+        }
+
+        float bbox_x1 = det["bbox"][0];
+        float bbox_y1 = det["bbox"][1];
+        float bbox_x2 = det["bbox"][2];
+        float bbox_y2 = det["bbox"][3];
+        float score = det["score"];
+
+        gt_dets.push_back(
+            {bbox_x1, bbox_y1, bbox_x2, bbox_y2, score, class_id});
       }
       for (const auto &box_landmark : obj_meta->box_landmarks) {
         pred_dets.push_back({box_landmark.x1, box_landmark.y1, box_landmark.x2,
@@ -110,8 +205,12 @@ TEST_F(DetectionTestSuite, accuracy) {
                 << std::endl;
       return;
     }
-    EXPECT_TRUE(
-        matchObjects(gt_dets, pred_dets, bbox_threshold, score_threshold));
+    EXPECT_TRUE(matchObjects(gt_dets, pred_dets, reg_nms_threshold,
+                             reg_score_diff_threshold));
+  }
+  if (context.getTestFlag() == TestFlag::GENERATE_FUNCTION_RES) {
+    m_json_object[platform] = results;
+    writeJsonFile(context.getJsonFilePath().string(), m_json_object);
   }
 }
 

@@ -43,18 +43,32 @@ class AttributesTestSuite : public CVI_TDLModelTestSuite {
     m_model = TDLModelFactory::getInstance().getModel(model_id);
     ASSERT_NE(m_model, nullptr);
   }
-
+  nlohmann::ordered_json convertDetectionResult(
+      const std::shared_ptr<ModelAttributeInfo> &attr_info) {
+    nlohmann::ordered_json result;  // is a list,contains bbox,conf,class_id
+    for (auto att_iter = attr_info->attributes.begin();
+         att_iter != attr_info->attributes.end(); att_iter++) {
+      std::string att_name = attributes_map[att_iter->first];
+      result[att_name] = att_iter->second;
+    }
+    return result;
+  }
   virtual void TearDown() {}
 };
 
 TEST_F(AttributesTestSuite, accuracy) {
-  const float score_threshold = m_json_object["score_threshold"];
+  const float reg_score_diff_threshold =
+      m_json_object["reg_score_diff_threshold"];
 
   std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
-  auto results = m_json_object[gen_platform()];
-
-  for (nlohmann::json::iterator iter = results.begin(); iter != results.end();
-       iter++) {
+  std::string platform = gen_platform();
+  CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
+  TestFlag test_flag = context.getTestFlag();
+  nlohmann::ordered_json results;
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    return;
+  }
+  for (auto iter = results.begin(); iter != results.end(); iter++) {
     std::string image_path =
         (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
     LOGIP("image_path: %s\n", image_path.c_str());
@@ -75,6 +89,11 @@ TEST_F(AttributesTestSuite, accuracy) {
 
     std::shared_ptr<ModelAttributeInfo> attr_info =
         std::static_pointer_cast<ModelAttributeInfo>(out_data[0]);
+    if (context.getTestFlag() == TestFlag::GENERATE_FUNCTION_RES) {
+      nlohmann::ordered_json result = convertDetectionResult(attr_info);
+      iter.value() = result;
+      continue;
+    }
 
     auto expected_info = iter.value();
     std::vector<float> gt_info;
@@ -88,7 +107,11 @@ TEST_F(AttributesTestSuite, accuracy) {
       gt_info.push_back(expected_info[attributes_map[att_iter->first]]);
     }
 
-    EXPECT_TRUE(matchScore(gt_info, pred_info, score_threshold));
+    EXPECT_TRUE(matchScore(gt_info, pred_info, reg_score_diff_threshold));
+  }
+  if (context.getTestFlag() == TestFlag::GENERATE_FUNCTION_RES) {
+    m_json_object[platform] = results;
+    writeJsonFile(context.getJsonFilePath().string(), m_json_object);
   }
 }
 

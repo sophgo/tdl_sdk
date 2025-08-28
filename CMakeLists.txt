@@ -257,6 +257,7 @@ if("${BUILD_OPTION}" STREQUAL "")
   add_subdirectory(src)
   add_subdirectory(sample)
   add_subdirectory(evaluation)
+  add_subdirectory(regression)
 elseif("${BUILD_OPTION}" STREQUAL "sample")
   add_subdirectory(sample)
 elseif("${BUILD_OPTION}" STREQUAL "all")
@@ -272,3 +273,7 @@ else()
 endif()
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/configs DESTINATION .)
+
+# Prepare clang-tidy helper info for cross-compilation
+# Write key compiler/toolchain information to build/build_info.txt for scripts/codecheck.sh
+include(cmake/build_info.cmake)
