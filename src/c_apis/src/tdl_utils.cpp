@@ -480,13 +480,13 @@ int32_t TDL_GetGalleryFeature(const char *gallery_dir,
   return 0;
 }
 
-int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image,
-                        const char *img_path) {
+int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image, const char *img_path,
+                        int vechn) {
   TDLContext *context = (TDLContext *)handle;
 
   if (!context->encoder) {
-    printf("ImageEncoder not init!");
-    context->encoder = std::make_shared<ImageEncoder>();
+    LOGI("ImageEncoder not init!");
+    context->encoder = std::make_shared<ImageEncoder>(vechn);
   }
 
   std::vector<uint8_t> encoded_data;

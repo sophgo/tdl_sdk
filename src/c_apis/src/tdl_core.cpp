@@ -1099,8 +1099,6 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
     return -1;
   }
 
-  context->encoder = std::make_shared<ImageEncoder>();
-
   if (context->app_task == nullptr) {
     context->app_task = AppFactory::createAppTask(task, config_file);
     if (context->app_task == nullptr) {

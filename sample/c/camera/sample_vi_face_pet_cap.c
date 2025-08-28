@@ -200,7 +200,7 @@ void *run_tdl_thread(void *args) {
 
           ret = TDL_EncodeFrame(pstArgs->tdl_handle,
                                 capture_info.snapshot_info[j].object_image,
-                                filename);
+                                filename, 1);
           if (ret != 0) {
             printf("TDL_EncodeFrame failed with %#x!\n", ret);
             continue;
