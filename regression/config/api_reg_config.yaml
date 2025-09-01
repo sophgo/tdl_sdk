@@ -111,17 +111,11 @@ test_files:
         - "yolov5m_det_coco80_640_640_INT8.json"
         - "yolov5s_det_coco80_640_640_INT8.json"
         - "yolov7_tiny_det_coco80_640_640_INT8.json"
-      segmentation:
-        - "topformer_seg_person_face_vehicle_384_640_INT8.json"
-      ocr:
-        - "recognition_license_plate_24_96_MIX.json"
     CV186X:
       detection:
         - "yolov5m_det_coco80_640_640_INT8.json"
         - "yolov5s_det_coco80_640_640_INT8.json"
         - "yolov7_tiny_det_coco80_640_640_INT8.json"
-      ocr:
-        - "recognition_license_plate_24_96_MIX.json"
     BM1688:
       detection:
         - "yolov5s_det_coco80_640_640_INT8.json"

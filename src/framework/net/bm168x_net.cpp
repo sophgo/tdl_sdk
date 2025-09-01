@@ -320,9 +320,8 @@ int32_t BM168xNet::updateInputTensors() {
     auto out_shape = net_info_->stages[0].output_shapes[tensor_idx];
 
     std::vector<int> st(4, 1);
-    int insert_idx = 4 - out_shape.num_dims;
-    for (int i = insert_idx; i < 4; i++) {
-      st[i] = out_shape.dims[i - insert_idx];
+    for (int i = 0; i < out_shape.num_dims; i++) {
+      st[i] = out_shape.dims[i];
     }
 
     BaseTensor *tensor = dynamic_cast<BaseTensor *>(output_tensor.get());

@@ -96,13 +96,10 @@ int32_t SimccPose::outputParse(
     float *data_x = x_feature_tensor->getBatchPtr<float>(b);
     float *data_y = y_feature_tensor->getBatchPtr<float>(b);
     int x_feature_info_shape, y_feature_info_shape;
-#if defined(__CV181X__)
+
     x_feature_info_shape = x_feature_info.shape[2];
     y_feature_info_shape = y_feature_info.shape[2];
-#else
-    x_feature_info_shape = x_feature_info.shape[3];
-    y_feature_info_shape = y_feature_info.shape[3];
-#endif
+
     for (int i = 0; i < NUM_KEYPOINTS; i++) {
       float *score_start_x = data_x + i * x_feature_info_shape;
       float *score_end_x = data_x + (i + 1) * x_feature_info_shape;

@@ -94,13 +94,8 @@ int32_t TopformerSeg::outputParse(
   std::shared_ptr<BaseTensor> out_conf_tensor =
       net_->getOutputTensor(out_conf_name);
 
-#if defined(__BM168X__) || defined(__CV186X__) || defined(__CV184X__)
-  outShapeH = out_id_info.shape[2];
-  outShapeW = out_id_info.shape[3];
-#else
   outShapeH = out_id_info.shape[1];
   outShapeW = out_id_info.shape[2];
-#endif
 
   for (uint32_t b = 0; b < (uint32_t)input_tensor.shape[0]; b++) {
     uint32_t image_width = images[b]->getWidth();
