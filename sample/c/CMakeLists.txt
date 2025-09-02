@@ -25,19 +25,19 @@ if(BUILD_SHARED)
     set(EX_LIBS tdl_ex ${LIBWEBSOCKETS_LIBS} ${OPENSSL_LIBRARY} ${ZLIB_LIBRARY})
     set(CORE_LIBS tdl_utils tdl_core ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES})
 else()
-    set(CORE_STATIC_LIBS
-        tdl_utils-static
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--start-group")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--whole-archive")
+
+    set(CORE_LIBS
         tdl_core-static
+        tdl_utils-static
         ${MIDDLEWARE_LIBS_STATIC}
         ${OPENCV_LIBS_IMCODEC_STATIC}
         ${MLIR_LIBS_STATIC}
         ${IVE_LIBS_STATIC}
     )
-
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--start-group")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--whole-archive")
     set(EX_LIBS tdl_ex-static)
-    set(CORE_LIBS ${CORE_STATIC_LIBS})
+
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-whole-archive")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--end-group")
 endif()

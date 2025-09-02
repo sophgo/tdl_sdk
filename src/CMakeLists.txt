@@ -30,10 +30,15 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:encoder>
                )
 if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
-   set(EX_SRCS $<TARGET_OBJECTS:c_apis_ex> $<TARGET_OBJECTS:video_decoder> $<TARGET_OBJECTS:network>)
-else()
-   set(EX_SRCS $<TARGET_OBJECTS:c_apis_ex> $<TARGET_OBJECTS:video_decoder>)
+   set(EX_SRCS $<TARGET_OBJECTS:c_apis_ex> $<TARGET_OBJECTS:network>)
 endif()
+
+if(APP_VIDEO_ENABLE)
+   set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:video_decoder>)
+else()
+   set(EX_SRCS ${EX_SRCS} $<TARGET_OBJECTS:video_decoder>)
+endif()
+
 
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm> )
@@ -50,15 +55,15 @@ endif()
 
 # shared library
 add_library(tdl_core SHARED ${CORES_SRCS})
-target_link_libraries(tdl_core 
-   ${MLIR_LIBS} 
-   ${OPENCV_LIBS_IMCODEC} 
+target_link_libraries(tdl_core
+   ${MLIR_LIBS}
+   ${OPENCV_LIBS_IMCODEC}
    ${IVE_LIBS}
    ${ZLIB_LIBRARY}
 )
 
 # if("${CVI_PLATFORM}" STREQUAL "SOPHON" OR "${CVI_PLATFORM}" STREQUAL "BM1688")
-#    target_link_libraries(tdl_core 
+#    target_link_libraries(tdl_core
 #       ${ZLIB_LIBRARY}
 #    )
 # endif()

@@ -37,7 +37,7 @@ endif()
 
 include_directories(${UTILS_INCLUDES})
 # Add shared library
-add_library(tdl_utils SHARED ${UTILS_SOURCES}  ${MIDDLEWARE_OBJ})
+add_library(tdl_utils SHARED ${UTILS_SOURCES} ${MIDDLEWARE_OBJ})
 set_target_properties(tdl_utils PROPERTIES
     ENABLE_EXPORTS ON
     POSITION_INDEPENDENT_CODE ON
