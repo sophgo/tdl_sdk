@@ -44,9 +44,9 @@ void print_usage(const char *prog_name) {
 }
 
 int main(int argc, char *argv[]) {
-  char *model_path1 = NULL;
-  char *model_path2 = NULL;
-  char *model_path3 = NULL;
+  char *model_path_detect = NULL;
+  char *model_path_landmark = NULL;
+  char *model_path_feature = NULL;
   char *model_path = NULL;
   char *input_image1 = NULL;
   char *input_image2 = NULL;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   if (!comm || comm == model_path || !*(comm + 1)) {
     fprintf(stderr,
             "Error: Models must be in format "
-            "'model_path1,model_path2,model_path3\n");
+            "'model_path_detect,model_path_landmark,model_path_feature\n");
     return -1;
   }
 
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
   if (!first_comma || first_comma == model_path || first_comma[1] == '\0') {
     fprintf(stderr,
             "Error: Models must be in format "
-            "'model_path1,model_path2,model_path3'\n");
+            "'model_path_detect,model_path_landmark,model_path_feature'\n");
     return -1;
   }
   const char *second_comma = strchr(first_comma + 1, ',');
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
       second_comma[1] == '\0') {
     fprintf(stderr,
             "Error: Models must be in format "
-            "'model_path1,model_path2,model_path3'\n");
+            "'model_path_detect,model_path_landmark,model_path_feature'\n");
     return -1;
   }
 
@@ -130,38 +130,38 @@ int main(int argc, char *argv[]) {
   char *comm1 = (char *)first_comma;
   char *comm2 = (char *)second_comma;
 
-  model_path1 = model_path;
+  model_path_detect = model_path;
   *comm1 = '\0';
-  model_path2 = comm1 + 1;
+  model_path_landmark = comm1 + 1;
   *comm2 = '\0';
-  model_path3 = comm2 + 1;
+  model_path_feature = comm2 + 1;
 
   printf("Running with:\n");
-  printf("  Model path1:     %s\n", model_path1);
-  printf("  Model path2:     %s\n", model_path2);
-  printf("  Model path3:     %s\n", model_path3);
-  printf("  Input image 1:   %s\n", input_image1);
-  printf("  Input image 2:   %s\n", input_image2);
-  printf("  Config:          %s\n", config);
+  printf("  Model path_detect:       %s\n", model_path_detect);
+  printf("  Model path_landmark:     %s\n", model_path_landmark);
+  printf("  Model path_feature:      %s\n", model_path_feature);
+  printf("  Input image 1:           %s\n", input_image1);
+  printf("  Input image 2:           %s\n", input_image2);
+  printf("  Config:                  %s\n", config);
 
   int ret = 0;
 
   TDLModel model_id_detect;
-  ret = get_model_info(model_path1, &model_id_detect);
+  ret = get_model_info(model_path_detect, &model_id_detect);
   if (ret != 0) {
     printf("None detect model name to support\n");
     return -1;
   }
 
   TDLModel model_id_landmark;
-  ret = get_model_info(model_path2, &model_id_landmark);
+  ret = get_model_info(model_path_landmark, &model_id_landmark);
   if (ret != 0) {
     printf("None landkark model name to support\n");
     return -1;
   }
 
   TDLModel model_id_feature;
-  ret = get_model_info(model_path3, &model_id_feature);
+  ret = get_model_info(model_path_feature, &model_id_feature);
   if (ret != 0) {
     printf("None feature model name to support\n");
     return -1;
@@ -169,19 +169,20 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id_detect, model_path1, config);
+  ret = TDL_OpenModel(tdl_handle, model_id_detect, model_path_detect, config);
   if (ret != 0) {
     printf("open detect model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id_landmark, model_path2, config);
+  ret =
+      TDL_OpenModel(tdl_handle, model_id_landmark, model_path_landmark, config);
   if (ret != 0) {
     printf("open landkark model failed with %#x!\n", ret);
     goto exit1;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id_feature, model_path3, config);
+  ret = TDL_OpenModel(tdl_handle, model_id_feature, model_path_feature, config);
   if (ret != 0) {
     printf("open feature model failed with %#x!\n", ret);
     goto exit2;

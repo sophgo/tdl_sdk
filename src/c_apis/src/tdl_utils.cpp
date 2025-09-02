@@ -15,9 +15,10 @@ int32_t TDL_InitObjectMeta(TDLObject *object_meta, int num_objects,
   if (object_meta->info == NULL) {
     object_meta->info =
         (TDLObjectInfo *)malloc(num_objects * sizeof(TDLObjectInfo));
-    for (int i = 0; i < num_objects; i++) {
-      object_meta->info[i].landmark_properity = NULL;
-    }
+    memset(object_meta->info, 0, num_objects * sizeof(TDLObjectInfo));
+    object_meta->size = num_objects;
+    object_meta->width = 0;
+    object_meta->height = 0;
   }
 
   for (int i = 0; i < num_objects; i++) {
@@ -26,9 +27,7 @@ int32_t TDL_InitObjectMeta(TDLObject *object_meta, int num_objects,
           (TDLLandmarkInfo *)malloc(num_landmark * sizeof(TDLLandmarkInfo));
     }
   }
-  object_meta->size = num_objects;
-  object_meta->width = 0;
-  object_meta->height = 0;
+
   return 0;
 }
 

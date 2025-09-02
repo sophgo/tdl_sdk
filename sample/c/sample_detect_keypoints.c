@@ -38,7 +38,7 @@ void print_usage(const char *prog_name) {
   printf(
       "  -m, --model_path  Comma-separated model paths\n"
       "  <yolov8n_det_hand_xxx,keypoint_hand_xxx>\n"
-      "  <license_plate_detection_yolov8n_xxx,keypoint_license_plate_xxx>\n"
+      "  <yolov8n_det_license_plate_xxx,keypoint_license_plate_xxx>\n"
       "  <mbv2_det_person_xxx,keypoint_simcc_person17_xxx>\n");
   printf("  -i, --input       Path to input image\n");
   printf("  -h, --help        Show this help message\n");
@@ -155,7 +155,6 @@ int main(int argc, char *argv[]) {
   }
 
   TDLObject obj_meta = {0};
-
   ret = TDL_Detection(tdl_handle, model_id_d, image, &obj_meta);
   if (ret != 0) {
     printf("TDL_Detection failed with %#x!\n", ret);
@@ -177,7 +176,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  ret = TDL_DetectionKeypoint(tdl_handle, model_id_k, image, &obj_meta);
+  ret = TDL_DetectionKeypoint(tdl_handle, model_id_k, image, &obj_meta, NULL);
   if (ret != 0) {
     printf("TDL_KeypointDetection failed with %#x!\n", ret);
   } else {

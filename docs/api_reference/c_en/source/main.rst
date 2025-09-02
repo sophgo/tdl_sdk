@@ -2343,7 +2343,8 @@ TDL_DetectionKeypoint
   int32_t TDL_DetectionKeypoint(TDLHandle handle,
                                 const TDLModel model_id,
                                 TDLImage image_handle,
-                                TDLObject *object_meta);
+                                TDLObject *object_meta,
+                                TDLImage *crop_image_handle));
 
 【Description】
 
@@ -2374,6 +2375,11 @@ Execute keypoint detection task based on object coordinates (performs keypoint d
      - TDLImage
      - image_handle
      - TDLImageHandle object
+
+   * - Input
+     - TDLImage
+     - crop_image_handle
+     - TDLImageHandle object, the cropped image queue will not take effect if it is NULL
 
    * - Output
      - TDLObject*

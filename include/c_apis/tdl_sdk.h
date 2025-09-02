@@ -232,10 +232,13 @@ int32_t TDL_Keypoint(TDLHandle handle, const TDLModel model_id,
  * @param model_id 指定关键点检测模型类型枚举值
  * @param image_handle TDLImageHandle 对象
  * @param object_meta 输出参数，存储检测到的关键点坐标及置信度
+ * @param crop_image_handle TDLImageHandle 对象,
+ * 裁剪后的图像队列，为NULL时不生效
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
-                              TDLImage image_handle, TDLObject *object_meta);
+                              TDLImage image_handle, TDLObject *object_meta,
+                              TDLImage *crop_image_handle);
 
 /**
  * @brief 执行实例分割任务

@@ -595,17 +595,42 @@ int32_t TDL_Keypoint(TDLHandle handle, const TDLModel model_id,
 }
 
 int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
-                              TDLImage image_handle, TDLObject *object_meta) {
+                              TDLImage image_handle, TDLObject *object_meta,
+                              TDLImage *crop_image_handle) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
   }
 
   TDLImageContext *image_context = (TDLImageContext *)image_handle;
+  std::vector<std::shared_ptr<BaseImage>> images;
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
-
+  std::shared_ptr<BasePreprocessor> preprocessor = model->getPreprocessor();
+  int32_t ret = 0;
+  int32_t keypoint_cnt = 0;
   std::shared_ptr<ModelBoxInfo> obj_info = convertObjMeta(object_meta);
-  int32_t ret = model->inference(image_context->image, obj_info, outputs);
+  if (object_meta->size != 0) {
+    for (int32_t i = 0; i < object_meta->size; i++) {
+      std::shared_ptr<BaseImage> target_img;
+      int32_t width = (int32_t)object_meta->info[i].box.x2 -
+                      (int32_t)object_meta->info[i].box.x1;
+      int32_t height = (int32_t)object_meta->info[i].box.y2 -
+                       (int32_t)object_meta->info[i].box.y1;
+      float expansion_factor = 1.25f;
+      int32_t new_width = static_cast<int32_t>(width * expansion_factor);
+      int32_t new_height = static_cast<int32_t>(height * expansion_factor);
+      int32_t crop_x =
+          (int32_t)object_meta->info[i].box.x1 - (new_width - width) / 2;
+      int32_t crop_y =
+          (int32_t)object_meta->info[i].box.y1 - (new_height - height) / 2;
+      target_img = preprocessor->crop(image_context->image, crop_x, crop_y,
+                                      new_width, new_height);
+      images.push_back(target_img);
+    }
+  } else {
+    images.push_back(image_context->image);
+  }
+  ret = model->inference(images, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -616,17 +641,38 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
       return -1;
     }
     ModelLandmarksInfo *keypoint_output = (ModelLandmarksInfo *)output.get();
-    TDL_InitObjectMeta(object_meta, 1, keypoint_output->landmarks_x.size());
+    keypoint_cnt = keypoint_output->landmarks_x.size();
+    TDL_InitObjectMeta(object_meta, object_meta->size, keypoint_cnt);
     object_meta->width = keypoint_output->image_width;
     object_meta->height = keypoint_output->image_height;
-    object_meta->info[i].landmark_size = keypoint_output->landmarks_x.size();
-    for (size_t j = 0; j < keypoint_output->landmarks_x.size(); j++) {
+    object_meta->info[i].landmark_size = keypoint_cnt;
+    for (size_t j = 0; j < keypoint_cnt; j++) {
       object_meta->info[i].landmark_properity[j].x =
           keypoint_output->landmarks_x[j];
       object_meta->info[i].landmark_properity[j].y =
           keypoint_output->landmarks_y[j];
     }
+
+    if (crop_image_handle != nullptr) {
+      TDLImageContext *image_crop_context = new TDLImageContext();
+      if (model_id == TDL_MODEL_KEYPOINT_LICENSE_PLATE) {
+        float dst_keypoints[keypoint_cnt * 2];
+        for (int32_t k = 0; k < keypoint_cnt; k++) {
+          dst_keypoints[2 * k] = object_meta->info[i].landmark_properity[k].x;
+          dst_keypoints[2 * k + 1] =
+              object_meta->info[i].landmark_properity[k].y;
+        }
+        std::shared_ptr<BaseImage> license_plate_align =
+            ImageFactory::alignLicensePlate(images[i], dst_keypoints, nullptr,
+                                            4, nullptr);
+        image_crop_context->image = license_plate_align;
+      } else {
+        image_crop_context->image = images[i];
+      }
+      crop_image_handle[i] = reinterpret_cast<TDLImage>(image_crop_context);
+    }
   }
+
   return 0;
 }
 

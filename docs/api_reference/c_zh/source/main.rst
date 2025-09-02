@@ -2359,7 +2359,8 @@ TDL_DetectionKeypoint
   int32_t TDL_DetectionKeypoint(TDLHandle handle,
                                 const TDLModel model_id,
                                 TDLImage image_handle,
-                                TDLObject *object_meta);
+                                TDLObject *object_meta,
+                                TDLImage *crop_image_handle);
 
 【描述】
 
@@ -2390,6 +2391,11 @@ TDL_DetectionKeypoint
      - TDLImage
      - image_handle
      - TDLImageHandle 对象
+
+   * - 输入
+     - TDLImage
+     - crop_image_handle
+     - TDLImageHandle 对象, 裁剪后的图像队列，为NULL时不生效
 
    * - 输出
      - TDLObject*
