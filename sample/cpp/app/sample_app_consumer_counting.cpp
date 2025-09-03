@@ -22,8 +22,10 @@ bool make_dir(const char *path, mode_t mode = 0755) {
 }
 
 void visualizeDetections(const std::string &dst_dir, uint32_t frame_id,
+                         const std::vector<TrackerInfo> &track_results,
                          std::shared_ptr<BaseImage> image,
-                         const std::vector<ObjectBoxInfo> &det_boxes) {
+                         const std::vector<ObjectBoxInfo> &det_boxes,
+                         std::vector<int> &counting_line) {
   cv::Mat mat;
   bool is_rgb;
   int32_t ret = ImageFactory::convertToMat(image, mat, is_rgb);
@@ -35,19 +37,27 @@ void visualizeDetections(const std::string &dst_dir, uint32_t frame_id,
     std::cout << "convert to bgr" << std::endl;
     cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
   }
+  cv::line(mat, cv::Point(counting_line[0], counting_line[1]),
+           cv::Point(counting_line[2], counting_line[3]), cv::Scalar(0, 0, 255),
+           2);
 
   char szinfo[128];
-  int obj_idx = 0;
-  for (auto &box : det_boxes) {
-    cv::rectangle(mat,
-                  cv::Rect(box.x1, box.y1, box.x2 - box.x1, box.y2 - box.y1),
-                  cv::Scalar(0, 255, 0), 2);
-    sprintf(szinfo, "%d-%.1f", obj_idx, box.x1);
-    int ctx = (box.x1 + box.x2) / 2;
-    int cty = (box.y1 + box.y2) / 2;
-    cv::putText(mat, szinfo, cv::Point(ctx, cty), cv::FONT_HERSHEY_SIMPLEX, 0.5,
-                cv::Scalar(0, 255, 0), 2);
-    obj_idx++;
+  for (int i = 0; i < track_results.size(); i++) {
+    TrackerInfo track_info = track_results[i];
+
+    if (track_info.obj_idx_ != -1) {
+      uint64_t track_id = track_info.track_id_;
+
+      ObjectBoxInfo box = det_boxes[track_info.obj_idx_];
+      cv::rectangle(mat,
+                    cv::Rect(box.x1, box.y1, box.x2 - box.x1, box.y2 - box.y1),
+                    cv::Scalar(0, 255, 0), 2);
+      sprintf(szinfo, "id:%ld", track_id);
+      int ctx = (box.x1 + box.x2) / 2;
+      int cty = (box.y1 + box.y2) / 2;
+      cv::putText(mat, szinfo, cv::Point(ctx, cty), cv::FONT_HERSHEY_SIMPLEX,
+                  0.5, cv::Scalar(0, 255, 0), 2);
+    }
   }
 
   char sz_frame_name[1024];
@@ -104,10 +114,15 @@ int main(int argc, char **argv) {
       printf("enter:%d, miss:%d\n", consumer_counting_result->enter_num,
              consumer_counting_result->miss_num);
 
-      // visualizeDetections(output_folder_path,
-      // consumer_counting_result->frame_id,
-      //                     consumer_counting_result->image,
-      //                     consumer_counting_result->object_boxes);
+      std::vector<int> counting_line(4, 0);
+      for (int i = 0; i < consumer_counting_result->counting_line.size(); i++) {
+        counting_line[i] = consumer_counting_result->counting_line[i];
+      }
+      visualizeDetections(output_dir, consumer_counting_result->frame_id,
+                          consumer_counting_result->track_results,
+                          consumer_counting_result->image,
+                          consumer_counting_result->object_boxes,
+                          counting_line);
 
       channel_counter[channel_name]++;
       std::cout << "export consumer counting result done" << std::endl;

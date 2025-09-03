@@ -35,10 +35,8 @@ int main(int argc, char **argv) {
     std::vector<float> landmark;
     printf("face_meta size: %ld,score:%f,blurness:%f\n",
            landmarks_meta->landmarks_x.size(),
-           landmarks_meta
-               ->attributes[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE],
-           landmarks_meta->attributes
-               [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER]);
+           landmarks_meta->landmarks_score[0],
+           landmarks_meta->landmarks_score[1]);
     for (size_t j = 0; j < landmarks_meta->landmarks_x.size(); j++) {
       printf("face_meta pts: %f, %f\n", landmarks_meta->landmarks_x[j],
              landmarks_meta->landmarks_y[j]);

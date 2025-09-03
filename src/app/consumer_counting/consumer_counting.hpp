@@ -7,6 +7,8 @@
 typedef struct {
   float old_x;
   float old_y;
+  float new_x;
+  float new_y;
   int unmatched_times;
   int counting_gap;
   bool enter;
@@ -17,12 +19,13 @@ typedef struct {
 
 class ConsumerCounting {
  public:
-  ConsumerCounting(int A_x, int A_y, int B_x, int B_y, int mode);
+  ConsumerCounting(int A_x, int A_y, int B_x, int B_y, int mode,
+                   int counting_gap);
 
   ~ConsumerCounting() {}
 
   int32_t update_consumer_counting_state(
-      const std::vector<TrackerInfo> &track_results);
+      const std::vector<TrackerInfo> &track_results, bool force_all = false);
   int32_t update_cross_detection_state(
       const std::vector<TrackerInfo> &track_results,
       std::vector<uint64_t> &cross_id);

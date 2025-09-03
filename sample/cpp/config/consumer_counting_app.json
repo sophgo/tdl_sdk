@@ -17,6 +17,7 @@
 
           "consumer_counting_node": {
             "mode": 0, 
+            "counting_gap": 30,
             "x1": 0,
             "y1": 500,
             "x2": 1900,

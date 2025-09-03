@@ -11,5 +11,3 @@ if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)
 
     message(STATUS "Python samples will be installed to ${CMAKE_INSTALL_PREFIX}/python")
 endif()
-
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/config DESTINATION .)

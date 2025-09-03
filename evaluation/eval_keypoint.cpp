@@ -26,7 +26,7 @@ std::string get_basename_noext(const std::string& path) {
 void dump_kp_to_dir_txt(
     const std::string& img_path,
     const std::vector<std::shared_ptr<ModelOutputInfo>>& outs,
-    const std::string& result_dir) {
+    const std::string& result_dir, std::string& model_name) {
   std::string base_name = get_basename_noext(img_path);
   std::string txt_path = result_dir;
 
@@ -46,6 +46,9 @@ void dump_kp_to_dir_txt(
     ofs << h;
     for (size_t k = 0; k < lm->landmarks_x.size(); ++k)
       ofs << ' ' << lm->landmarks_x[k] << ' ' << lm->landmarks_y[k];
+    if (model_name == "KEYPOINT_FACE_V2") {
+      ofs << ' ' << lm->landmarks_score[0] << ' ' << lm->landmarks_score[1];
+    }
     ofs << '\n';
   }
   ofs.close();
@@ -100,7 +103,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::shared_ptr<ModelOutputInfo>> kp_out;
     kp_model->inference({img}, kp_out);
 
-    dump_kp_to_dir_txt(img_path, kp_out, result_dir);
+    dump_kp_to_dir_txt(img_path, kp_out, result_dir, model_name);
   }
 
   std::cout << "All done. total = " << img_idx << '\n';

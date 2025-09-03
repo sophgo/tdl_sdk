@@ -121,6 +121,14 @@ int32_t ConsumerCountingAPP::getResult(const std::string &pipeline_name,
       frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
   if (image == nullptr) {
     std::cout << "image is nullptr" << std::endl;
+    if (frame_info->node_data_.find("counting_result") !=
+        frame_info->node_data_.end()) {
+      std::vector<uint32_t> counting_result =
+          getNodeData<std::vector<uint32_t>>("counting_result", frame_info);
+      consumer_counting_result->enter_num = counting_result[0];
+      consumer_counting_result->miss_num = counting_result[1];
+    }
+    result = Packet::make(consumer_counting_result);
     return -1;
   }
   consumer_counting_result->image = image;
@@ -250,6 +258,8 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::getObjectDetectionNode(
     std::shared_ptr<ModelBoxInfo> object_meta =
         std::dynamic_pointer_cast<ModelBoxInfo>(out_data);
     frame_info->node_data_["object_meta"] = Packet::make(object_meta->bboxes);
+    LOGI("frame id:%d, detecte object size: %d\n", frame_info->frame_id_,
+         object_meta->bboxes.size());
     return 0;
   };
   object_detection_node->setProcessFunc(lambda_func);
@@ -293,6 +303,8 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::getTrackNode(
     std::vector<TrackerInfo> track_results;
     tracker->track(bbox_infos, frame_info->frame_id_, track_results);
     frame_info->node_data_["track_results"] = Packet::make(track_results);
+    LOGI("frame id:%d, track size: %d\n", frame_info->frame_id_,
+         track_results.size());
     return 0;
   };
   track_node->setProcessFunc(lambda_func);
@@ -307,22 +319,36 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::ConsumerCountingNode(
   int y1 = node_config["y1"];
   int x2 = node_config["x2"];
   int y2 = node_config["y2"];
-
-  std::vector<int> counting_line = {x1, y1, x2, y2};
+  int counting_gap = node_config["counting_gap"];
 
   std::shared_ptr<ConsumerCounting> consumer_counting =
-      std::make_shared<ConsumerCounting>(x1, y1, x2, y2, mode);
+      std::make_shared<ConsumerCounting>(x1, y1, x2, y2, mode, counting_gap);
 
   std::shared_ptr<PipelineNode> consumer_counting_node =
       std::make_shared<PipelineNode>(Packet::make(consumer_counting));
   consumer_counting_node->setName("consumer_counting_node");
 
   auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
-    const std::vector<TrackerInfo> &track_results =
-        frame_info->node_data_["track_results"].get<std::vector<TrackerInfo>>();
+    auto image =
+        frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
 
     std::shared_ptr<ConsumerCounting> consumer_counting =
         packet.get<std::shared_ptr<ConsumerCounting>>();
+
+    if (image == nullptr) {  // force all
+      std::cout << "image is nullptr" << std::endl;
+      consumer_counting->update_consumer_counting_state(
+          std::vector<TrackerInfo>(), true);
+      std::vector<uint32_t> counting_result;
+
+      counting_result.push_back(consumer_counting->get_enter_num());
+      counting_result.push_back(consumer_counting->get_miss_num());
+      frame_info->node_data_["counting_result"] = Packet::make(counting_result);
+      return -1;
+    }
+
+    const std::vector<TrackerInfo> &track_results =
+        frame_info->node_data_["track_results"].get<std::vector<TrackerInfo>>();
 
     std::vector<int> counting_line;
     consumer_counting->get_counting_line(counting_line);
@@ -334,6 +360,9 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::ConsumerCountingNode(
 
     counting_result.push_back(consumer_counting->get_enter_num());
     counting_result.push_back(consumer_counting->get_miss_num());
+
+    LOGI("frame id:%d, enter num: %d, miss num: %d\n", frame_info->frame_id_,
+         consumer_counting->get_enter_num(), consumer_counting->get_miss_num());
 
     frame_info->node_data_["counting_result"] = Packet::make(counting_result);
 
@@ -350,15 +379,23 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::CrossDetectionNode(
   int y1 = node_config["y1"];
   int x2 = node_config["x2"];
   int y2 = node_config["y2"];
+  int counting_gap = node_config["counting_gap"];
 
   std::shared_ptr<ConsumerCounting> cross_detection =
-      std::make_shared<ConsumerCounting>(x1, y1, x2, y2, mode);
+      std::make_shared<ConsumerCounting>(x1, y1, x2, y2, mode, counting_gap);
 
   std::shared_ptr<PipelineNode> cross_detection_node =
       std::make_shared<PipelineNode>(Packet::make(cross_detection));
   cross_detection_node->setName("cross_detection_node");
 
   auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
+    auto image =
+        frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
+    if (image == nullptr) {
+      std::cout << "image is nullptr" << std::endl;
+      return -1;
+    }
+
     const std::vector<TrackerInfo> &track_results =
         frame_info->node_data_["track_results"].get<std::vector<TrackerInfo>>();
 
@@ -370,7 +407,8 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::CrossDetectionNode(
 
     std::vector<uint64_t> cross_id;
     cross_detection->update_cross_detection_state(track_results, cross_id);
-
+    LOGI("frame id:%d, cross_id size: %d\n", frame_info->frame_id_,
+         cross_id.size());
     frame_info->node_data_["cross_id"] = Packet::make(cross_id);
 
     return 0;

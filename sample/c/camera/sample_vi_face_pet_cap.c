@@ -351,7 +351,8 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Running with:\n");
-  printf("  config_file:    %s\n", config_file);
+  printf("  config_file:    %s\n",
+         config_file);  // sample/config/face_pet_cap_app_vi.json
   printf("  gallery_dir:   %s\n", gallery_dir);
   printf("  output_dir:  %s\n", output_dir);
   printf("  vi_chn:        %d\n", chn);

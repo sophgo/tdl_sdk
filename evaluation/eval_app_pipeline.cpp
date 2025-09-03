@@ -26,20 +26,9 @@ std::string pack_track_results(const std::vector<TrackerInfo> &track_results,
                                uint32_t img_width, uint32_t img_height) {
   std::string str_content;
   for (auto &track_result : track_results) {
-    // printf(
-    //     "track_result: "
-    //     "%d,box:[%.2f,%.2f,%.2f,%.2f],score:%.2f,image_width:%d,image_height:%"
-    //     "d\n",
-    //     int(track_result.track_id_), track_result.box_info_.x1,
-    //     track_result.box_info_.y1, track_result.box_info_.x2,
-    //     track_result.box_info_.y2, track_result.box_info_.score, img_width,
-    //     img_height);
-    if (track_result.obj_idx_ == -1) {
-      // || track_result.box_info_.object_type !=
-      // TDLObjectType::OBJECT_TYPE_FACE) {
-      // printf("track_result.obj_idx_ == -1, continue\n");
-      continue;
-    }
+    // if (track_result.obj_idx_ == -1) {
+    //   continue;
+    // }
     float ctx = (track_result.box_info_.x1 + track_result.box_info_.x2) / 2;
     float cty = (track_result.box_info_.y1 + track_result.box_info_.y2) / 2;
     float w = track_result.box_info_.x2 - track_result.box_info_.x1;
@@ -48,9 +37,7 @@ std::string pack_track_results(const std::vector<TrackerInfo> &track_results,
     cty = cty / img_height;
     w = w / img_width;
     h = h / img_height;
-    // printf("ctx:%.2f,cty:%.2f,w:%.2f,h:%.2f,imgw:%d,imgh:%d\n", ctx, cty, w,
-    // h,
-    //        img_width, img_height);
+
     char sz_content[1024];
     sprintf(sz_content, "11 %.6f %.6f %.6f %.6f %d %.4f\n", ctx, cty, w, h,
             int(track_result.track_id_), track_result.box_info_.score);
@@ -65,18 +52,8 @@ std::string pack_det_results(
     const std::vector<ObjectBoxInfo> &person_boxes, uint32_t img_width,
     uint32_t img_height) {
   std::string str_content;
-  // printf("face_boxes size: %d, person_boxes size:%d\n",face_boxes.size(),
-  // person_boxes.size() ); getchar();
 
   for (auto &track_result : track_results) {
-    // printf(
-    //     "track_result: "
-    //     "%d,box:[%.2f,%.2f,%.2f,%.2f],score:%.2f,image_width:%d,image_height:%"
-    //     "d\n",
-    //     int(track_result.track_id_), track_result.box_info_.x1,
-    //     track_result.box_info_.y1, track_result.box_info_.x2,
-    //     track_result.box_info_.y2, track_result.box_info_.score, img_width,
-    //     img_height);
     if (track_result.obj_idx_ == -1) {
       // || track_result.box_info_.object_type !=
       // TDLObjectType::OBJECT_TYPE_FACE) {
@@ -108,8 +85,6 @@ std::string pack_det_results(
       }
       ObjectBoxInfo p_box =
           person_boxes[track_result.obj_idx_ - face_boxes.size()];
-      // printf("id:%d, p_box: %f, %f, %f, %f\n", track_result.obj_idx_,
-      // p_box.x1, p_box.x2, p_box.y1, p_box.y2);
 
       float ctx = (p_box.x1 + p_box.x2) / 2;
       float cty = (p_box.y1 + p_box.y2) / 2;
@@ -199,6 +174,13 @@ std::string capobj_to_str(std::vector<ObjectSnapshotInfo> &face_snapshots,
   return ss.str();
 }
 
+std::string consumer_counting_to_str(uint64_t frame_id, uint32_t enter_num,
+                                     uint32_t miss_num) {
+  std::stringstream ss;
+  ss << frame_id << " " << enter_num << " " << miss_num << "\n";
+  return ss.str();
+}
+
 void exportFaceSnapshots(const std::string &dst_dir,
                          std::vector<ObjectSnapshotInfo> &face_snapshots) {
   char sz_frame_name[1024];
@@ -274,7 +256,6 @@ int main(int argc, char **argv) {
       Packet result;
       std::cout << "to get result from channel:" << channel_name << std::endl;
 
-      // getchar();
       int ret = app_task->getResult(channel_name, result);
 
       std::string output_dir = channel_output_dirs[channel_name];
@@ -292,9 +273,6 @@ int main(int argc, char **argv) {
 
         frame_id = cap_result->frame_id;
 
-        // track_content = pack_track_results(cap_result->track_results,
-        //                                    cap_result->frame_width,
-        //                                    cap_result->frame_height);
         track_content =
             pack_det_results(cap_result->track_results, cap_result->face_boxes,
                              cap_result->person_boxes, cap_result->frame_width,
@@ -315,9 +293,6 @@ int main(int argc, char **argv) {
 
         frame_id = cap_result->frame_id;
 
-        // track_content = pack_track_results(cap_result->track_results,
-        //                                    cap_result->frame_width,
-        //                                    cap_result->frame_height);
         track_content =
             pack_det_results(cap_result->track_results, cap_result->face_boxes,
                              cap_result->person_boxes, cap_result->frame_width,
@@ -339,6 +314,28 @@ int main(int argc, char **argv) {
           outfea.close();
         }
         exportFaceSnapshots(output_dir, cap_result->face_snapshots);
+      } else if (task_name == "consumer_counting") {
+        std::shared_ptr<ConsumerCountingResult> consumer_counting_result =
+            result.get<std::shared_ptr<ConsumerCountingResult>>();
+        if (consumer_counting_result == nullptr) {
+          std::cout << "cap_result is nullptr" << std::endl;
+          continue;
+        }
+
+        frame_id = consumer_counting_result->frame_id;
+
+        track_content =
+            pack_track_results(consumer_counting_result->track_results,
+                               consumer_counting_result->frame_width,
+                               consumer_counting_result->frame_height);
+
+        cap_content = consumer_counting_to_str(
+            frame_id, consumer_counting_result->enter_num,
+            consumer_counting_result->miss_num);
+      } else {
+        std::cout << "task_name: " << task_name << " not supported"
+                  << std::endl;
+        continue;
       }
 
       channel_cap_fp[channel_name] << cap_content;

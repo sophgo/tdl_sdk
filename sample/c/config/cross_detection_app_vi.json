@@ -12,6 +12,7 @@
 
         "cross_detection_node": {
           "mode": 0, 
+          "counting_gap": 30,
           "x1": 480,
           "y1": 20,
           "x2": 480,
