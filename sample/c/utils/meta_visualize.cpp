@@ -9,8 +9,8 @@
 #define min(x, y) (((x) <= (y)) ? (x) : (y))
 #define max(x, y) (((x) >= (y)) ? (x) : (y))
 
-int32_t TDL_VisualizeRectangle(box_t *box, int32_t num, char *input_path,
-                               char *output_path) {
+int32_t VisualizeRectangle(box_t *box, int32_t num, char *input_path,
+                           char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     LOGE("input path is empty\n");
@@ -30,8 +30,8 @@ int32_t TDL_VisualizeRectangle(box_t *box, int32_t num, char *input_path,
   return 0;
 }
 
-int32_t TDL_VisualizePoint(point_t *point, int32_t num, char *input_path,
-                           char *output_path) {
+int32_t VisualizePoint(point_t *point, int32_t num, char *input_path,
+                       char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     LOGE("input path is empty\n");
@@ -48,8 +48,8 @@ int32_t TDL_VisualizePoint(point_t *point, int32_t num, char *input_path,
   return 0;
 }
 
-int32_t TDL_VisualizeLine(box_t *box, int32_t num, char *input_path,
-                          char *output_path) {
+int32_t VisualizeLine(box_t *box, int32_t num, char *input_path,
+                      char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     LOGE("input path is empty\n");
@@ -67,8 +67,8 @@ int32_t TDL_VisualizeLine(box_t *box, int32_t num, char *input_path,
   return 0;
 }
 
-int32_t TDL_VisualizePolylines(point_t *point, int32_t num, char *input_path,
-                               char *output_path) {
+int32_t VisualizePolylines(point_t *point, int32_t num, char *input_path,
+                           char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     LOGE("input path is empty\n");
@@ -88,8 +88,8 @@ int32_t TDL_VisualizePolylines(point_t *point, int32_t num, char *input_path,
   return 0;
 }
 
-int32_t TDL_CropImage(int x, int y, int weight, int height, char *input_path,
-                      char *output_path) {
+int32_t CropImage(int x, int y, int weight, int height, char *input_path,
+                  char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     LOGE("input path is empty\n");
@@ -124,8 +124,8 @@ cv::Vec3b getColor(int value) {
   }
 }
 
-int32_t TDL_MatToImage(int **mat, int weight, int height, char *output_path,
-                       int scale) {
+int32_t MatToImage(int **mat, int weight, int height, char *output_path,
+                   int scale) {
   cv::Mat image(weight * scale, height * scale, CV_8UC3, cv::Scalar(0, 0, 0));
   for (int i = 0; i < weight; i++) {
     for (int j = 0; j < height; j++) {
@@ -139,8 +139,8 @@ int32_t TDL_MatToImage(int **mat, int weight, int height, char *output_path,
   return 0;
 }
 
-int32_t TDL_VisualizText(int32_t x, int32_t y, char *text, char *input_path,
-                         char *output_path) {
+int32_t VisualizText(int32_t x, int32_t y, char *text, char *input_path,
+                     char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     LOGE("input path is empty\n");
@@ -646,24 +646,23 @@ int DrawMeta(const MetaType *meta, VIDEO_FRAME_INFO_S *drawFrame,
   return 0;
 }
 
-int32_t TDL_DrawObjRect(const TDLObject *meta, void *frame, const bool drawText,
-                        TDLBrush brush) {
+int32_t DrawObjRect(const TDLObject *meta, void *frame, const bool drawText,
+                    TDLBrush brush) {
   if (meta->size <= 0) return 0;
 
   std::vector<TDLBrush> brushes(meta->size, brush);
   return DrawMeta(meta, (VIDEO_FRAME_INFO_S *)frame, drawText, brushes);
 }
 
-int32_t TDL_DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
-                         TDLBrush brush) {
+int32_t DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
+                     TDLBrush brush) {
   if (meta->size <= 0) return 0;
 
   std::vector<TDLBrush> brushes(meta->size, brush);
   return DrawMeta(meta, (VIDEO_FRAME_INFO_S *)frame, drawText, brushes);
 }
 
-int32_t TDL_ObjectWriteText(char *name, int x, int y, void *frame,
-                            TDLBrush brush) {
+int32_t ObjectWriteText(char *name, int x, int y, void *frame, TDLBrush brush) {
   return WriteText(name, x, y, (VIDEO_FRAME_INFO_S *)frame, brush);
 }
 #endif

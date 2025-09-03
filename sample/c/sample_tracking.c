@@ -216,18 +216,18 @@ int main(int argc, char **argv) {
           char text[5] = {0};
           snprintf(text, 5, "%ld", track_meta.info[c].id);
           if (c == 0) {
-            TDL_VisualizText(boxes[c].x1 + (boxes[c].x2 - boxes[c].x1) / 2,
-                             boxes[c].y1 + (boxes[c].y2 - boxes[c].y1) / 2,
-                             text, files[i], outpath);
+            VisualizText(boxes[c].x1 + (boxes[c].x2 - boxes[c].x1) / 2,
+                         boxes[c].y1 + (boxes[c].y2 - boxes[c].y1) / 2, text,
+                         files[i], outpath);
           } else {
-            TDL_VisualizText(boxes[c].x1 + (boxes[c].x2 - boxes[c].x1) / 2,
-                             boxes[c].y1 + (boxes[c].y2 - boxes[c].y1) / 2,
-                             text, outpath, outpath);
+            VisualizText(boxes[c].x1 + (boxes[c].x2 - boxes[c].x1) / 2,
+                         boxes[c].y1 + (boxes[c].y2 - boxes[c].y1) / 2, text,
+                         outpath, outpath);
           }
         }
       }
       if (output_file != NULL) {
-        TDL_VisualizeRectangle(boxes, track_meta.out_num, outpath, outpath);
+        VisualizeRectangle(boxes, track_meta.out_num, outpath, outpath);
       }
     }
 

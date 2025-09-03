@@ -156,9 +156,8 @@ int main(int argc, char *argv[]) {
         }
       }
       if (output_image != NULL) {
-        TDL_VisualizePoint(point, obj_meta.size * 17, input_image,
-                           output_image);
-        TDL_VisualizeLine(line, 19, input_image, output_image);
+        VisualizePoint(point, obj_meta.size * 17, input_image, output_image);
+        VisualizeLine(line, 19, input_image, output_image);
       }
     }
   }

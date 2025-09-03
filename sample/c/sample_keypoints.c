@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
         point[i].y = obj_meta.info[i].y * obj_meta.height;
       }
       if (output_image != NULL) {
-        TDL_VisualizePoint(point, obj_meta.size, input_image, output_image);
+        VisualizePoint(point, obj_meta.size, input_image, output_image);
       }
     }
   }

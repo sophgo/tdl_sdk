@@ -12,7 +12,7 @@
 #include "cvi_vi.h"
 #include "meta_visualize.h"
 #include "pthread_utils.h"
-#include "rtsp_utils.h"
+#include "sample_utils.h"
 #include "tdl_sdk.h"
 
 // #define ENABLE_RTSP
@@ -21,7 +21,7 @@
 #define VI_HEIGHT 540
 
 static volatile bool to_exit = false;
-static TDLImageQueue image_queue;
+static ImageQueue image_queue;
 
 static uint32_t get_time_in_ms() {
   struct timeval tv;
@@ -78,19 +78,19 @@ void *send_frame_thread(void *args) {
     for (size_t i = 0; i < pstArgs->channel_size; i++) {
       TDLImage image = NULL;
 
-      image = TDL_GetCameraFrame(
-          pstArgs->tdl_handle,
-          pstArgs->vi_chn);  // if channel_size > 1, image should be taken from
-                             // different vi_chn
+      image =
+          GetCameraFrame(pstArgs->tdl_handle,
+                         pstArgs->vi_chn);  // if channel_size > 1, image should
+                                            // be taken from different vi_chn
       if (image == NULL) {
-        printf("TDL_GetViFrame falied\n");
+        printf("GetCameraFrame falied\n");
         continue;
       }
 
-      ret = TDL_Image_Enqueue(&image_queue, image);
+      ret = Image_Enqueue(&image_queue, image);
       if (ret != 0) {
-        printf("image TDL_Enqueue falied\n");
-        TDL_ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+        printf("Image_Enqueue falied\n");
+        ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
         TDL_DestroyImage(image);
         continue;
       }
@@ -131,7 +131,7 @@ void *run_tdl_thread(void *args) {
   VIDEO_FRAME_INFO_S *frame = NULL;
 
   // 初始化RTSP参数
-  TDLRTSPContext rtsp_context = {0};
+  RtspContext rtsp_context = {0};
   rtsp_context.chn = 0;
   rtsp_context.pay_load_type = PT_H264;
   rtsp_context.frame_width = VI_WIDTH;
@@ -188,22 +188,20 @@ void *run_tdl_thread(void *args) {
         snprintf(obj_info->name, sizeof(obj_info->name), "id:%d",
                  obj_info->track_id);
       }
-      TDL_DrawObjRect(&consumer_counting_info.object_meta, frame, true, brush);
+      DrawObjRect(&consumer_counting_info.object_meta, frame, true, brush);
 
       brush.color.r = 255;
       brush.color.g = 0;
 
       char line_start[128] = {0};
       snprintf(line_start, sizeof(line_start), "start");  // TODO: TDL_DrawLine
-      TDL_ObjectWriteText(line_start, consumer_counting_info.counting_line[0],
-                          consumer_counting_info.counting_line[1], frame,
-                          brush);
+      ObjectWriteText(line_start, consumer_counting_info.counting_line[0],
+                      consumer_counting_info.counting_line[1], frame, brush);
 
       char line_end[128] = {0};
       snprintf(line_end, sizeof(line_end), "end");
-      TDL_ObjectWriteText(line_end, consumer_counting_info.counting_line[2],
-                          consumer_counting_info.counting_line[3], frame,
-                          brush);
+      ObjectWriteText(line_end, consumer_counting_info.counting_line[2],
+                      consumer_counting_info.counting_line[3], frame, brush);
 
       brush.color.r = 0;
       brush.color.g = 255;
@@ -211,18 +209,18 @@ void *run_tdl_thread(void *args) {
       snprintf(text, sizeof(text), "enter_num:%d, miss_num:%d",
                consumer_counting_info.enter_num,
                consumer_counting_info.miss_num);
-      TDL_ObjectWriteText(text, 50, 50, frame, brush);
+      ObjectWriteText(text, 50, 50, frame, brush);
 
-      ret = TDL_SendFrameRTSP(frame, &rtsp_context);
+      ret = SendFrameRTSP(frame, &rtsp_context);
       if (ret != 0) {
-        printf("TDL_SendFrameRTSP failed with %#x!\n", ret);
+        printf("SendFrameRTSP failed with %#x!\n", ret);
         continue;
       }
 #endif
 
       TDL_ReleaseObjectCountingInfo(&consumer_counting_info);
-      TDL_ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
-      TDLImage img = TDL_Image_Dequeue(&image_queue);
+      ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+      TDLImage img = Image_Dequeue(&image_queue);
       if (img) {
         TDL_DestroyImage(img);
       }
@@ -233,8 +231,9 @@ void *run_tdl_thread(void *args) {
     }
   }
 
+  return NULL;
 exit0:
-  TDL_DestoryCamera(pstArgs->tdl_handle);
+  DestoryCamera(pstArgs->tdl_handle);
   TDL_DestroyHandle(pstArgs->tdl_handle);
 }
 
@@ -284,10 +283,9 @@ int main(int argc, char *argv[]) {
 
   char **channel_names = NULL;
   uint8_t channel_size = 0;
-  int ret =
-      TDL_InitCamera(tdl_handle, VI_WIDTH, VI_HEIGHT, TDL_IMAGE_YUV420SP_UV, 3);
+  int ret = InitCamera(tdl_handle, VI_WIDTH, VI_HEIGHT, IMAGE_YUV420SP_UV, 3);
   if (ret != 0) {
-    printf("TDL_InitCamera %#x!\n", ret);
+    printf("InitCamera %#x!\n", ret);
     return ret;
   }
 
@@ -329,13 +327,13 @@ int main(int argc, char *argv[]) {
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
 exit0:
-  TDL_DestroyQueue(&image_queue);
+  DestroyQueue(&image_queue);
   for (int i = 0; i < channel_size; i++) {
     free(channel_names[i]);
   }
   free(channel_names);
 
-  TDL_DestoryCamera(tdl_handle);
+  DestoryCamera(tdl_handle);
   TDL_DestroyHandle(tdl_handle);
 
   return ret;

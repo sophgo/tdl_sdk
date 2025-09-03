@@ -203,11 +203,10 @@ int main(int argc, char *argv[]) {
       }
       if (output_image2 != NULL) {
         if (i == 0) {
-          TDL_VisualizeRectangle(boxes, obj_meta.size, input_image,
-                                 output_image1);
+          VisualizeRectangle(boxes, obj_meta.size, input_image, output_image1);
         } else {
-          TDL_VisualizeRectangle(boxes, obj_meta.size, output_image1,
-                                 output_image1);
+          VisualizeRectangle(boxes, obj_meta.size, output_image1,
+                             output_image1);
         }
         char crop_image[128] = "";
         snprintf(crop_image, sizeof(crop_image), "%s%d.jpg", basename, i);
@@ -215,10 +214,10 @@ int main(int argc, char *argv[]) {
                     (int)round((0.25 * obj_meta.width) / 2);
         int cropY = (int)obj_meta.info[i].box.y1 -
                     (int)round((0.25 * obj_meta.height) / 2);
-        TDL_CropImage(cropX, cropY, obj_meta.width, obj_meta.height,
-                      output_image1, crop_image);
-        TDL_VisualizePoint(point, obj_meta.info[i].landmark_size, crop_image,
-                           crop_image);
+        CropImage(cropX, cropY, obj_meta.width, obj_meta.height, output_image1,
+                  crop_image);
+        VisualizePoint(point, obj_meta.info[i].landmark_size, crop_image,
+                       crop_image);
       }
     }
   }

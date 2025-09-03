@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
     }
     printf("]\n");
     if (output_image != NULL) {
-      TDL_VisualizeRectangle(boxes, obj_meta.size, input_image, output_image);
+      VisualizeRectangle(boxes, obj_meta.size, input_image, output_image);
     }
   }
 

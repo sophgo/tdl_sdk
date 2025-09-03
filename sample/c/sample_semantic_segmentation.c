@@ -119,8 +119,8 @@ int main(int argc, char *argv[]) {
       ptrs[x] = mat[x];
     }
     if (output_image != NULL) {
-      TDL_MatToImage(ptrs, seg_meta.output_height, seg_meta.output_width,
-                     output_image, 30);
+      MatToImage(ptrs, seg_meta.output_height, seg_meta.output_width,
+                 output_image, 30);
     }
   }
 

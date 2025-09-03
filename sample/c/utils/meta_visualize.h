@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "tdl_types.h"
+
 #if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
     defined(__CV183X__) || defined(__CV184X__) || defined(__CV186X__)
 #include "cvi_comm_vpss.h"
@@ -31,36 +32,35 @@ typedef struct {
 
 typedef int int32_t;
 
-int32_t TDL_VisualizeRectangle(box_t *box, int32_t num, char *input_path,
-                               char *output_path);
-
-int32_t TDL_VisualizePoint(point_t *point, int32_t num, char *input_path,
+int32_t VisualizeRectangle(box_t *box, int32_t num, char *input_path,
                            char *output_path);
 
-int32_t TDL_VisualizeLine(box_t *box, int32_t num, char *input_path,
-                          char *output_path);
+int32_t VisualizePoint(point_t *point, int32_t num, char *input_path,
+                       char *output_path);
 
-int32_t TDL_VisualizePolylines(point_t *point, int32_t num, char *input_path,
-                               char *output_path);
-
-int32_t TDL_CropImage(int x, int y, int weight, int height, char *input_path,
+int32_t VisualizeLine(box_t *box, int32_t num, char *input_path,
                       char *output_path);
 
-int32_t TDL_MatToImage(int **mat, int weight, int height, char *output_path,
-                       int scale);
+int32_t VisualizePolylines(point_t *point, int32_t num, char *input_path,
+                           char *output_path);
 
-int32_t TDL_VisualizText(int32_t x, int32_t y, char *text, char *input_path,
-                         char *output_path);
+int32_t CropImage(int x, int y, int weight, int height, char *input_path,
+                  char *output_path);
+
+int32_t MatToImage(int **mat, int weight, int height, char *output_path,
+                   int scale);
+
+int32_t VisualizText(int32_t x, int32_t y, char *text, char *input_path,
+                     char *output_path);
 
 #if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
     defined(__CV183X__) || defined(__CV184X__) || defined(__CV186X__)
-int32_t TDL_DrawObjRect(const TDLObject *meta, void *frame, const bool drawText,
-                        TDLBrush brush);
+int32_t DrawObjRect(const TDLObject *meta, void *frame, const bool drawText,
+                    TDLBrush brush);
 
-int32_t TDL_DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
-                         TDLBrush brush);
-int32_t TDL_ObjectWriteText(char *name, int x, int y, void *frame,
-                            TDLBrush brush);
+int32_t DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
+                     TDLBrush brush);
+int32_t ObjectWriteText(char *name, int x, int y, void *frame, TDLBrush brush);
 #endif
 
 #ifdef __cplusplus

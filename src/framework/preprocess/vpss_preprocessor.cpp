@@ -31,11 +31,6 @@ VpssContext::VpssContext() {
       assert(false);
     }
 
-    s32Ret = CVI_VB_Init();
-    if (s32Ret != CVI_SUCCESS) {
-      LOGE("CVI_VB_Init failed!\n");
-      assert(false);
-    }
     LOGI("CVI_VB_Init success");
   }
 #endif
@@ -45,18 +40,27 @@ VpssContext::VpssContext() {
     LOGE("CVI_SYS_Init failed!\n");
     assert(false);
   }
+
+#if defined(__CV184X__) || defined(__CV181X__) || defined(__CV180X__)
+  s32Ret = CVI_VB_Init();
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("CVI_VB_Init failed!\n");
+    assert(false);
+  }
+#endif
+
   LOGI("VpssContext init done,ret: %d", s32Ret);
 }
 
 VpssContext::~VpssContext() {
+#if defined(__CV184X__) || defined(__CV181X__) || defined(__CV180X__)
+  CVI_VB_Exit();
+#endif
   int s32Ret = CVI_SYS_Exit();
   if (s32Ret != CVI_SUCCESS) {
     LOGE("CVI_SYS_Exit failed!\n");
     assert(false);
   }
-#ifdef __CV181X__
-  CVI_VB_Exit();
-#endif
 }
 
 VpssContext* VpssContext::GetInstance() {

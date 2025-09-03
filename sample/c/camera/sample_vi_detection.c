@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include "meta_visualize.h"
-#include "rtsp_utils.h"
+#include "sample_utils.h"
 #include "tdl_sdk.h"
 
 #define WIDTH 960
@@ -95,9 +95,9 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  ret = TDL_InitCamera(tdl_handle, WIDTH, HEIGHT, TDL_IMAGE_YUV420SP_UV, 3);
+  ret = InitCamera(tdl_handle, WIDTH, HEIGHT, IMAGE_YUV420SP_UV, 3);
   if (ret != 0) {
-    printf("TDL_InitCamera %#x!\n", ret);
+    printf("InitCamera %#x!\n", ret);
     TDL_DestroyHandle(tdl_handle);
     return ret;
   }
@@ -108,13 +108,13 @@ int main(int argc, char *argv[]) {
   ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
-    TDL_DestoryCamera(tdl_handle);
+    DestoryCamera(tdl_handle);
     TDL_DestroyHandle(tdl_handle);
     return ret;
   }
 
   // 初始化RTSP参数
-  TDLRTSPContext rtsp_context = {0};
+  RtspContext rtsp_context = {0};
   rtsp_context.chn = rtsp_chn;
   rtsp_context.pay_load_type = PT_H264;
   rtsp_context.frame_width = WIDTH;
@@ -142,9 +142,9 @@ int main(int argc, char *argv[]) {
       break;  // 有键盘输入，退出循环
     }
 
-    image = TDL_GetCameraFrame(tdl_handle, chn);
+    image = GetCameraFrame(tdl_handle, chn);
     if (image == NULL) {
-      printf("TDL_GetViFrame failed\n");
+      printf("GetCameraFrame failed\n");
       continue;
     }
 
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
         snprintf(obj_info->name, sizeof(obj_info->name), "class:%d score:%.2f",
                  obj_info->class_id, obj_info->score);
       }
-      TDL_DrawObjRect(&obj_meta, frame, true, brush);
+      DrawObjRect(&obj_meta, frame, true, brush);
     }
 
     // 在左上角添加文本
@@ -181,12 +181,12 @@ int main(int argc, char *argv[]) {
     brush_text.color.r = 255;
     brush_text.color.g = 0;
     brush_text.color.b = 0;
-    TDL_ObjectWriteText("Detect...", 10, 30, frame, brush_text);
+    ObjectWriteText("Detect...", 10, 30, frame, brush_text);
 
     // 发送帧
-    ret = TDL_SendFrameRTSP(frame, &rtsp_context);
+    ret = SendFrameRTSP(frame, &rtsp_context);
     if (ret != 0) {
-      printf("TDL_SendFrameRTSP failed with %#x!\n", ret);
+      printf("SendFrameRTSP failed with %#x!\n", ret);
       continue;
     }
     if (is_rtsp_running == 0) {
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
     }
 
     TDL_ReleaseObjectMeta(&obj_meta);
-    TDL_ReleaseCameraFrame(tdl_handle, chn);
+    ReleaseCameraFrame(tdl_handle, chn);
     TDL_DestroyImage(image);
     usleep(40 * 1000);  // Match Vi Frame Rate
   }
@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
   printf("rtsp disconnected!\n");
   TDL_CloseModel(tdl_handle, model_id);
-  TDL_DestoryCamera(tdl_handle);
+  DestoryCamera(tdl_handle);
   TDL_DestroyHandle(tdl_handle);
   return ret;
 }

@@ -137,11 +137,11 @@ int main(int argc, char *argv[]) {
         printf("]\n");
         if (output_image != NULL) {
           if (i == 0) {
-            TDL_VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
-                                   input_image, output_image);
+            VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
+                               input_image, output_image);
           } else {
-            TDL_VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
-                                   output_image, output_image);
+            VisualizePolylines(point, inst_seg_meta.info[i].mask_point_size,
+                               output_image, output_image);
           }
         }
       }
