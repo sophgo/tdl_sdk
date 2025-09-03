@@ -70,15 +70,18 @@
 * 下载依赖仓库
 
     ```shell
-    ./sophpi/scripts/repo_clone.sh --gitclone scripts/subtree.xml
+    cd sdk_package/sophpi
+    chmod +x scripts/repo_clone.sh
+    ./scripts/repo_clone.sh --gitclone scripts/subtree.xml
     ```
 
 * 执行编译
 
     ```shell
     cd tdl_sdk
+    #build system and tdl_sdk at the first time
     ./build_tdl_sdk.sh CV181X
-    #再次编译
+    # build tdl_sdk only after the system is built
     ./build_tdl_sdk.sh all
     #debug版本编译（附带log）
     ./build_tdl_sdk.sh debug
