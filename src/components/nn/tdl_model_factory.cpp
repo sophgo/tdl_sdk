@@ -30,6 +30,7 @@
 #include "segmentation/yolov8_seg.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
+
 TDLModelFactory::TDLModelFactory() {
   coco_types_ = {"person",        "bicycle",      "car",
                  "motorcycle",    "airplane",     "bus",
@@ -304,6 +305,9 @@ bool TDLModelFactory::isObjectDetectionModel(const ModelType model_type) {
           model_type == ModelType::YOLOV8N_DET_TRAFFIC_LIGHT ||
           model_type == ModelType::YOLOV8N_DET_HEAD_HARDHAT ||
           model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON ||
+          model_type == ModelType::YOLOV11N_DET_MONITOR_PERSON ||
+          model_type == ModelType::YOLOV11N_DET_BICYCLE_MOTOR_EBICYCLE ||
+          model_type == ModelType::YOLOV11N_DET_COCO80 ||
           model_type == ModelType::YOLOV8_DET_COCO80 ||
           model_type == ModelType::YOLOV10_DET_COCO80 ||
           model_type == ModelType::YOLOV7_DET_COCO80 ||
@@ -445,7 +449,18 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_HARD_HAT;
   } else if (model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON) {
     num_classes = 1;
+  } else if (model_type == ModelType::YOLOV11N_DET_MONITOR_PERSON) {
+    model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_PERSON;
+    num_classes = 1;
+  } else if (model_type == ModelType::YOLOV11N_DET_BICYCLE_MOTOR_EBICYCLE) {
+    num_classes = 3;
+    model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_BICYCLE;
+    model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_MOTORBIKE;
+    model_type_mapping[2] = TDLObjectType::OBJECT_TYPE_EBICYCLE;
   } else if (model_type == ModelType::YOLOV8_DET_COCO80) {
+    model_category = 0;  // YOLOV8
+    num_classes = 80;
+  } else if (model_type == ModelType::YOLOV11N_DET_COCO80) {
     model_category = 0;  // YOLOV8
     num_classes = 80;
   } else if (model_type == ModelType::YOLOV10_DET_COCO80) {

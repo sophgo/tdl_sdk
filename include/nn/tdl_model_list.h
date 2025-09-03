@@ -26,6 +26,7 @@
   X(YOLOV7_DET_COCO80, "")                                                    \
   X(YOLOV8_DET_COCO80, "")                                                    \
   X(YOLOV10_DET_COCO80, "")                                                   \
+  X(YOLOV11N_DET_COCO80, "")                                                  \
   X(PPYOLOE_DET_COCO80, "")                                                   \
   X(YOLOX_DET_COCO80, "")                                                     \
   /* custom object detection (need set num_cls) */                            \
@@ -33,6 +34,8 @@
   X(YOLOV6, "custom model, specify num_cls")                                  \
   X(YOLOV7, "custom model, specify num_cls")                                  \
   X(YOLOV8, "custom model, specify num_cls")                                  \
+  X(YOLOV11N_DET_MONITOR_PERSON, "0:person")                                  \
+  X(YOLOV11N_DET_BICYCLE_MOTOR_EBICYCLE, "0:bicycle,1:motorcycle,2:ebicycle") \
   X(YOLOV10, "custom model, specify num_cls")                                 \
   X(PPYOLOE, "custom model, specify num_cls")                                 \
   X(YOLOX, "custom model, specify num_cls")                                   \

@@ -63,6 +63,14 @@
       "types":["person"],
       "file_name":"yolov8n_det_monitor_person_256_448_INT8"
     },
+    "YOLOV11N_DET_MONITOR_PERSON":{  
+      "types":["person"],
+      "file_name":"yolov11n_det_monitor_person_384_640_INT8"
+    },
+    "YOLOV11N_DET_BICYCLE_MOTOR_EBICYCLE":{  
+      "types":["bicycle","motorcycle","ebicycle"],
+      "file_name":"yolov11n_det_bicycle_motor_ebicycle_384_640_INT8"
+    },
     "YOLOV5_DET_COCO80":{
       "is_coco_types":true,
       "file_name":"yolov5s_det_coco80_640_640_INT8"
@@ -82,6 +90,10 @@
     "YOLOV10_DET_COCO80":{
       "is_coco_types":true,
       "file_name":"yolov10n_det_coco80_640_640_INT8"
+    },
+    "YOLOV11N_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov11n_det_coco80_640_640_INT8"
     },
     "PPYOLOE_DET_COCO80":{
       "is_coco_types":true,
