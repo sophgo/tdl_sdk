@@ -126,6 +126,9 @@ struct NetParam {
   // bool share_output_mem = false;  // do not allocate output tensor memory,
   // share with other memory
   std::string model_file_path;
+  uint8_t *model_buffer;  // if model_file_path is not set,use model_buffer to
+                          // load model
+  uint32_t model_buffer_size = 0;
   ModelConfig model_config;
 };
 

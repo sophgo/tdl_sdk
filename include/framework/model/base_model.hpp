@@ -18,7 +18,7 @@ class BaseModel {
  public:
   BaseModel();
   virtual ~BaseModel() = default;
-  int32_t modelOpen(const std::string& model_path);
+  int32_t modelOpen();
 
   NetParam& getNetParam() { return net_param_; }
   void setNetParam(const NetParam& net_param) { net_param_ = net_param; }

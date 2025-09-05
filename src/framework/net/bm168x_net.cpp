@@ -43,12 +43,26 @@ int32_t BM168xNet::setup() {
 
   LOGI("toxxx get_model_bmrt: %s", net_param_.model_file_path.c_str());
   p_bmrt_ = bmrt_create(bm_handle_);
-  bool flag = bmrt_load_bmodel(p_bmrt_, net_param_.model_file_path.c_str());
-  if (!flag) {
-    LOGE("model %s load failed", net_param_.model_file_path.c_str());
+  if (net_param_.model_file_path.empty()) {
+    if (net_param_.model_buffer == nullptr ||
+        net_param_.model_buffer_size == 0) {
+      LOGE("model_buffer is nullptr or model_buffer_size is 0");
+      return -1;
+    }
+    bool flag = bmrt_load_bmodel_data(p_bmrt_, net_param_.model_buffer,
+                                      net_param_.model_buffer_size);
+    if (!flag) {
+      LOGE("model load from buffer failed");
+      return -1;
+    }
+  } else {
+    bool flag = bmrt_load_bmodel(p_bmrt_, net_param_.model_file_path.c_str());
+    if (!flag) {
+      LOGE("model %s load failed", net_param_.model_file_path.c_str());
+      return -1;
+    }
   }
-  LOGI("getxxx_model_bmrt: %s,%0x", net_param_.model_file_path.c_str(),
-       p_bmrt_);
+
   // if name was not set,use the name inside bmodel as default
   std::string net_name = net_param_.model_config.net_name;
   LOGI("net_name: %s", net_name.c_str());
