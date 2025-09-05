@@ -20,6 +20,12 @@ int32_t Tracker::initialize(const std::shared_ptr<BaseImage>& image,
   return 0;
 }
 
+int32_t Tracker::initialize(const std::shared_ptr<BaseImage>& image,
+                            const std::vector<ObjectBoxInfo>& detect_boxes,
+                            int index) {
+  return 0;
+}
+
 TrackerConfig Tracker::getTrackConfig() { return tracker_config_; }
 
 void Tracker::setTrackConfig(const TrackerConfig& track_config) {

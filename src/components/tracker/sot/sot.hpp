@@ -32,7 +32,9 @@ class SOT : public Tracker {
   int32_t initialize(const std::shared_ptr<BaseImage>& image,
                      const std::vector<ObjectBoxInfo>& detect_boxes, float x,
                      float y) override;
-
+  int32_t initialize(const std::shared_ptr<BaseImage>& image,
+                     const std::vector<ObjectBoxInfo>& detect_boxes,
+                     int index) override;
   int32_t track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
                 TrackerInfo& tracker_info);
 
@@ -81,13 +83,13 @@ class SOT : public Tracker {
   float occluded_score_ratio_threshold_ = 0.9;  // 目标丢失时得分比率阈值
   float occluded_score_threshold_ = 0.6;        // 目标丢失时得分阈值
   float occluded_iou_threshold_ = 0.9;          // 目标丢失时IoU阈值
-  float occluded_threshold_ = 0.3;              // 遮挡阈值
+  float occluded_threshold_ = 0.1;              // 遮挡阈值
 
   // 判断目标是否重现相关参数
   float reappear_score_threshold_ = 0.3;      // 目标重现时得分阈值
   int reappear_score_ratio_threshold_ = 0.3;  // 目标重现时得分比率阈值
   float reappear_iou_threshold_ = 0.3;        // 目标重现时IoU阈值
-  float reappear_threshold_ = 0.5;            // 重现阈值
+  float reappear_threshold_ = 2;              // 重现阈值
 
   // 当前跟踪的目标边界框 [x, y, w, h]
   std::vector<float> current_bbox_;

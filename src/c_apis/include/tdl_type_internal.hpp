@@ -13,6 +13,7 @@
 #include "tdl_object_def.h"
 #include "tdl_sdk.h"
 #include "tdl_types.h"
+#include "tracker/tracker_types.hpp"
 #include "video_decoder/video_decoder_type.hpp"
 
 typedef struct {
@@ -23,6 +24,7 @@ typedef struct {
   std::shared_ptr<AppTask> app_task;
   std::shared_ptr<ImageEncoder> encoder;
   std::shared_ptr<IntrusionDetection> intrusion_detect;
+  std::shared_ptr<Tracker> tracker;
 } TDLContext;
 
 typedef struct {

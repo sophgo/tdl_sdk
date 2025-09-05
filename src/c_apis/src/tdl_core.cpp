@@ -1020,6 +1020,93 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
   return 0;
 }
 
+int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
+                                    TDLObject *object_meta, int *set_values,
+                                    int size) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->tracker == nullptr) {
+    LOGI(" to init context->tracker \n");
+    context->tracker = TrackerFactory::createTracker(TrackerType::TDL_SOT);
+    std::shared_ptr<BaseModel> sot_model =
+        get_model(handle, TDLModel::TDL_MODEL_TRACKING_FEARTRACK);
+    context->tracker->setModel(sot_model);
+  }
+
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+
+  if (set_values == nullptr) {
+    LOGE("set_values is nullptr \n");
+    return -1;
+  }
+
+  std::vector<ObjectBoxInfo> bboxes;
+  for (int i = 0; i < object_meta->size; i++) {
+    ObjectBoxInfo box;
+    box.x1 = object_meta->info[i].box.x1;
+    box.y1 = object_meta->info[i].box.y1;
+    box.x2 = object_meta->info[i].box.x2;
+    box.y2 = object_meta->info[i].box.y2;
+    box.score = object_meta->info[i].score;
+    bboxes.push_back(box);
+  }
+
+  if (size == 1) {
+    return context->tracker->initialize(image_context->image, bboxes,
+                                        set_values[0]);
+  }
+
+  if (size == 2) {
+    return context->tracker->initialize(image_context->image, bboxes,
+                                        set_values[0], set_values[1]);
+
+  } else if (size == 4) {
+    ObjectBoxInfo init_bbox;
+    init_bbox.x1 = set_values[0];
+    init_bbox.y1 = set_values[1];
+    init_bbox.x2 = set_values[2];
+    init_bbox.y2 = set_values[3];
+    init_bbox.score = 1.0f;
+
+    return context->tracker->initialize(image_context->image, bboxes,
+                                        init_bbox);
+  } else {
+    LOGE("set_values size should be 1 or 2 or 4, but got %d", size);
+    return -1;
+  }
+}
+
+int32_t TDL_SingleObjectTracking(TDLHandle handle, TDLImage image_handle,
+                                 TDLTracker *track_meta, uint64_t frame_id) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->tracker == nullptr) {
+    LOGE("context->tracker is nullptr \n");
+    return -1;
+  }
+
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+
+  TrackerInfo tracker_info;
+  context->tracker->track(image_context->image, frame_id, tracker_info);
+
+  if (tracker_info.status_ != TrackStatus::LOST) {
+    TDL_InitTrackMeta(track_meta, 1);
+    track_meta->info[0].id = tracker_info.track_id_;
+    track_meta->info[0].bbox.x1 = tracker_info.box_info_.x1;
+    track_meta->info[0].bbox.y1 = tracker_info.box_info_.y1;
+    track_meta->info[0].bbox.x2 = tracker_info.box_info_.x2;
+    track_meta->info[0].bbox.y2 = tracker_info.box_info_.y2;
+  } else {
+    LOGI("tracker_info.status_ is LOST");
+  }
+  return 0;
+}
+
 int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
                                TDLBox *box, bool *is_intrusion) {
   TDLContext *context = (TDLContext *)handle;

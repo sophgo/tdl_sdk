@@ -200,6 +200,23 @@ int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
   return -1;
 }
 
+int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
+                        const std::vector<ObjectBoxInfo>& detect_boxes,
+                        int index) {
+  if (detect_boxes.empty()) {
+    LOGE("no detection boxes");
+    return -1;
+  }
+
+  if (detect_boxes.size() <= index) {
+    LOGE("index out of range");
+    return -1;
+  }
+
+  initBBox(image, detect_boxes[index]);
+  return 0;
+}
+
 int32_t SOT::initBBox(const std::shared_ptr<BaseImage>& image,
                       const ObjectBoxInfo& init_bbox) {
   float x = init_bbox.x1;

@@ -54,6 +54,10 @@ class Tracker {
                              const std::vector<ObjectBoxInfo>& detect_boxes,
                              float x, float y);
 
+  virtual int32_t initialize(const std::shared_ptr<BaseImage>& image,
+                             const std::vector<ObjectBoxInfo>& detect_boxes,
+                             int index);
+
   virtual void setPairConfig(
       std::map<TDLObjectType, TDLObjectType> object_pair_config){};
 

@@ -346,6 +346,35 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
                      TDLObject *obj_meta, TDLTracker *track_meta);
 
 /**
+ * @brief 单目追踪设置追踪目标
+ *
+ * @param handle TDLHandle 对象
+ * @param image_handle TDLImageHandle 对象
+ * @param object_meta 当前帧检测结果
+ * @param set_values 追踪目标。支持以下3种形式：
+ * 1. 传入目标框坐标(x1, y1, x2, y2)
+ * 2. 传入图像中某个点的位置(x, y)，(此时object_meta size不能为0)
+ * 3. 传入object_meta中某个目标的索引，(此时object_meta size不能为0)
+ * @param size set_values 元素个数(只能为1或2或4)
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
+                                    TDLObject *object_meta, int *set_values,
+                                    int size);
+
+/**
+ * @brief 执行单目追踪
+ *
+ * @param handle TDLHandle 对象
+ * @param image_handle TDLImageHandle 对象
+ * @param track_meta 追踪结果
+ * @param frame_id 帧id
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_SingleObjectTracking(TDLHandle handle, TDLImage image_handle,
+                                 TDLTracker *track_meta, uint64_t frame_id);
+
+/**
  * @brief 执行入侵检测
  *
  * @param regions 背景区域点集数组
