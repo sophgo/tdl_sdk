@@ -1,0 +1,254 @@
+{
+  "log_dir": "./log",
+  "report_dir": "./report",
+
+  "test_suites": [
+    {     
+      "name": "MatcherTestSuite.*",
+      "_comment": "feature matching test",
+      "type": "unit",
+      "platforms": ["ALL"]
+    },
+    {
+      "name": "PreprocessorTestSuite.*",
+      "_comment": "image preprocess test",
+      "type": "unit",
+      "platforms": ["ALL"]
+    },
+    {      
+      "name": "ImageTestSuite.*",
+      "_comment": "image test",
+      "type": "unit",
+      "platforms": ["ALL"]
+    },
+    {
+      "name": "NetTestSuite.*",
+      "_comment": "net test",
+      "type": "unit",
+      "platforms": ["ALL"]
+    },
+    {    
+      "name": "DetectionTestSuite.*",
+      "_comment": "object detection test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "mbv2_det_person_256_448_INT8.json",
+          "mbv2_det_person_512_896_INT8.json",
+          "mbv2_det_person_256_384_INT8.json",
+          "mbv2_det_person_896_896_INT8.json",
+          "ppyoloe_det_coco80_640_640_INT8.json",
+          "yolov10n_det_coco80_640_640_INT8.json",
+          "yolov6n_det_coco80_640_640_INT8.json",
+          "yolov6s_det_coco80_640_640_INT8.json",
+          "yolov8n_det_coco80_640_640_INT8.json",
+          "yolov8n_det_face_head_person_pet_384_640_INT8.json",
+          "yolov8n_det_fire_smoke_384_640_INT8.json",
+          "yolov8n_det_hand_face_person_384_640_INT8.json",
+          "yolov8n_det_head_hardhat_576_960_INT8.json",
+          "yolov8n_det_ir_person_384_640_INT8.json",
+          "yolov8n_det_ir_person_mbv2_384_640_INT8.json",
+          "yolov8n_det_license_plate_384_640_INT8.json",
+          "yolov8n_det_monitor_person_256_448_INT8.json",
+          "yolov8n_det_person_vehicle_384_640_INT8.json",
+          "yolov8n_det_person_vehicle_mv2_035_384_640_INT8.json",
+          "yolov8n_det_pet_person_035_384_640_INT8.json",
+          "yolov8n_det_pet_person_384_640_INT8.json",
+          "yolov8n_det_traffic_light_384_640_INT8.json",
+          "yolov8s_det_coco80_640_640_INT8.json",
+          "yolov8n_det_head_shoulder_384_640_INT8.json",
+          "yolov8n_det_head_person_384_640_INT8.json",
+          "yolov8n_det_fire_384_640_INT8.json",
+          "scrfd_det_face_432_768_INT8.json",
+          "yolov8n_det_hand_384_640_INT8.json",
+          "yolov8n_det_hand_mv3_384_640_INT8.json",
+          "yolov8n_det_bicycle_motor_ebicycle_384_640_INT8.json",
+          "yolov8n_det_bicycle_motor_ebicycle_mbv2_384_640_INT8.json",
+          "yolov5m_det_coco80_640_640_INT8.json",
+          "yolov5s_det_coco80_640_640_INT8.json",
+          "yolov7_tiny_det_coco80_640_640_INT8.json"
+        ],
+        "exclude": {
+          "CV184X": [
+            "yolov5m_det_coco80_640_640_INT8.json",
+            "yolov5s_det_coco80_640_640_INT8.json",
+            "yolov7_tiny_det_coco80_640_640_INT8.json"
+          ],
+          "CV186X": [
+            "yolov5m_det_coco80_640_640_INT8.json",
+            "yolov5s_det_coco80_640_640_INT8.json",
+            "yolov7_tiny_det_coco80_640_640_INT8.json"
+          ],
+          "BM1688": [
+            "yolov5s_det_coco80_640_640_INT8.json",
+            "yolov7_tiny_det_coco80_640_640_INT8.json",
+            "yolov8n_det_bicycle_motor_ebicycle_mbv2_384_640_INT8.json",
+            "yolov8n_det_bicycle_motor_ebicycle_384_640_INT8.json",
+            "yolov8n_det_head_person_384_640_INT8.json",
+            "mbv2_det_person_256_384_INT8.json",
+            "yolov8n_det_face_head_person_pet_384_640_INT8.json",
+            "yolov8n_det_ir_person_mbv2_384_640_INT8.json"
+          ],
+          "BM1684X": [
+            "yolov5s_det_coco80_640_640_INT8.json",
+            "yolov7_tiny_det_coco80_640_640_INT8.json",
+            "yolov8n_det_bicycle_motor_ebicycle_mbv2_384_640_INT8.json",
+            "yolov8n_det_bicycle_motor_ebicycle_384_640_INT8.json",
+            "yolov8n_det_head_person_384_640_INT8.json",
+            "mbv2_det_person_256_384_INT8.json",
+            "yolov8n_det_face_head_person_pet_384_640_INT8.json",
+            "yolov8n_det_ir_person_mbv2_384_640_INT8.json"
+          ]
+        }
+      }
+    },
+    {
+      "name": "ClassificationTestSuite.*",
+      "_comment": "classification model test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "cls_hand_gesture_128_128_INT8.json",
+          "cls_rgbliveness_256_256_INT8.json",
+          "cls_sound_babay_cry_188_40_INT8.json",
+          "cls_sound_nihaoshiyun_126_40_INT8.json",
+          "cls_sound_xiaoaixiaoai_126_40_INT8.json",
+          "cls_keypoint_hand_gesture_1_42_INT8.json"
+        ],
+        "exclude": {
+          "BM1688": [
+            "cls_keypoint_hand_gesture_1_42_INT8.json"
+          ],
+          "BM1684X": [
+            "cls_keypoint_hand_gesture_1_42_INT8.json"
+          ]
+        }
+      }
+    },
+    {
+      "name": "AttributesTestSuite.*",
+      "_comment": "face attribute test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "cls_attribute_gender_age_glass_mask_112_112_INT8.json",
+          "cls_attribute_gender_age_glass_112_112_INT8.json",
+          "cls_attribute_gender_age_glass_emotion_112_112_INT8.json"
+        ],
+        "exclude": {
+          "BM1688": [
+            "cls_attribute_gender_age_glass_mask_112_112_INT8.json",
+            "cls_attribute_gender_age_glass_112_112_INT8.json",
+            "cls_attribute_gender_age_glass_emotion_112_112_INT8.json"
+          ],
+          "BM1684X": [
+            "cls_attribute_gender_age_glass_mask_112_112_INT8.json",
+            "cls_attribute_gender_age_glass_112_112_INT8.json",
+            "cls_attribute_gender_age_glass_emotion_112_112_INT8.json"
+          ]
+        }
+      }
+    },
+    {
+     
+      "name": "KeypointTestSuite.*",
+      "_comment": "keypoint detection test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "keypoint_face_v2_64_64_INT8.json",
+          "keypoint_hand_128_128_INT8.json",
+          "keypoint_license_plate_64_128_INT8.json",
+          "keypoint_simcc_person17_256_192_INT8.json",
+          "keypoint_yolov8pose_person17_384_640_INT8.json",
+          "lstr_det_lane_360_640_MIX.json"
+        ],
+        "exclude": {
+          "BM1688": [
+            "keypoint_face_v2_64_64_INT8.json"
+          ],
+          "BM1684X": [
+            "keypoint_face_v2_64_64_INT8.json"
+          ]
+        }
+      }
+    },
+    {
+     
+      "name": "FeatureExtraTestSuite.*",
+      "_comment": "feature extraction test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "feature_cviface_112_112_INT8.json"
+        ],
+        "exclude": {
+          "BM1688": [
+            "feature_cviface_112_112_INT8.json"
+          ],
+          "BM1684X": [
+            "feature_cviface_112_112_INT8.json"
+          ]
+        }
+      }
+    },
+    {
+     
+      "name": "SegmentationTestSuite.*",
+      "_comment": "segmentation model test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "yolov8n_seg_coco80_640_640_INT8.json",
+          "topformer_seg_person_face_vehicle_384_640_INT8.json"
+        ],
+        "exclude": {
+          "BM1688": [
+            "topformer_seg_person_face_vehicle_384_640_INT8.json"
+          ],
+          "BM1684X": [
+            "yolov8n_seg_coco80_640_640_INT8.json"
+          ]
+        }
+      }
+    },
+    {
+     
+      "name": "OcrTestSuite.*",
+      "_comment": "ocr test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "recognition_license_plate_24_96_MIX.json"
+        ],
+        "exclude": {
+          "BM1688": [
+            "recognition_license_plate_24_96_MIX.json"
+          ],
+          "BM1684X": [
+            "recognition_license_plate_24_96_MIX.json"
+          ]
+        }
+      }
+    },
+    {
+     
+      "name": "SotTestSuite.*",
+      "_comment": "SOT model test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "tracking_feartrack_128_128_256_256_INT8.json"
+        ]
+      }
+    }
+  ]
+}

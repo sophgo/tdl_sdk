@@ -74,7 +74,10 @@ else()
   project(googletest)
   add_subdirectory(${BUILD_DOWNLOAD_DIR}/googletest-src/)
 endif()
-include_directories(${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include/gtest)
+
+set(GTEST_INCLUDES ${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include)
+
+# include_directories(${BUILD_DOWNLOAD_DIR}/googletest-src/googletest/include/gtest)
 # ===============Google Test===============
 
 # ===============nlohmannjson===============
