@@ -157,38 +157,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     const ModelType model_type, const std::string &model_path,
     const ModelConfig &model_config, const int device_id) {
-  if (model_type == ModelType::INVALID) {
-    LOGE("model type not found for model type: %d",
-         static_cast<int>(model_type));
-    return nullptr;
-  }
-  std::string model_name = modelTypeToString(model_type);
-  std::shared_ptr<BaseModel> model = getModelInstance(model_type);
-  if (model == nullptr) {
-    LOGE("model not found for model type: %d", static_cast<int>(model_type));
-    return nullptr;
-  }
-  NetParam net_param_default = model->getNetParam();
-  net_param_default.device_id = device_id;
-  // merge net_param_default into  model_config
-  ModelConfig model_config_merged = model_config;
-  if (model_config_merged.rgb_order.empty()) {
-    model_config_merged.rgb_order = net_param_default.model_config.rgb_order;
-  }
-  if (model_config_merged.mean.empty()) {
-    model_config_merged.mean = net_param_default.model_config.mean;
-  }
-  if (model_config_merged.std.empty()) {
-    model_config_merged.std = net_param_default.model_config.std;
-  }
-  net_param_default.model_config = model_config_merged;
-  model->setNetParam(net_param_default);
-  LOGI("model_path: %s", model_path.c_str());
-  int ret = model->modelOpen(model_path);
-  if (ret != 0) {
-    return nullptr;
-  }
-  return model;
+  return getModelImpl(model_type, model_path, nullptr, 0, model_config,
+                      device_id);
 }
 std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     const std::string &model_type, const std::string &model_path,
@@ -212,6 +182,54 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
     return nullptr;
   }
   return getModel(model_type, model_path, model_config, device_id);
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::getModel(
+    const ModelType model_type, const uint8_t *model_buffer,
+    const uint32_t model_buffer_size, const int device_id) {
+  if (model_buffer == nullptr || model_buffer_size == 0) {
+    LOGE("model buffer is nullptr or model buffer size is 0");
+    return nullptr;
+  }
+  ModelConfig model_config;
+  std::string model_name = modelTypeToString(model_type);
+  if (model_config_map_.find(model_name) != model_config_map_.end()) {
+    model_config = parseModelConfig(model_config_map_[model_name]);
+  }
+  return getModelImpl(model_type, "", model_buffer, model_buffer_size,
+                      model_config, device_id);
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::getModel(
+    const std::string &model_type, const uint8_t *model_buffer,
+    const uint32_t model_buffer_size, const int device_id) {
+  ModelType model_type_enum = modelTypeFromString(model_type);
+  if (model_type_enum == ModelType::INVALID) {
+    LOGE("model type not found for model type: %s", model_type.c_str());
+    return nullptr;
+  }
+  return getModel(model_type_enum, model_buffer, model_buffer_size, device_id);
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::getModel(
+    const std::string &model_type, const uint8_t *model_buffer,
+    const uint32_t model_buffer_size, const ModelConfig &model_config,
+    const int device_id) {
+  ModelType model_type_enum = modelTypeFromString(model_type);
+  if (model_type_enum == ModelType::INVALID) {
+    LOGE("model type not found for model type: %s", model_type.c_str());
+    return nullptr;
+  }
+  return getModelImpl(model_type_enum, "", model_buffer, model_buffer_size,
+                      model_config, device_id);
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::getModel(
+    const ModelType model_type, const uint8_t *model_buffer,
+    const uint32_t model_buffer_size, const ModelConfig &model_config,
+    const int device_id) {
+  return getModelImpl(model_type, "", model_buffer, model_buffer_size,
+                      model_config, device_id);
 }
 ModelConfig TDLModelFactory::getModelConfig(const ModelType model_type) {
   std::string model_type_str = modelTypeToString(model_type);
@@ -754,4 +772,59 @@ void TDLModelFactory::getPlatformAndModelExtension(
   LOGE("platform not supported");
   assert(false);
 #endif
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::getModelImpl(
+    ModelType model_type, const std::string &model_path,
+    const uint8_t *model_buffer, const uint32_t model_buffer_size,
+    const ModelConfig &model_config, const int device_id) {
+  if (model_path.empty() && model_buffer == nullptr && model_buffer_size == 0) {
+    LOGE("model path or model buffer is empty");
+    return nullptr;
+  } else if (!model_path.empty() && model_buffer != nullptr &&
+             model_buffer_size != 0) {
+    LOGE("model path and model buffer are not empty");
+    return nullptr;
+  }
+
+  if (model_type == ModelType::INVALID) {
+    LOGE("model type not found for model type: %d",
+         static_cast<int>(model_type));
+    return nullptr;
+  }
+
+  std::shared_ptr<BaseModel> model = getModelInstance(model_type);
+  if (model == nullptr) {
+    LOGE("model not found for model type: %d", static_cast<int>(model_type));
+    return nullptr;
+  }
+  NetParam net_param_default = model->getNetParam();
+  net_param_default.device_id = device_id;
+  // merge net_param_default into  model_config
+  ModelConfig model_config_merged = model_config;
+  if (model_config_merged.rgb_order.empty()) {
+    model_config_merged.rgb_order = net_param_default.model_config.rgb_order;
+  }
+  if (model_config_merged.mean.empty()) {
+    model_config_merged.mean = net_param_default.model_config.mean;
+  }
+  if (model_config_merged.std.empty()) {
+    model_config_merged.std = net_param_default.model_config.std;
+  }
+  if (!model_path.empty()) {
+    net_param_default.model_file_path = model_path;
+    LOGIP("model_path: %s", model_path.c_str());
+  } else if (model_buffer != nullptr && model_buffer_size != 0) {
+    net_param_default.model_buffer = const_cast<uint8_t *>(model_buffer);
+    net_param_default.model_buffer_size = model_buffer_size;
+  }
+  net_param_default.model_config = model_config_merged;
+
+  model->setNetParam(net_param_default);
+
+  int ret = model->modelOpen();
+  if (ret != 0) {
+    return nullptr;
+  }
+  return model;
 }

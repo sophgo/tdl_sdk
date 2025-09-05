@@ -197,6 +197,31 @@ int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
   return 0;
 }
 
+int32_t TDL_OpenModelFromBuffer(TDLHandle handle, const TDLModel model_id,
+                                const uint8_t *model_buffer,
+                                uint32_t model_buffer_size,
+                                const char *model_config_json) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context->models.find(model_id) != context->models.end()) {
+    return 0;
+  }
+  ModelType model_type = convertModelType(model_id);
+  TDLModelFactory &factory = TDLModelFactory::getInstance();
+
+  if (model_config_json != nullptr) {
+    factory.loadModelConfig(model_config_json);
+  }
+
+  ModelConfig model_config = factory.getModelConfig(model_type);
+  std::shared_ptr<BaseModel> model = factory.getModel(
+      model_type, model_buffer, model_buffer_size, model_config);
+  if (model == nullptr) {
+    return -1;
+  }
+  context->models[model_id] = model;
+  return 0;
+}
+
 int32_t TDL_CloseModel(TDLHandle handle, const TDLModel model_id) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {

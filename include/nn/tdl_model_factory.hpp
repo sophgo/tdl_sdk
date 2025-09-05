@@ -52,6 +52,33 @@ class TDLModelFactory {
                                       const std::string &model_path,
                                       const std::string &model_config_json,
                                       const int device_id = 0);
+
+  /*
+   * get model instance,load model from buffer
+   * @param model_type
+   * @param model_buffer
+   * @param model_buffer_size,size of the model buffer
+   * @param device_id
+   * @return model instance
+   */
+  std::shared_ptr<BaseModel> getModel(const ModelType model_type,
+                                      const uint8_t *model_buffer,
+                                      const uint32_t model_buffer_size,
+                                      const int device_id = 0);
+  std::shared_ptr<BaseModel> getModel(const std::string &model_type,
+                                      const uint8_t *model_buffer,
+                                      const uint32_t model_buffer_size,
+                                      const int device_id = 0);
+  std::shared_ptr<BaseModel> getModel(const std::string &model_type,
+                                      const uint8_t *model_buffer,
+                                      const uint32_t model_buffer_size,
+                                      const ModelConfig &model_config,
+                                      const int device_id = 0);
+  std::shared_ptr<BaseModel> getModel(const ModelType model_type,
+                                      const uint8_t *model_buffer,
+                                      const uint32_t model_buffer_size,
+                                      const ModelConfig &model_config,
+                                      const int device_id = 0);
   ModelConfig getModelConfig(const ModelType model_type);
   /*
    * load model config from model_config_file
@@ -84,6 +111,13 @@ class TDLModelFactory {
   bool isFeatureExtractionModel(const ModelType model_type);
   bool isOCRModel(const ModelType model_type);
   bool isObjectTrackingModel(const ModelType model_type);
+
+  std::shared_ptr<BaseModel> getModelImpl(ModelType model_type,
+                                          const std::string &model_path,
+                                          const uint8_t *model_buffer,
+                                          const uint32_t model_buffer_size,
+                                          const ModelConfig &model_config,
+                                          const int device_id = 0);
 
   // 辅助函数：创建各类模型
   std::shared_ptr<BaseModel> createObjectDetectionModel(

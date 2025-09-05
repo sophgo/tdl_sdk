@@ -21,9 +21,25 @@ CviNet::~CviNet() {
 int32_t CviNet::setup() {
   LOGI("to setup CviNet,model_file_path: %s",
        net_param_.model_file_path.c_str());
+  int ret = 0;
+  if (net_param_.model_file_path.empty()) {
+    if (net_param_.model_buffer == nullptr ||
+        net_param_.model_buffer_size == 0) {
+      LOGE("model_buffer is nullptr or model_buffer_size is 0");
+      return -1;
+    }
+    ret = CVI_NN_RegisterModelFromBuffer(
+        reinterpret_cast<const int8_t*>(net_param_.model_buffer),
+        net_param_.model_buffer_size, &model_handle_);
+  } else {
+    if (net_param_.model_file_path.empty()) {
+      LOGE("model_file_path is empty");
+      return -1;
+    }
+    ret = CVI_NN_RegisterModel(net_param_.model_file_path.c_str(),
+                               &model_handle_);
+  }
 
-  int32_t ret =
-      CVI_NN_RegisterModel(net_param_.model_file_path.c_str(), &model_handle_);
   if (ret != 0) {
     LOGE("CVI_NN_RegisterModel failed");
     return ret;

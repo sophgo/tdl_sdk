@@ -24,7 +24,8 @@ void print_netparam(const NetParam& net_param) {
 BaseModel::BaseModel() {
   // bug:should not use memset for struct has stl container
   //  memset(&net_param_, 0, sizeof(NetParam));
-
+  net_param_.model_buffer = nullptr;
+  net_param_.model_buffer_size = 0;
   net_param_.platform = CommonUtils::getPlatform();
 }
 
@@ -33,8 +34,8 @@ int32_t BaseModel::setPreprocessor(
   preprocessor_ = preprocessor;
   return 0;
 }
-int32_t BaseModel::modelOpen(const std::string& model_path) {
-  net_param_.model_file_path = model_path;
+int32_t BaseModel::modelOpen() {
+  // net_param_.model_file_path = model_path;
   print_netparam(net_param_);
   int32_t ret = setupNetwork(net_param_);
   if (ret != 0) {
