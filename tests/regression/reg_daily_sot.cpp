@@ -86,16 +86,18 @@ TEST_F(SotTestSuite, accuracy) {
   std::vector<std::vector<float>> pred_dets;
   int frame_id = 0;
   for (auto iter = results.begin(); iter != results.end(); iter++) {
+    gt_dets.clear();
+    pred_dets.clear();
     std::string image_path =
         (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
     image = ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
     ASSERT_NE(image, nullptr);
     if (frame_id == 0) {
       ObjectBoxInfo init_bbox;
-      init_bbox.x1 = 1687.0;
-      init_bbox.y1 = 1199.0;
-      init_bbox.x2 = 1745.0;
-      init_bbox.y2 = 1365.0;
+      init_bbox.x1 = 387.0;
+      init_bbox.y1 = 328.0;
+      init_bbox.x2 = 556.0;
+      init_bbox.y2 = 655.0;
       init_bbox.score = 1.0;
       init_bbox.class_id = 0;
       tracker->initialize(image, {}, init_bbox);
@@ -118,11 +120,12 @@ TEST_F(SotTestSuite, accuracy) {
                            tracker_info.box_info_.x2, tracker_info.box_info_.y2,
                            tracker_info.box_info_.score,
                            float(tracker_info.box_info_.class_id)});
+      EXPECT_TRUE(matchObjects(gt_dets, pred_dets, reg_nms_threshold,
+                               reg_score_diff_threshold));
     }
     frame_id++;
   }
-  EXPECT_TRUE(matchObjects(gt_dets, pred_dets, reg_nms_threshold,
-                           reg_score_diff_threshold));
+
   if (context.getTestFlag() == TestFlag::GENERATE_FUNCTION_RES) {
     m_json_object[platform] = results;
     writeJsonFile(context.getJsonFilePath().string(), m_json_object);
