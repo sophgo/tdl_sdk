@@ -77,6 +77,9 @@ int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image, const char *img_path,
 
 int32_t TDL_SaveTDLImage(TDLImage image, const char *img_save_path);
 
+int32_t TDL_ClipPostprocess(float *text_features, int text_rows,
+                            float *image_features, int image_rows,
+                            int feature_dim, float **result);
 #ifdef __cplusplus
 }
 #endif

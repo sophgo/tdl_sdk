@@ -1927,6 +1927,65 @@ Extract deep feature vectors from the image.
      - feature_meta
      - Output feature vector
 
+TDL_ClipText
+~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_ClipText(TDLHandle handle,
+                       const TDLModel model_id,
+                       const char *txt_dir,
+                       float **feature_out,
+                       int *numSentences,
+                       int *embedding_num);
+
+【Description】
+
+Extract the deep feature vectors of the text using the CLIP model.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 2 1 3
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Model type enumeration
+
+   * - Input
+     - const char\*
+     - txt_dir
+     - File path of the TXT file containing the vocabulary, encoding table, and input sentences
+
+   * - Output
+     - float\**
+     - feature_out
+     - Output feature vector
+
+   * - Output
+     - int\*
+     - numSentences
+     - Number of output features
+
+   * - Output
+     - int\*
+     - embedding_num
+     - Dimension of the output features
+
 TDL_LaneDetection
 ~~~~~~~~~~~~~~~~~~~~~
 

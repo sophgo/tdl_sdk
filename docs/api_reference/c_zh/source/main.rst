@@ -1943,6 +1943,65 @@ TDL_FeatureExtraction
      - feature_meta
      - 输出特征向量
 
+TDL_ClipText
+~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_ClipText(TDLHandle handle,
+                       const TDLModel model_id,
+                       const char *txt_dir,
+                       float **feature_out,
+                       int *numSentences,
+                       int *embedding_num);
+
+【描述】
+
+提取CLIP模型对文本的深度特征向量。
+
+【参数】
+
+.. list-table::
+   :widths: 1 2 1 3
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id
+     - 模型类型枚举
+
+   * - 输入
+     - const char\*
+     - txt_dir
+     - 词表、编码表、输入语句的TXT文件路径
+
+   * - 输出
+     - float\**
+     - feature_out
+     - 输出特征向量
+
+   * - 输出
+     - int\*
+     - numSentences
+     - 输出特征的个数
+
+   * - 输出
+     - int\*
+     - embedding_num
+     - 输出特征的维度
+
 TDL_LaneDetection
 ~~~~~~~~~~~~~~~~~~~~~
 

@@ -10,6 +10,7 @@
 #include "tracker/tracker_types.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
+#include "utils/tokenizer_bpe.hpp"
 
 static std::shared_ptr<BaseModel> get_model(TDLHandle handle,
                                             const TDLModel model_id) {
@@ -892,6 +893,78 @@ int32_t TDL_FeatureExtraction(TDLHandle handle, const TDLModel model_id,
          static_cast<int>(output->getType()));
     return -1;
   }
+  return 0;
+}
+
+int32_t TDL_ClipText(TDLHandle handle, const TDLModel model_id,
+                     const char *txt_dir, float **feature_out,
+                     int *numSentences, int *embedding_num) {
+  if (txt_dir == nullptr || feature_out == nullptr || numSentences == nullptr ||
+      embedding_num == nullptr) {
+    return -1;
+  }
+
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+
+  std::string base(txt_dir);
+  std::string encoder_file = base + "/encoder.txt";
+  std::string bpe_file = base + "/vocab.txt";
+  std::string input_file = base + "/input.txt";
+
+  std::vector<std::vector<int32_t>> tokens;
+  BytePairEncoder bpe(encoder_file, bpe_file);
+  bpe.tokenizerBPE(input_file, tokens);
+
+  *numSentences = static_cast<int>(tokens.size());
+  if (*numSentences <= 0) {
+    *feature_out = nullptr;
+    *embedding_num = 0;
+    return 0;
+  }
+
+  std::vector<std::shared_ptr<BaseImage>> input_texts;
+  input_texts.reserve(tokens.size());
+
+  std::shared_ptr<BaseImage> text;
+  for (const std::vector<int32_t> &token_vec : tokens) {
+    text = ImageFactory::createImage(77, 1, ImageFormat::GRAY,
+                                     TDLDataType::INT32, true);
+    uint8_t *txt_buffer = text->getVirtualAddress()[0];
+    memcpy(txt_buffer, token_vec.data(), 77 * sizeof(int32_t));
+    input_texts.push_back(text);
+  }
+
+  std::vector<std::shared_ptr<ModelOutputInfo>> text_output_features;
+  model->inference(input_texts, text_output_features);
+
+  auto first_feature =
+      std::static_pointer_cast<ModelFeatureInfo>(text_output_features[0]);
+  *embedding_num = first_feature->embedding_num;
+
+  *feature_out =
+      (float *)malloc(*numSentences * *embedding_num * sizeof(float));
+  if (*feature_out == nullptr) {
+    return -2;
+  }
+
+  for (int i = 0; i < *numSentences; i++) {
+    std::shared_ptr<ModelFeatureInfo> feature_info =
+        std::static_pointer_cast<ModelFeatureInfo>(text_output_features[i]);
+
+    if (feature_info->embedding_num != *embedding_num) {
+      free(*feature_out);
+      *feature_out = nullptr;
+      return -3;
+    }
+
+    float *clip_feature_text = (float *)(feature_info->embedding);
+    float *dest = *feature_out + i * *embedding_num;
+    memcpy(dest, clip_feature_text, *embedding_num * sizeof(float));
+  }
+
   return 0;
 }
 

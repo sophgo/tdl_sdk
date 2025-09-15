@@ -297,6 +297,21 @@ int32_t TDL_FeatureExtraction(TDLHandle handle, const TDLModel model_id,
                               TDLImage image_handle, TDLFeature *feature_meta);
 
 /**
+ * @brief 执行CLIP模型文本侧特征提取任务
+ *
+ * @param handle TDLHandle 对象
+ * @param model_id 指定使用的特征提取模型类型枚举值
+ * @param txt_dir 词表、编码表、输入语句的TXT文件路径
+ * @param feature_out 输出参数，存储提取的特征向量
+ * @param numSentences 输出特征的个数
+ * @param embedding_num 输出特征的维度
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_ClipText(TDLHandle handle, const TDLModel model_id,
+                     const char *txt_dir, float **feature_out,
+                     int *numSentences, int *embedding_num);
+
+/**
  * @brief 执行车道线检测任务
  *
  * @param handle TDLHandle 对象

@@ -1,6 +1,7 @@
 #include "tdl_utils.h"
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <cstdlib>
 #include <cstring>
@@ -529,4 +530,80 @@ int32_t TDL_SaveTDLImage(TDLImage image, const char *img_save_path) {
   }
 
   return ret;
+}
+static float vector_norm(const float *vec, int size) {
+  float sum = 0.0f;
+  for (int i = 0; i < size; ++i) {
+    sum += vec[i] * vec[i];
+  }
+  return sqrtf(sum);  // 使用C标准库的单精度版本
+}
+
+static void normalize_matrix(float *matrix, int rows, int cols) {
+  for (int i = 0; i < rows; ++i) {
+    float *row = matrix + i * cols;  // 当前行的起始地址
+    float norm = vector_norm(row, cols);
+
+    if (norm > 1e-6f) {  // 避免除零，使用微小值判断
+      for (int j = 0; j < cols; ++j) {
+        row[j] /= norm;
+      }
+    }
+  }
+}
+static void softmax_row(float *row, int cols) {
+  // 找到最大值用于数值稳定性
+  float max_val = row[0];
+  for (int j = 1; j < cols; ++j) {
+    if (row[j] > max_val) {
+      max_val = row[j];
+    }
+  }
+
+  float sum_exp = 0.0f;
+  for (int j = 0; j < cols; ++j) {
+    row[j] = expf(row[j] - max_val);  // 减去最大值防止数值溢出
+    sum_exp += row[j];
+  }
+
+  for (int j = 0; j < cols; ++j) {
+    row[j] /= sum_exp;
+  }
+}
+int32_t TDL_ClipPostprocess(float *text_features, int text_rows,
+                            float *image_features, int image_rows,
+                            int feature_dim, float **result) {
+  if (text_rows <= 0 || image_rows <= 0 || feature_dim <= 0) {
+    return -2;  // 无效的维度参数
+  }
+
+  // 归一化处理
+  normalize_matrix(image_features, image_rows, feature_dim);
+  normalize_matrix(text_features, text_rows, feature_dim);
+
+  // 分配结果矩阵内存 (image_rows x text_rows)
+  *result = (float *)malloc(image_rows * text_rows * sizeof(float));
+  if (*result == NULL) {  // C语言中使用NULL而非nullptr
+    return -3;            // 内存分配失败
+  }
+
+  // 计算矩阵乘积: result = 100 * (image_features * text_features^T)
+  for (int i = 0; i < image_rows; ++i) {
+    for (int j = 0; j < text_rows; ++j) {
+      float sum = 0.0f;
+      for (int k = 0; k < feature_dim; ++k) {
+        // 访问image_features的第i行第k列
+        float img_val = image_features[i * feature_dim + k];
+        // 访问text_features的第j行第k列（转置后相当于第k行第j列）
+        float txt_val = text_features[j * feature_dim + k];
+        sum += img_val * txt_val;
+      }
+      (*result)[i * text_rows + j] = 100.0f * sum;
+    }
+  }
+  for (int i = 0; i < image_rows; ++i) {
+    float *row = *result + i * text_rows;  // 获取当前行的起始地址
+    softmax_row(row, text_rows);
+  }
+  return 0;  // 成功
 }
