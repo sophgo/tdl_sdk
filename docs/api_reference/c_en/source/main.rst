@@ -1639,14 +1639,14 @@ Execute face keypoint detection, supplementing keypoint coordinates to existing 
      - face_meta
      - Input face detection results, output additional keypoint coordinates
 
-TDL_Classfification
+TDL_Classification
 ~~~~~~~~~~~~~~~~~~~~~
 
 【Syntax】
 
 .. code-block:: c
 
-  int32_t TDL_Classfification(TDLHandle handle,
+  int32_t TDL_Classification(TDLHandle handle,
                               const TDLModel model_id,
                               TDLImage image_handle,
                               TDLClassInfo *class_info);

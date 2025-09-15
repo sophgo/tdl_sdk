@@ -1655,14 +1655,14 @@ TDL_FaceLandmark
      - face_meta
      - 输入人脸检测结果，输出补充关键点坐标
 
-TDL_Classfification
+TDL_Classification
 ~~~~~~~~~~~~~~~~~~~~~
 
 【语法】
 
 .. code-block:: c
 
-  int32_t TDL_Classfification(TDLHandle handle,
+  int32_t TDL_Classification(TDLHandle handle,
                               const TDLModel model_id,
                               TDLImage image_handle,
                               TDLClassInfo *class_info);

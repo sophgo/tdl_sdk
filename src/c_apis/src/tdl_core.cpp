@@ -372,8 +372,8 @@ int32_t TDL_FaceDetection(TDLHandle handle, const TDLModel model_id,
   return 0;
 }
 
-int32_t TDL_Classfification(TDLHandle handle, const TDLModel model_id,
-                            TDLImage image_handle, TDLClassInfo *class_info) {
+int32_t TDL_Classification(TDLHandle handle, const TDLModel model_id,
+                           TDLImage image_handle, TDLClassInfo *class_info) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;

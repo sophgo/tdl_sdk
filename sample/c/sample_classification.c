@@ -187,9 +187,9 @@ int main(int argc, char *argv[]) {
   }
   TDLClassInfo obj_info = {0};
 
-  ret = TDL_Classfification(tdl_handle, model_id, image, &obj_info);
+  ret = TDL_Classification(tdl_handle, model_id, image, &obj_info);
   if (ret != 0) {
-    printf("TDL_Classfification failed with %#x!\n", ret);
+    printf("TDL_Classification failed with %#x!\n", ret);
   } else {
     printf("pred_label: %d, score = %f\n", obj_info.class_id, obj_info.score);
   }

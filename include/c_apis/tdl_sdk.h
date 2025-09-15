@@ -200,8 +200,8 @@ int32_t TDL_FaceLandmark(TDLHandle handle, const TDLModel model_id,
  * @param class_info 输出参数，存储分类结果，类别置信度、标签等
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_Classfification(TDLHandle handle, const TDLModel model_id,
-                            TDLImage image_handle, TDLClassInfo *class_info);
+int32_t TDL_Classification(TDLHandle handle, const TDLModel model_id,
+                           TDLImage image_handle, TDLClassInfo *class_info);
 
 /**
  * @brief 对检测到的目标进行细粒度分类
