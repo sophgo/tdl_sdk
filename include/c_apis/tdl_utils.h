@@ -75,6 +75,8 @@ int32_t TDL_GetGalleryFeature(const char *gallery_dir,
 int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image, const char *img_path,
                         int vechn);
 
+int32_t TDL_SaveTDLImage(TDLImage image, const char *img_save_path);
+
 #ifdef __cplusplus
 }
 #endif

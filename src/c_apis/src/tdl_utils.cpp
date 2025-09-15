@@ -509,3 +509,24 @@ int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image, const char *img_path,
   ofs.close();
   return 0;
 }
+
+int32_t TDL_SaveTDLImage(TDLImage image, const char *img_save_path) {
+  TDLImageContext *image_context = (TDLImageContext *)image;
+  if (image_context == NULL || image_context->image == NULL) {
+    LOGE("image_context or image_context->image is NULL");
+    return -1;
+  }
+
+  if (img_save_path == NULL) {
+    LOGE("img_save_path is NULL");
+    return -1;
+  }
+
+  int ret = 0;
+  ret = ImageFactory::writeImage(img_save_path, image_context->image);
+  if (ret != 0) {
+    std::cout << "save image " << img_save_path << " failed" << std::endl;
+  }
+
+  return ret;
+}
