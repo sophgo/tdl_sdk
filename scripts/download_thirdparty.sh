@@ -3,20 +3,16 @@ set -euo pipefail
 
 # Determine architecture from the toolchain file
 case "${TOOLCHAIN_FILE:-}" in
-  *arm-linux-gnueabihf.cmake )
+  *arm-linux-gnueabihf.cmake | arm-none-linux-gnueabihf.cmake)
     ARCHITECTURE="32bit" ;;
   *arm-none-linux-musleabihf.cmake)
-    ARCHITECTURE="musl_arm" ;;
-  *aarch64-linux-gnu.cmake | *aarch64-buildroot-linux-gnu.cmake)
+    ARCHITECTURE="musl" ;;
+  *aarch64-linux-gnu.cmake | *aarch64-buildroot-linux-gnu.cmake | *aarch64-none-linux-gnu.cmake)
     ARCHITECTURE="64bit" ;;
   *riscv64-unknown-linux-gnu.cmake)
     ARCHITECTURE="glibc_riscv64" ;;
   *riscv64-unknown-linux-musl.cmake)
     ARCHITECTURE="musl_riscv64" ;;
-  *arm-none-linux-gnueabihf.cmake)
-    ARCHITECTURE="glibc_arm" ;;
-  *aarch64-none-linux-gnu.cmake)
-    ARCHITECTURE="glibc_arm64" ;;
   *)
     echo "ERROR: unsupported toolchain file: ${TOOLCHAIN_FILE}" >&2
     exit 1

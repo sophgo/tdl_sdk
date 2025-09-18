@@ -159,9 +159,14 @@ set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component(TOP_DIR ${CURRENT_DIR} DIRECTORY)
 
-if (${CVI_PLATFORM} STREQUAL "BM1688" OR
-    ${CVI_PLATFORM} STREQUAL "BM1684" OR
-    ${CVI_PLATFORM} STREQUAL "BM1684X")
+if (
+    "${CVI_PLATFORM}" STREQUAL "BM1688" OR
+    "${CVI_PLATFORM}" STREQUAL "BM1684" OR
+    "${CVI_PLATFORM}" STREQUAL "BM1684X" OR
+    (
+        "${FTP_SERVER_PWD}" STREQUAL "" AND IS_LOCAL
+    )
+)
 
   execute_process(
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/download_thirdparty.sh
@@ -172,6 +177,10 @@ if (${CVI_PLATFORM} STREQUAL "BM1688" OR
     message(FATAL_ERROR "download_thirdparty.sh failed: ${DOWNLOAD_RESULT}")
   endif()
 
+endif()
+
+if ("${FTP_SERVER_PWD}" STREQUAL "" AND IS_LOCAL)
+  set(IS_LOCAL FALSE)
 endif()
 
 foreach(flags CMAKE_CXX_FLAGS CMAKE_C_FLAGS)
