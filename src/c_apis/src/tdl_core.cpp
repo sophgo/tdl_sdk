@@ -638,6 +638,8 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
   if (object_meta->size != 0) {
     for (int32_t i = 0; i < object_meta->size; i++) {
       std::shared_ptr<BaseImage> target_img;
+      int32_t img_width = (int32_t)image_context->image->getWidth();
+      int32_t img_height = (int32_t)image_context->image->getHeight();
       int32_t width = (int32_t)object_meta->info[i].box.x2 -
                       (int32_t)object_meta->info[i].box.x1;
       int32_t height = (int32_t)object_meta->info[i].box.y2 -
@@ -649,6 +651,15 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
           (int32_t)object_meta->info[i].box.x1 - (new_width - width) / 2;
       int32_t crop_y =
           (int32_t)object_meta->info[i].box.y1 - (new_height - height) / 2;
+
+      //边界控制：保证整个裁剪框在图像内部
+      if (crop_x < 0) crop_x = 0;
+      if (crop_y < 0) crop_y = 0;
+      if (crop_x + new_width > img_width)
+        crop_x = std::max(0, img_width - new_width);
+      if (crop_y + new_height > img_height)
+        crop_y = std::max(0, img_height - new_height);
+
       target_img = preprocessor->crop(image_context->image, crop_x, crop_y,
                                       new_width, new_height);
       images.push_back(target_img);
