@@ -64,7 +64,6 @@ set(REG_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_app
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/cvi_tdl_evaluation
     ${MIDDLEWARE_SDK_ROOT}/sample/common
-    ${CVI_RTSP_INCLUDE}
 )
 
 if(${CVI_PLATFORM} STREQUAL "SOPHON")
@@ -85,7 +84,6 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
     ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
-    ${CVI_RTSP_LIBPATH}
   )
 elseif(${CONFIG_DUAL_OS} STREQUAL "ON")
   set(SAMPLE_LIBS
@@ -129,7 +127,6 @@ else()
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
     ${MLIR_SDK_ROOT}/lib/libz.so
-    ${CVI_RTSP_LIBPATH}
   )
 
   if("${MW_VER}" STREQUAL "v2")
@@ -153,7 +150,6 @@ else()
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
         ${MLIR_SDK_ROOT}/lib/libz.so
-        ${CVI_RTSP_LIBPATH}
       )
     endif()
     list(APPEND SAMPLE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)

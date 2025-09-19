@@ -474,7 +474,7 @@ int main(int argc, char *argv[]) {
     ld_model_path = argv[3];
     fa_model_path = argv[4];
 
-    sprintf(g_out_dir, "%s", argv[6]);
+    sprintf(g_out_dir, "%s", argv[5]);
   }else if (argc == 8) {
 
     ped_model_path = argv[2];
@@ -532,7 +532,10 @@ int main(int argc, char *argv[]) {
       (!strcmp(fr_model_path, "NULL")) ? NULL : fr_model_path, NULL,
       (!strcmp(ld_model_path, "NULL")) ? NULL : ld_model_path,
       (!strcmp(fa_model_path, "NULL")) ? NULL : fa_model_path);
-  app_handle->face_cpt_info->fr_flag = 2;
+
+  if (strcmp(fr_model_path, "NULL")){
+    app_handle->face_cpt_info->fr_flag = 2;
+  }
   g_use_face_attribute = app_handle->face_cpt_info->fa_flag;
   if (strcmp(ped_model_path, "NULL")) {
     CVI_TDL_SUPPORTED_MODEL_E ped_model_id = CVI_TDL_SUPPORTED_MODEL_MOBILEDETV2_PEDESTRIAN;

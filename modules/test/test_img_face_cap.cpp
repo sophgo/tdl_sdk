@@ -266,7 +266,7 @@ int register_gallery_face(imgprocess_t img_handle, cvitdl_app_handle_t app_handl
 
   int ret = CVI_TDL_ReadImage(img_handle, strf.c_str(), &fdFrame, PIXEL_FORMAT_RGB_888_PLANAR);
   if (ret != CVI_SUCCESS) {
-    return NULL;
+    return ret;
   }
   cvtdl_face_t faceinfo;
   memset(&faceinfo, 0, sizeof(faceinfo));

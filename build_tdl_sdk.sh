@@ -67,7 +67,7 @@ fi
 
 # check system type
 CONFIG_DUAL_OS=OFF
-if [ -n "${ALIOS_PATH}" ]; then
+if [ -d "${ALIOS_PATH}" ]; then
     CONFIG_DUAL_OS=ON
 fi
 
