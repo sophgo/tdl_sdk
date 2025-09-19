@@ -1,0 +1,26 @@
+{
+  "model_dir": "./models/",
+  "model_config": "./model_factory.json",
+  "frame_buffer_size": 0,
+  "pipelines": [
+    {
+      "name": "camera",
+      "nodes": {
+        "object_detection_node": {
+          "config_thresh": 0.5
+        },
+        "track_node": {
+          "fuse_track": true
+        },
+        "snapshot_node": {
+          "snapshot_interval": 100,
+          "min_snapshot_size": 40,
+          "crop_size_min": 128,
+          "crop_size_max": 256,
+          "snapshot_quality_threshold": 0,
+          "crop_square": true
+        }
+      }
+    }
+  ]
+}

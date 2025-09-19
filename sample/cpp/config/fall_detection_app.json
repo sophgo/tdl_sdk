@@ -1,0 +1,23 @@
+{
+  "model_dir": "./models",
+  "frame_buffer_size": 1,
+  "pipelines": [
+    {
+      "name": "fall_detection",
+      "nodes": {
+        "video_node": {
+          "video_type": "image_folder",
+          "video_path": "./images",
+          "is_loop": false,
+          "fps": 25
+        },
+        "keypoint_detection_node": {
+          "config_thresh": 0.5
+        },
+        "track_node": {
+          "fuse_track": false
+        }
+      }
+    }
+  ]
+}

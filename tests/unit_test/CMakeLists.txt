@@ -1,0 +1,9 @@
+project(unit_test)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
+
+file(GLOB_RECURSE SRC_FILES_UNIT_TEST ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+
+
+# message(STATUS "SRC_FRAMWORK_FILES_CUR: ${SRC_FRAMWORK_FILES_CUR}")
+add_library(${PROJECT_NAME} OBJECT ${SRC_FILES_UNIT_TEST})

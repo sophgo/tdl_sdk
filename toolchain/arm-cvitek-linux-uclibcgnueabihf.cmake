@@ -54,6 +54,7 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -fsigned-char" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfloat-abi=hard" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon-vfpv4 -ffunction-sections -fdata-sections -Wl,-gc-sections -lz -lm -lpthread" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes" )
 
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )
 set( CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" )

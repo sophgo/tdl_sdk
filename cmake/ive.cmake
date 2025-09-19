@@ -1,3 +1,7 @@
+if(${CVI_PLATFORM} STREQUAL "BM1688" OR ${CVI_PLATFORM} STREQUAL "SOPHON")
+    return()
+endif()
+
 if(USE_TPU_IVE)
     if("${TPU_IVE_SDK_ROOT}" STREQUAL "")
         message(FATAL_ERROR "Missing ${TPU_IVE_SDK_ROOT}.")
@@ -9,6 +13,7 @@ if(USE_TPU_IVE)
 
     set(IVE_INCLUDES ${TPU_IVE_SDK_ROOT}/include/)
     set(IVE_LIBS     ${TPU_IVE_SDK_ROOT}/lib/libcvi_ive_tpu.so)
+    set(IVE_LIBS_STATIC ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ive_tpu.a)
 
     add_definitions(-DUSE_TPU_IVE)
 
@@ -20,5 +25,10 @@ if(USE_TPU_IVE)
 else()
     # Use standalone IVE hardware
     set(IVE_INCLUDES ${MIDDLEWARE_SDK_ROOT}/include/)
-    set(IVE_LIBS     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ive.so)
+    if(EXISTS "${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ive.so")
+        set(IVE_LIBS ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ive.so)
+        set(IVE_LIBS_STATIC ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ive.a)
+    else()
+        set(IVE_LIBS)
+    endif()
 endif()
