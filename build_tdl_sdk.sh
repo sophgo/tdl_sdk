@@ -37,8 +37,8 @@ if [ ! -f "${TOP_DIR}/tdl_sdk/scripts/credential.sh" ]; then
     pushd "${TOP_DIR}/tdl_sdk"
     if git remote -v | grep -q "cvitek"; then
         echo "cvitek found in git remote, syncing credential.sh from internal branch..."
-        git fetch origin internal
-        git show origin/internal:scripts/credential.sh > scripts/credential.sh
+        git fetch origin internal:internal
+        git show internal:scripts/credential.sh > scripts/credential.sh
     else
         echo "cvitek not found in git remote, skipping credential.sh sync."
     fi
