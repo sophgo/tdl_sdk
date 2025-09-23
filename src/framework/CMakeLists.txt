@@ -69,5 +69,12 @@ set(PROJ_SRCS
                 )
 
 
+if("${CVI_PLATFORM}" STREQUAL "SOPHON" OR 
+   "${CVI_PLATFORM}" STREQUAL "CV184X" OR 
+   "${CVI_PLATFORM}" STREQUAL "CV181X" OR 
+   "${CVI_PLATFORM}" STREQUAL "CV180X")
+  list(APPEND PROJ_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/utils/frame_dump.cpp)
+endif()
+
 add_library(${PROJECT_NAME} OBJECT ${PROJ_SRCS} ${NET_SRCS})
 

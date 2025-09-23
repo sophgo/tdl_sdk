@@ -129,6 +129,15 @@ int32_t DestoryCamera(TDLHandle handle);
  */
 int32_t SendFrameRTSP(VIDEO_FRAME_INFO_S *frame, RtspContext *rtsp_context);
 
+/**
+ * @brief 将frame图像保存为图片文件
+ *
+ * @param filename 文件路径
+ * @param pstVideoFrame frame图像
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t DumpFrame(char *filename, VIDEO_FRAME_INFO_S *pstVideoFrame);
+
 #ifdef __cplusplus
 }
 #endif

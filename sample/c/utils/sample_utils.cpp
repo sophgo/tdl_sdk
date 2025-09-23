@@ -2,6 +2,7 @@
 #include <memory>
 #include "encoder/rtsp/rtsp.hpp"
 #include "tdl_type_internal.hpp"
+#include "utils/frame_dump.hpp"
 #include "utils/tdl_log.hpp"
 #include "video_decoder/video_decoder_type.hpp"
 
@@ -150,5 +151,9 @@ int32_t DestoryCamera(TDLHandle handle) {
 }
 
 #endif
+
+int32_t DumpFrame(char *filename, VIDEO_FRAME_INFO_S *pstVideoFrame) {
+  return FrameDump::saveFrame(filename, pstVideoFrame);
+}
 
 }  // extern "C"
