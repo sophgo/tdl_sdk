@@ -85,11 +85,11 @@ static int32_t TDL_PLAT_VI_INIT(SAMPLE_VI_CONFIG_S *pstViConfig) {
    * Create ISP
    ************************************************/
   // to do
-  // s32Ret = SAMPLE_COMM_VI_CreateIsp(pstViConfig);
-  // if (s32Ret != CVI_SUCCESS) {
-  // 	LOGE("[ERROR] SAMPLE_COMM_VI_CreateIsp failed with %#x!\n", s32Ret);
-  // 	return s32Ret;
-  // }
+  s32Ret = SAMPLE_COMM_VI_CreateIsp(pstViConfig);
+  if (s32Ret != CVI_SUCCESS) {
+    LOGE("[ERROR] SAMPLE_COMM_VI_CreateIsp failed with %#x!\n", s32Ret);
+    return s32Ret;
+  }
   /************************************************
    * Set sensor init
    ************************************************/

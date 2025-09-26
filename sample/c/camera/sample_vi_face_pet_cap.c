@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +16,9 @@
 #include "sample_utils.h"
 #include "tdl_sdk.h"
 
+#ifndef __CV184X__
 #define ENABLE_RTSP
+#endif
 
 #define VI_WIDTH 960
 #define VI_HEIGHT 540
@@ -185,18 +188,17 @@ void *run_tdl_thread(void *args) {
 
         if (capture_info.snapshot_info[j].object_image) {  // save snapshot
           char filename[512];
-          sprintf(
-              filename,
-              "%s/"
-              "%d_face_%d_qua_%.3f_male[%d]_glass[%d]_age[%d]_emotion[%s].jpg",
-              pstArgs->output_dir,
-              capture_info.snapshot_info[j].snapshot_frame_id,
-              capture_info.snapshot_info[j].track_id,
-              capture_info.snapshot_info[j].quality,
-              capture_info.snapshot_info[j].male,
-              capture_info.snapshot_info[j].glass,
-              capture_info.snapshot_info[j].age,
-              emotionStr[capture_info.snapshot_info[j].emotion]);
+          sprintf(filename,
+                  "%s/%" PRIu64 "_face_%" PRIu64
+                  "_qua_%.3f_male[%d]_glass[%d]_age[%d]_emotion[%s].jpg",
+                  pstArgs->output_dir,
+                  capture_info.snapshot_info[j].snapshot_frame_id,
+                  capture_info.snapshot_info[j].track_id,
+                  capture_info.snapshot_info[j].quality,
+                  capture_info.snapshot_info[j].male,
+                  capture_info.snapshot_info[j].glass,
+                  capture_info.snapshot_info[j].age,
+                  emotionStr[capture_info.snapshot_info[j].emotion]);
 
           ret = TDL_EncodeFrame(pstArgs->tdl_handle,
                                 capture_info.snapshot_info[j].object_image,
