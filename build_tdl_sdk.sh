@@ -55,6 +55,9 @@ CVI_TDL_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # set dynamic link or static link
 BUILD_SHARED=ON
 
+# set opencv version
+ENABLE_OPENCV_4_5=ON
+
 # Handle platform-specific build commands
 if [[ "$1" == "CV181X" ]]; then
     echo "Building for CV181X platform..."
@@ -372,7 +375,8 @@ $CMAKE_BIN -G Ninja ${CVI_TDL_ROOT} -DCVI_PLATFORM=${CHIP_ARCH} \
                                     -DFTP_SERVER_NAME=${FTP_SERVER_NAME} \
                                     -DFTP_SERVER_PWD=${FTP_SERVER_PWD} \
                                     -DBUILD_SHARED=${BUILD_SHARED} \
-                                    -DOSS_TARBALL_PATH=${OSS_TARBALL_PATH}
+                                    -DOSS_TARBALL_PATH=${OSS_TARBALL_PATH} \
+                                    -DENABLE_OPENCV_4_5=${ENABLE_OPENCV_4_5}
 
 
 test $? -ne 0 && echo "cmake tdl_sdk failed !!" && popd && exit 1
