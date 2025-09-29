@@ -293,11 +293,16 @@ TDLDataType
      - 动作分割模型 (0:静态, 2:过渡, 3:运动)
 
    * - FEATURE_CLIP_IMG
-     - 图像特征提取模型
+     - Clip图像特征提取模型
 
    * - FEATURE_CLIP_TEXT
-     - 文本特征提取模型
+     - Clip文本特征提取模型
 
+   * - FEATURE_MOBILECLIP2_IMG
+     - MobileClip2图像特征提取模型
+
+   * - FEATURE_MOBILECLIP2_TEXT
+     - MobileClip2文本特征提取模型
 
 
 模型创建函数

@@ -18,6 +18,10 @@ int get_model_info(char *model_path, TDLModel *model_index) {
     *model_index = TDL_MODEL_FEATURE_CLIP_IMG;
   } else if (strstr(model_path, "clip_text") != NULL) {
     *model_index = TDL_MODEL_FEATURE_CLIP_TEXT;
+  } else if (strstr(model_path, "mobileclip2_B_img") != NULL) {
+    *model_index = TDL_MODEL_FEATURE_MOBILECLIP2_IMG;
+  } else if (strstr(model_path, "mobileclip2_B_text") != NULL) {
+    *model_index = TDL_MODEL_FEATURE_MOBILECLIP2_TEXT;
   } else {
     ret = -1;
   }

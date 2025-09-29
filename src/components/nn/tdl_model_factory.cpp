@@ -364,6 +364,8 @@ bool TDLModelFactory::isSegmentationModel(const ModelType model_type) {
 bool TDLModelFactory::isFeatureExtractionModel(const ModelType model_type) {
   return (model_type == ModelType::FEATURE_CLIP_IMG ||
           model_type == ModelType::FEATURE_CLIP_TEXT ||
+          model_type == ModelType::FEATURE_MOBILECLIP2_IMG ||
+          model_type == ModelType::FEATURE_MOBILECLIP2_TEXT ||
           model_type == ModelType::FEATURE_BMFACE_R34 ||
           model_type == ModelType::FEATURE_BMFACE_R50 ||
           model_type == ModelType::FEATURE_CVIFACE ||
@@ -577,9 +579,11 @@ std::shared_ptr<BaseModel> TDLModelFactory::createFeatureExtractionModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
 
-  if (model_type == ModelType::FEATURE_CLIP_IMG) {
+  if (model_type == ModelType::FEATURE_CLIP_IMG ||
+      model_type == ModelType::FEATURE_MOBILECLIP2_IMG) {
     model = std::make_shared<Clip_Image>();
-  } else if (model_type == ModelType::FEATURE_CLIP_TEXT) {
+  } else if (model_type == ModelType::FEATURE_CLIP_TEXT ||
+             model_type == ModelType::FEATURE_MOBILECLIP2_TEXT) {
     model = std::make_shared<Clip_Text>();
   } else if (model_type == ModelType::FEATURE_BMFACE_R34 ||
              model_type == ModelType::FEATURE_BMFACE_R50 ||

@@ -290,6 +290,16 @@
       "file_name":"feature_clip_text_1_77_W4BF16",
       "rgb_order":"rgb"
     },
+    "FEATURE_MOBILECLIP2_IMG":{
+      "_comment":"mobileclip2 image feature extraction",
+      "file_name":"feature_mobileclip2_B_img_224_224_INT8",
+      "rgb_order":"rgb"
+    },
+    "FEATURE_MOBILECLIP2_TEXT":{
+      "_comment":"mobileclip2 text feature extraction",
+      "file_name":"feature_mobileclip2_B_text_1_77_INT8",
+      "rgb_order":"rgb"
+    },
     "FEATURE_CVIFACE":{
       "_comment":"cviface 256-dimensional feature",
       "file_name":"feature_cviface_112_112_INT8",

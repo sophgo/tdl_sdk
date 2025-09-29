@@ -16,7 +16,7 @@ def check_model_id_name(model_id_name):
     """检查模型ID是否支持"""
     supported_models = [
         "FEATURE_CLIP_IMG",
-        "FEATURE_CLIP_TEXT", 
+        "FEATURE_MOBILECLIP2_IMG", 
         "FEATURE_BMFACE_R34",
         "FEATURE_BMFACE_R50",
         "FEATURE_CVIFACE"
@@ -100,7 +100,7 @@ def get_model_type_from_name(model_id_name):
     """将模型名称映射到ModelType"""
     model_type_map = {
         "FEATURE_CLIP_IMG": nn.ModelType.FEATURE_CLIP_IMG,
-        "FEATURE_CLIP_TEXT": nn.ModelType.FEATURE_CLIP_TEXT,
+        "FEATURE_MOBILECLIP2_IMG": nn.ModelType.FEATURE_MOBILECLIP2_IMG,
         "FEATURE_BMFACE_R34": nn.ModelType.FEATURE_BMFACE_R34,
         "FEATURE_BMFACE_R50": nn.ModelType.FEATURE_BMFACE_R50,
         "FEATURE_CVIFACE": nn.ModelType.FEATURE_CVIFACE,

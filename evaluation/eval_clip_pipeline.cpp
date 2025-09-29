@@ -52,21 +52,73 @@ std::vector<float> softmax(const std::vector<float>& logits) {
   for (float& v : result) v /= sum;
   return result;
 }
+// 检查模型ID是否在允许的列表中
+int is_valid_model_id(const char* id, const char* const valid_ids[],
+                      int count) {
+  for (int i = 0; i < count; i++) {
+    if (strcmp(id, valid_ids[i]) == 0) {
+      return 1;  // 有效ID
+    }
+  }
+  return 0;  // 无效ID
+}
 
+// 打印可用的模型ID
+void print_valid_ids(const char* title, const char* const valid_ids[],
+                     int count) {
+  printf("%s 可用选项: ", title);
+  for (int i = 0; i < count; i++) {
+    printf("%s", valid_ids[i]);
+    if (i < count - 1) {
+      printf(", ");
+    }
+  }
+  printf("\n");
+}
 int main(int argc, char** argv) {
+  // 定义支持的图像模型ID
+  const char* valid_img_models[] = {"FEATURE_CLIP_IMG",
+                                    "FEATURE_MOBILECLIP2_IMG"};
+  const int img_model_count =
+      sizeof(valid_img_models) / sizeof(valid_img_models[0]);
+
+  // 定义支持的文本模型ID
+  const char* valid_text_models[] = {
+      "FEATURE_CLIP_TEXT",
+      "FEATURE_MOBILECLIP2_TEXT",
+  };
+  const int text_model_count =
+      sizeof(valid_text_models) / sizeof(valid_text_models[0]);
+
   if (argc != 7) {
     printf(
-        "Usage: %s <model_dir> <image_list_txt> <encoder_file> <bpe_file> "
-        "<text_file> <output_result_txt>\n",
+        "Usage: %s <model_dir> <img_model_id_name> <text_model_id_name> "
+        "<image_list_txt> "
+        "<text_dir> <output_result_txt>\n",
         argv[0]);
     return -1;
   }
+  // 检查图像模型ID是否有效
+  if (!is_valid_model_id(argv[2], valid_img_models, img_model_count)) {
+    printf("错误: 无效的图像模型ID: %s\n", argv[2]);
+    print_valid_ids("可用的图像模型ID", valid_img_models, img_model_count);
+    return -1;
+  }
 
+  // 检查文本模型ID是否有效
+  if (!is_valid_model_id(argv[3], valid_text_models, text_model_count)) {
+    printf("错误: 无效的文本模型ID: %s\n", argv[3]);
+    print_valid_ids("可用的文本模型ID", valid_text_models, text_model_count);
+    return -1;
+  }
   std::string model_dir = argv[1];
-  std::string image_list_file = argv[2];  // 图片路径列表txt文件
-  std::string encoderFile = argv[3];
-  std::string bpeFile = argv[4];
-  std::string textFile = argv[5];
+  std::string img_model_id_name = argv[2];
+  std::string text_model_id_name = argv[3];
+  std::string image_list_file = argv[4];  // 图片路径列表txt文件
+  std::string txt_dir = argv[5];
+  std::string encoder_file = txt_dir + "/encoder.txt";
+  std::string bpe_file = txt_dir + "/vocab.txt";
+  std::string input_file = txt_dir + "/input.txt";
   std::string output_result_file = argv[6];  // 新增输出文件路径
 
   // 1. 读取图片路径列表
@@ -82,14 +134,14 @@ int main(int argc, char** argv) {
   model_factory.setModelDir(model_dir);
 
   std::shared_ptr<BaseModel> model_clip_image =
-      model_factory.getModel(ModelType::FEATURE_CLIP_IMG);
+      model_factory.getModel(img_model_id_name);
   if (!model_clip_image) {
     printf("Failed to load clip image model\n");
     return -1;
   }
 
   std::shared_ptr<BaseModel> model_clip_text =
-      model_factory.getModel(ModelType::FEATURE_CLIP_TEXT);
+      model_factory.getModel(text_model_id_name);
   if (!model_clip_text) {
     printf("Failed to load clip text model\n");
     return -1;
@@ -97,8 +149,8 @@ int main(int argc, char** argv) {
 
   // 3. 文本特征处理（只做一次）
   std::vector<std::vector<int32_t>> tokens;
-  BytePairEncoder bpe(encoderFile, bpeFile);
-  int result = bpe.tokenizerBPE(textFile, tokens);
+  BytePairEncoder bpe(encoder_file, bpe_file);
+  int result = bpe.tokenizerBPE(input_file, tokens);
   if (result != 0) {
     printf("Failed to tokenize text file\n");
     return -1;

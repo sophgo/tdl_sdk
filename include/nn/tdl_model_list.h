@@ -94,6 +94,8 @@
   X(FEATURE_IMG, "output image feature vector")                               \
   X(FEATURE_CLIP_IMG, "output image clip feature vector")                     \
   X(FEATURE_CLIP_TEXT, "output text clip feature vector")                     \
+  X(FEATURE_MOBILECLIP2_IMG, "output image mobileclip2 feature vector")       \
+  X(FEATURE_MOBILECLIP2_TEXT, "output text mobileclip2 feature vector")       \
                                                                               \
   /* face feature extraction */                                               \
   X(FEATURE_CVIFACE, "cviface 256-dimensional feature")                       \
