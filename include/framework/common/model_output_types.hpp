@@ -15,6 +15,7 @@ enum class ModelOutputType {
   CLS_ATTRIBUTE,
   SEGMENTATION,
   OCR_INFO,
+  ASR_INFO,
   UNKOWN
 };
 
@@ -201,6 +202,34 @@ class ModelSegmentationInfo : public ModelOutputInfo {
   uint32_t output_height;
   uint8_t *class_id;
   uint8_t *class_conf;
+};
+
+class ModelASRInfo : public ModelOutputInfo {
+ public:
+  ModelASRInfo() = default;
+  ~ModelASRInfo() {
+    if (decoder_feature != nullptr) {
+      free(decoder_feature);
+      decoder_feature = nullptr;
+    }
+
+    if (text_info != nullptr) {
+      free(text_info);
+      text_info = nullptr;
+      text_length = 0;
+    }
+  }
+  ModelOutputType getType() const override { return ModelOutputType::ASR_INFO; }
+
+  void *decoder_feature;
+  int decoder_feature_size;
+
+  int32_t pred_index;
+
+  size_t text_length;
+  char *text_info;
+
+  bool input_finished = false;
 };
 
 #endif

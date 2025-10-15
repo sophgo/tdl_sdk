@@ -13,6 +13,8 @@ case "${TOOLCHAIN_FILE:-}" in
     ARCHITECTURE="glibc_riscv64" ;;
   *riscv64-unknown-linux-musl.cmake)
     ARCHITECTURE="musl_riscv64" ;;
+  *x86_64-linux-gnu.cmake) 
+    ARCHITECTURE="musl_riscv64" ;; #any ARCHITECTURE, just for source code
   *)
     echo "ERROR: unsupported toolchain file: ${TOOLCHAIN_FILE}" >&2
     exit 1
@@ -33,6 +35,8 @@ packages=(
   libwebsockets
   openssl
   zlib
+  kissfft
+  kaldi-native-fbank
 )
 
 base_url="https://github.com/sophgo/oss/raw/refs/heads/master/oss_release_tarball/${ARCHITECTURE}"

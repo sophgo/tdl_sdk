@@ -342,10 +342,35 @@ else()
     endif()
 endif()
 
+set(MIDDLEWARE_AUDIO_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_dnvqe.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
+    $<$<STREQUAL:${CVI_PLATFORM},CV181X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.so>)
+
+set(MIDDLEWARE_AUDIO_LIBS_STATIC
+    "-Wl,--whole-archive"
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_dnvqe.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.a
+    $<$<STREQUAL:${CVI_PLATFORM},CV181X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.a>
+    "-Wl,--no-whole-archive")
+
 message("MIDDLEWARE_INCLUDES: ${MIDDLEWARE_INCLUDES}")
 message("KERNEL_ROOT: ${KERNEL_ROOT}")
 message("MIDDLEWARE_LIBS: ${MIDDLEWARE_LIBS}")
 message("MIDDLEWARE_LIBS_STATIC: ${MIDDLEWARE_LIBS_STATIC}")
+message("MIDDLEWARE_AUDIO_LIBS: ${MIDDLEWARE_AUDIO_LIBS}")
+message("MIDDLEWARE_AUDIO_LIBS_STATIC: ${MIDDLEWARE_AUDIO_LIBS_STATIC}")
+
 
 set(MIDDLEWARE_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/middleware/${MW_VER})
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")

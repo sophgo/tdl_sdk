@@ -162,8 +162,8 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
 
   tensor_info.shape.resize(4, 1);
   int insert_idx = 4 - p_shape[idx].num_dims;
-  for (int i = insert_idx; i < 4; i++) {
-    tensor_info.shape[i] = p_shape[idx].dims[i - insert_idx];
+  for (int i = 0; i < p_shape[idx].num_dims; i++) {
+    tensor_info.shape[i] = p_shape[idx].dims[i];
   }
 
   if (p_shape[idx].num_dims != 4) {
@@ -218,7 +218,7 @@ int32_t BM168xNet::addInput(const std::string &name) {
   input_tensor_hash_[name] =
       std::make_shared<BaseTensor>(element_bytes, memory_pool_);
   auto &shape = input_output_tensor_infos_[name].shape;
-  input_tensor_hash_[name]->reshape(1, shape[1], shape[2], shape[3]);
+  input_tensor_hash_[name]->reshape(shape[0], shape[1], shape[2], shape[3]);
   TensorInfo &tensor_info = input_output_tensor_infos_[name];
   tensor_info.sys_mem = reinterpret_cast<uint8_t *>(
       input_tensor_hash_[name]->getMemoryBlock()->virtualAddress);
@@ -253,7 +253,7 @@ int32_t BM168xNet::addOutput(const std::string &name) {
   output_tensor_hash_[name] =
       std::make_shared<BaseTensor>(element_bytes, memory_pool_);
   auto &shape = input_output_tensor_infos_[name].shape;
-  output_tensor_hash_[name]->reshape(1, shape[1], shape[2], shape[3]);
+  output_tensor_hash_[name]->reshape(shape[0], shape[1], shape[2], shape[3]);
   LOGI(
       "finish add output:%s,element_bytes:%d,shape:%d,%d,%d,%d,qscale:%f,"
       "zero_point:%d,dtype:%d",

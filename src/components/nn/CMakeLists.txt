@@ -5,6 +5,7 @@ include_directories(
                     ${REPO_DIR}/include/components
                     ${REPO_DIR}/include/nn
                     ${CMAKE_CURRENT_SOURCE_DIR}/
+                    ${FBANK_INCLUDES}
                     )
 
 file(GLOB_RECURSE SRC_FRAMWORK_FILES_CUR ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)

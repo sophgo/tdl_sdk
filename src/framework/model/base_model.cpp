@@ -392,6 +392,19 @@ int32_t BaseModel::outputParse(
   return -1;
 }
 
+int32_t BaseModel::outputParse(const std::shared_ptr<BaseImage>& image,
+                               std::shared_ptr<ModelOutputInfo>& out_data) {
+  LOGW("outputParse not implemented");
+  return -1;
+}
+
+int32_t BaseModel::outputParse(
+    const std::vector<std::shared_ptr<BaseImage>>& images,
+    std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) {
+  LOGW("outputParse not implemented");
+  return -1;
+}
+
 void BaseModel::setTypeMapping(
     const std::map<int, TDLObjectType>& type_mapping) {
   type_mapping_ = type_mapping;

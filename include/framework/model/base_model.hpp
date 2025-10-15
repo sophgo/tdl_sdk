@@ -57,9 +57,12 @@ class BaseModel {
       std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas,
       const std::map<std::string, float>& parameters = {});
 
+  virtual int32_t outputParse(const std::shared_ptr<BaseImage>& image,
+                              std::shared_ptr<ModelOutputInfo>& out_data);
+
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>>& images,
-      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) = 0;
+      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas);
 
   virtual int32_t outputParse(
       const std::vector<std::vector<std::shared_ptr<BaseImage>>>& images,

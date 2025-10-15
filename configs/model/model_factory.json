@@ -327,6 +327,16 @@
       "rgb_order":"rgb",
       "mean":[123.675,116.28,103.53],
       "std":[58.395,57.12,57.375]
+    },
+
+    "RECOGNITION_SPEECH_ZIPFORMER_ENCODER":{
+      "file_name":"recognition_speech_zipformer_encoder_71_80_BF16"
+    },
+    "RECOGNITION_SPEECH_ZIPFORMER_DECODER":{
+      "file_name":"recognition_speech_zipformer_decoder_1_2_BF16"
+    },
+    "RECOGNITION_SPEECH_ZIPFORMER_JOINER":{
+      "file_name":"recognition_speech_zipformer_joiner_1_512_1_512_BF16"
     }
     
   }

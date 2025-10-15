@@ -7,11 +7,13 @@ project(evaluation)
 set(SAMPLE_INCLUDES
     ${MLIR_INCLUDES}
     ${MIDDLEWARE_INCLUDES}
+    ${FBANK_INCLUDES}
     ${REPO_DIR}/include/framework
     ${REPO_DIR}/include/components
     ${REPO_DIR}/include/nn
     ${REPO_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${REPO_DIR}/src/components/nn
 )
 if(APP_VIDEO_ENABLE)
   set(SAMPLE_LIBS ${MIDDLEWARE_LIBS} ${OPENCV_LIBRARIES} ${MIDDLEWARE_OBJ})

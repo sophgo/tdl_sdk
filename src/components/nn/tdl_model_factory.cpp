@@ -28,6 +28,9 @@
 #include "object_tracking/feartrack.hpp"
 #include "segmentation/topformer_seg.hpp"
 #include "segmentation/yolov8_seg.hpp"
+#include "speech_recognition/zipformer_decoder.hpp"
+#include "speech_recognition/zipformer_encoder.hpp"
+#include "speech_recognition/zipformer_joiner.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
 
@@ -279,9 +282,12 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModelInstance(
   else if (isObjectTrackingModel(model_type)) {
     model = createObjectTrackingModel(model_type);
   }
-  // 9. 其他模型
+  // 9. OCR模型
   else if (isOCRModel(model_type)) {
     model = createOCRModel(model_type);
+    // 10. 语音识别模型
+  } else if (isSpeechRecognitionModel(model_type)) {
+    model = createSpeechRecognitionModel(model_type);
   } else {
     LOGE("model type %s not supported", modelTypeToString(model_type).c_str());
     return nullptr;
@@ -378,6 +384,12 @@ bool TDLModelFactory::isOCRModel(const ModelType model_type) {
 
 bool TDLModelFactory::isObjectTrackingModel(const ModelType model_type) {
   return (model_type == ModelType::TRACKING_FEARTRACK);
+}
+
+bool TDLModelFactory::isSpeechRecognitionModel(const ModelType model_type) {
+  return (model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_ENCODER ||
+          model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_DECODER ||
+          model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_JOINER);
 }
 
 // 创建函数实现
@@ -664,6 +676,21 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectTrackingModel(
 
   if (model_type == ModelType::TRACKING_FEARTRACK) {
     model = std::make_shared<FearTrack>();
+  }
+
+  return model;
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::createSpeechRecognitionModel(
+    const ModelType model_type) {
+  std::shared_ptr<BaseModel> model = nullptr;
+
+  if (model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_ENCODER) {
+    model = std::make_shared<ZipformerEncoder>();
+  } else if (model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_DECODER) {
+    model = std::make_shared<ZipformerDecoder>();
+  } else if (model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_JOINER) {
+    model = std::make_shared<ZipformerJoiner>();
   }
 
   return model;

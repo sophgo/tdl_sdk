@@ -6,11 +6,13 @@ project(sample_cpp)
 set(SAMPLE_INCLUDES
     ${IVE_INCLUDES}
     ${MLIR_INCLUDES}
+    ${FBANK_INCLUDES}
     ${MIDDLEWARE_INCLUDES}
     ${REPO_DIR}/include/framework
     ${REPO_DIR}/include/components
     ${REPO_DIR}/include/nn
     ${REPO_DIR}/include/
+    ${REPO_DIR}/src/components/nn
 )
 
 if(BUILD_SHARED)
@@ -80,6 +82,15 @@ if ("${CVI_PLATFORM}" STREQUAL "SOPHON" OR
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_api_client.cpp)
 endif()
 
+
+if (NOT ("${CVI_PLATFORM}" STREQUAL "CV180X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV181X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV182X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV183X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV184X"))
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_microphone_audio_asr.cpp)
+endif()
+
 message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")
 
 foreach (fname ${SAMPLE_SRC_FILES})
@@ -92,6 +103,12 @@ foreach (fname ${SAMPLE_SRC_FILES})
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt stdc++fs)
   elseif(name STREQUAL "sample_vi_md")
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS})
+  elseif(name MATCHES "microphone_audio")
+    if(BUILD_SHARED)
+      set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_AUDIO_LIBS})
+    else()
+      set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_AUDIO_LIBS_STATIC})
+    endif()
   endif()
 
   target_link_libraries(${name} ${SAMPLE_LIBS})

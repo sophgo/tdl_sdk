@@ -111,6 +111,7 @@ class TDLModelFactory {
   bool isFeatureExtractionModel(const ModelType model_type);
   bool isOCRModel(const ModelType model_type);
   bool isObjectTrackingModel(const ModelType model_type);
+  bool isSpeechRecognitionModel(const ModelType model_type);
 
   std::shared_ptr<BaseModel> getModelImpl(ModelType model_type,
                                           const std::string &model_path,
@@ -136,6 +137,8 @@ class TDLModelFactory {
       const ModelType model_type);
   std::shared_ptr<BaseModel> createOCRModel(const ModelType model_type);
   std::shared_ptr<BaseModel> createObjectTrackingModel(
+      const ModelType model_type);
+  std::shared_ptr<BaseModel> createSpeechRecognitionModel(
       const ModelType model_type);
 
   std::string model_dir_;

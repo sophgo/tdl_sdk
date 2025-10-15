@@ -103,6 +103,11 @@
   X(FEATURE_BMFACE_R50, "resnet50 512-dimensional BMFace feature")            \
                                                                               \
   /* object tracking */                                                       \
-  X(TRACKING_FEARTRACK, "single object tracking")
+  X(TRACKING_FEARTRACK, "single object tracking")                             \
+                                                                              \
+  /* speech recognition */                                                    \
+  X(RECOGNITION_SPEECH_ZIPFORMER_ENCODER, "zipformer encoder")                \
+  X(RECOGNITION_SPEECH_ZIPFORMER_DECODER, "zipformer decoder")                \
+  X(RECOGNITION_SPEECH_ZIPFORMER_JOINER, "zipformer joiner")
 
 #endif
