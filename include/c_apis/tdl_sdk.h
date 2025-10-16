@@ -400,7 +400,7 @@ int32_t TDL_SingleObjectTracking(TDLHandle handle, TDLImage image_handle,
 int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
                                TDLBox *box, bool *is_intrusion);
 
-#if defined(__CV181X__) || defined(__CV184X__)
+#if defined(__CV181X__) || defined(__CV184X__) || defined(__CV186X__)
 /**
  * @brief 执行移动侦测任务
  *

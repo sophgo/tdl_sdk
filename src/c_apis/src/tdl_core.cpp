@@ -1235,7 +1235,7 @@ int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
   return 0;
 }
 
-#if defined(__CV181X__) || defined(__CV184X__)
+#if defined(__CV181X__) || defined(__CV184X__) || defined(__CV186X__)
 
 int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
                             TDLImage detect_image, TDLObject *roi,

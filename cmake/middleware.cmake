@@ -176,7 +176,8 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.so)
+        ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ive.so)
     set(MIDDLEWARE_LIBS_STATIC
         "-Wl,--whole-archive"
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
@@ -196,6 +197,7 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ive.a
         "-Wl,--no-whole-archive"
         ${MLIR_SDK_ROOT}/lib/libz.a)
     add_definitions(-DSENSOR_GCORE_GC4653)
