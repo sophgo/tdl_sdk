@@ -493,7 +493,8 @@ int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image, const char *img_path,
 
   TDLImageContext *image_context = (TDLImageContext *)image;
 
-  bool ret = context->encoder->encodeFrame(image_context->image, encoded_data);
+  bool ret =
+      context->encoder->encodeFrame(image_context->image, encoded_data, vechn);
 
   if (!ret) {
     std::cerr << "Image encoding failed.\n";

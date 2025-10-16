@@ -19,7 +19,8 @@ class ImageEncoder {
   ImageEncoder(int VeChn = 1);
   ~ImageEncoder();
   bool encodeFrame(const std::shared_ptr<BaseImage>& image,
-                   std::vector<uint8_t>& encode_img, int jpeg_quality = 90);
+                   std::vector<uint8_t>& encode_img, int VeChn = 1,
+                   int jpeg_quality = 90);
 
  private:
 #if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \

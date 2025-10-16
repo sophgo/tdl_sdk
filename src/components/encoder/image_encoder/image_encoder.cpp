@@ -63,7 +63,7 @@ ImageEncoder::~ImageEncoder() {
 }
 
 bool ImageEncoder::encodeFrame(const std::shared_ptr<BaseImage>& image,
-                               std::vector<uint8_t>& encode_img,
+                               std::vector<uint8_t>& encode_img, int VeChn,
                                int jpeg_quality) {
   if (!image) {
     std::cerr << "[ImageEncoder] Error: input image is nullptr.\n";
@@ -76,7 +76,7 @@ bool ImageEncoder::encodeFrame(const std::shared_ptr<BaseImage>& image,
   // 允许 NV21(VU) 与 NV12(UV)
   if (image->getImageFormat() != ImageFormat::YUV420SP_VU &&
       image->getImageFormat() != ImageFormat::YUV420SP_UV) {
-    std::cerr << "[ImageEncoder] Error: image format is not YUV420SP_VU/U V.\n";
+    std::cerr << "[ImageEncoder] Error: image format is not YUV420SP_VU/UV.\n";
     return false;
   }
 
@@ -90,7 +90,7 @@ bool ImageEncoder::encodeFrame(const std::shared_ptr<BaseImage>& image,
   VENC_STREAM_S stStream;
   VENC_PACK_S* pstPack;
   VENC_CHN_ATTR_S stAttr;
-  VENC_CHN VeChn_ = 1;
+  VeChn_ = VeChn;
 
   // 获取并设置编码属性（宽高、缓冲等）
   CVI_VENC_GetChnAttr(VeChn_, &stAttr);
