@@ -32,8 +32,8 @@ class ViDecoder : public VideoDecoder {
   std::vector<std::unique_ptr<MemoryBlock>> memory_blocks_;
   std::shared_ptr<BaseMemoryPool> memory_pool_ = nullptr;
   bool isMapped_ = false;
-  void *addr_ = nullptr;
-  uint32_t image_size_ = 0;
+  void *addr_[3] = {nullptr};
+  uint32_t image_length_[3] = {0};
 
   int32_t deinitialize();
 };

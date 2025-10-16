@@ -333,6 +333,12 @@ int32_t ViDecoder::deinitialize() {
     while (!frameQueues[i].empty()) {
       auto frame_info = frameQueues[i].front();
       frameQueues[i].pop();
+      for (int32_t j = 0; j < 3; j++) {
+        if (frame_info->stVFrame.u32Length[j] != 0) {
+          CVI_SYS_Munmap((void *)frame_info->stVFrame.pu8VirAddr[j],
+                         frame_info->stVFrame.u32Length[j]);
+        }
+      }
       CVI_VPSS_ReleaseChnFrame(i, 0, frame_info.get());
     }
   }
@@ -379,9 +385,6 @@ ViDecoder::~ViDecoder() {
   if (isInitialized) {
     deinitialize();
   }
-  if (isMapped_) {
-    CVI_SYS_Munmap((void *)addr_, image_size_);
-  }
 }
 
 int32_t ViDecoder::init(const std::string &path,
@@ -392,10 +395,6 @@ int32_t ViDecoder::init(const std::string &path,
 }
 
 int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int32_t vi_chn) {
-  if (isMapped_) {
-    CVI_SYS_Munmap((void *)addr_, image_size_);
-    isMapped_ = false;
-  }
   int32_t ret = 0;
   std::shared_ptr<VIDEO_FRAME_INFO_S> frame_info =
       std::make_shared<VIDEO_FRAME_INFO_S>();
@@ -412,18 +411,21 @@ int32_t ViDecoder::read(std::shared_ptr<BaseImage> &image, int32_t vi_chn) {
     }
   }
 
-  // 计算总的图像大小
-  size_t image_size = frame_info->stVFrame.u32Length[0] +
-                      frame_info->stVFrame.u32Length[1] +
-                      frame_info->stVFrame.u32Length[2];
-
   // 如果虚拟地址为空，进行内存映射
   if (frame_info->stVFrame.pu8VirAddr[0] == NULL) {
-    frame_info->stVFrame.pu8VirAddr[0] =
-        (CVI_U8 *)CVI_SYS_Mmap(frame_info->stVFrame.u64PhyAddr[0], image_size);
     isMapped_ = true;
-    addr_ = frame_info->stVFrame.pu8VirAddr[0];
-    image_size_ = image_size;
+    for (int32_t i = 0; i < 3; i++) {
+      if (frame_info->stVFrame.u32Length[i] != 0) {
+        frame_info->stVFrame.pu8VirAddr[i] =
+            (CVI_U8 *)CVI_SYS_Mmap(frame_info->stVFrame.u64PhyAddr[i],
+                                   frame_info->stVFrame.u32Length[i]);
+        CVI_SYS_IonFlushCache(frame_info->stVFrame.u64PhyAddr[i],
+                              frame_info->stVFrame.pu8VirAddr[i],
+                              frame_info->stVFrame.u32Length[i]);
+        addr_[i] = frame_info->stVFrame.pu8VirAddr[i];
+        image_length_[i] = frame_info->stVFrame.u32Length[i];
+      }
+    }
   }
 
   image = ImageFactory::wrapVPSSFrame(frame_info.get(), false);
@@ -444,6 +446,13 @@ int32_t ViDecoder::release(int32_t vi_chn) {
   std::unique_lock<std::mutex> lock(queueMutexes[vi_chn]);
   auto frame_info = frameQueues[vi_chn].front();
   frameQueues[vi_chn].pop();
+
+  for (int32_t i = 0; i < 3; i++) {
+    if (frame_info->stVFrame.u32Length[i] != 0) {
+      CVI_SYS_Munmap((void *)frame_info->stVFrame.pu8VirAddr[i],
+                     frame_info->stVFrame.u32Length[i]);
+    }
+  }
 
   ret = CVI_VPSS_ReleaseChnFrame(vi_chn, 0, frame_info.get());
   if (ret != 0) {
