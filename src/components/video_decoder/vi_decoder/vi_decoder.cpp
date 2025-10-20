@@ -184,7 +184,7 @@ int32_t ViDecoder::initialize(int32_t w, int32_t h, ImageFormat image_fmt,
     return ret;
   }
 
-  memory_pool_ = BaseMemoryPoolFactory::createMemoryPool();
+  memory_pool_ = MemoryPoolFactory::createMemoryPool();
   memory_blocks_.clear();
   auto pool = std::dynamic_pointer_cast<CviMemoryPool>(memory_pool_);
   if (!pool) {

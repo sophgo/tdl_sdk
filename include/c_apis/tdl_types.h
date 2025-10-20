@@ -32,6 +32,12 @@ typedef enum {
   TDL_COLOR = 2
 } TDLTargetSearchTypeE;
 typedef struct {
+  uint64_t *mem_addrs;
+  uint32_t *mem_sizes;
+  uint32_t size;
+} TDLModelMemInfo;
+
+typedef struct {
   float x1;
   float y1;
   float x2;

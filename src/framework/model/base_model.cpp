@@ -418,3 +418,20 @@ void BaseModel::setExportFeature(int flag) {
   throw std::runtime_error(
       "setExportFeature() should not be called on BaseModel");
 }
+
+const std::vector<std::string>& BaseModel::getOutputNames() const {
+  return net_->getOutputNames();
+}
+
+const std::vector<std::string>& BaseModel::getInputNames() const {
+  return net_->getInputNames();
+}
+
+int32_t BaseModel::getTensorInfo(const std::string& name, TensorInfo& info) {
+  info = net_->getTensorInfo(name);
+  if (info.shape.size() == 0) {
+    LOGE("Tensor info not found for %s", name.c_str());
+    return -1;
+  }
+  return 0;
+}

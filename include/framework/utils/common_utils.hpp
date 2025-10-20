@@ -15,6 +15,7 @@ class CommonUtils {
   static std::string getLibraryDir();
   static std::string getParentDir(const std::string &path);
   static std::string getExecutableDir();
+  static int32_t randomFill(uint8_t *data, uint32_t size);
 };
 
 #endif  // COMMON_UTILS_H

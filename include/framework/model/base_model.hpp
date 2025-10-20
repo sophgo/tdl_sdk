@@ -86,6 +86,10 @@ class BaseModel {
                                   const std::string& input_name = "");
   virtual int32_t setupNetwork(NetParam& net_param);
 
+  const std::vector<std::string>& getInputNames() const;
+  const std::vector<std::string>& getOutputNames() const;
+  int32_t getTensorInfo(const std::string& name, TensorInfo& info);
+
  private:
   int getFitBatchSize(int left_size) const;
   void setInputBatchSize(const std::string& layer_name, int batch_size);

@@ -21,7 +21,7 @@ VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
   // CVI_U32 u32MapSize =
   //     vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
   if (memory_pool == nullptr) {
-    memory_pool_ = BaseMemoryPoolFactory::createMemoryPool();
+    memory_pool_ = MemoryPoolFactory::createMemoryPool();
   } else {
     memory_pool_ = memory_pool;
   }
@@ -52,7 +52,7 @@ VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
 VPSSImage::VPSSImage(const VIDEO_FRAME_INFO_S& frame) {
   frame_ = frame;
 
-  memory_pool_ = BaseMemoryPoolFactory::createMemoryPool();
+  memory_pool_ = MemoryPoolFactory::createMemoryPool();
 
   int32_t ret = extractImageInfo(frame);
   if (ret != 0) {

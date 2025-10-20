@@ -6,8 +6,8 @@
 #include <iostream>
 #include <numeric>
 
+#include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
-
 BaseTensor::BaseTensor(int element_bytes,
                        std::shared_ptr<BaseMemoryPool> memory_pool)
     : element_bytes_(element_bytes), num_elements_(0), owns_data_(false) {
@@ -207,7 +207,8 @@ int32_t BaseTensor::copyFromImage(std::shared_ptr<BaseImage> image,
 }
 
 int32_t BaseTensor::release() {
-  if (memory_block_ != nullptr) {
+  if (memory_block_ != nullptr && memory_block_->own_memory &&
+      memory_pool_ != nullptr) {
     memory_pool_->release(memory_block_);
     memory_block_ = nullptr;
   }
@@ -240,4 +241,21 @@ MemoryBlock* BaseTensor::getMemoryBlock() {
     return nullptr;
   }
   return memory_block_.get();
+}
+
+int32_t BaseTensor::randomFill() {
+  if (memory_block_ == nullptr) {
+    LOGE("memory_block_ is nullptr\n");
+    return -1;
+  }
+  uint8_t* data = static_cast<uint8_t*>(memory_block_->virtualAddress);
+  uint32_t size = memory_block_->size;
+
+  CommonUtils::randomFill(data, size);
+  int32_t ret = flushCache();
+  if (ret != 0) {
+    LOGE("flushCache failed, ret: %d\n", ret);
+    return -1;
+  }
+  return 0;
 }

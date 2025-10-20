@@ -3,8 +3,10 @@
 #include <libgen.h>
 #include <limits.h>  // for PATH_MAX
 #include <unistd.h>
+#include <random>
 #include <string>
 #include "utils/tdl_log.hpp"
+
 uint32_t CommonUtils::getDataTypeSize(TDLDataType data_type) {
   switch (data_type) {
     case TDLDataType::FP32:
@@ -100,4 +102,14 @@ std::string CommonUtils::getExecutableDir() {
   char dir[PATH_MAX];
   strncpy(dir, buffer, PATH_MAX);
   return std::string(dirname(dir));
+}
+
+int32_t CommonUtils::randomFill(uint8_t *data, uint32_t size) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dis(0, 255);
+  for (uint32_t i = 0; i < size; ++i) {
+    data[i] = static_cast<uint8_t>(dis(gen));
+  }
+  return 0;
 }

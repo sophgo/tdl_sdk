@@ -64,6 +64,17 @@ class NetFactory {
  public:
   static std::shared_ptr<BaseNet> createNet(const NetParam& net_param,
                                             InferencePlatform platform);
+  // memory info
+  // order:instruction_mem,variable_instruction_mem,neuron_mem,coeff_mem
+  static int32_t getModelMemInfo(const std::string& model_file,
+                                 std::vector<uint64_t>& mem_addrs,
+                                 std::vector<uint32_t>& mem_sizes);
+  // memory info
+  // order:instruction_mem,variable_instruction_mem,neuron_mem,coeff_mem
+  static int32_t getModelMemInfo(const void* model_buffer,
+                                 const uint32_t model_buffer_size,
+                                 std::vector<uint64_t>& mem_addrs,
+                                 std::vector<uint32_t>& mem_sizes);
 };
 
 #endif  // INCLUDE_BASE_NET_H_

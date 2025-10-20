@@ -353,6 +353,7 @@ bool matchKeypoints(const std::vector<float> &gt_keypoints_x,
       gt_keypoints_y.size() != pred_keypoints_y.size() ||
       gt_keypoints_x.size() != gt_keypoints_y.size() ||
       gt_keypoints_score.size() != pred_keypoints_score.size()) {
+    LOGIP("size not equal,return false");
     return false;
   }
 
@@ -361,6 +362,8 @@ bool matchKeypoints(const std::vector<float> &gt_keypoints_x,
         std::abs(gt_keypoints_score[i] - pred_keypoints_score[i]);
 
     if (score_diff > score_diff_thresh) {
+      LOGIP("score_diff:(%f-%f) > score_diff_thresh:%f,return false",
+            gt_keypoints_score[i], pred_keypoints_score[i], score_diff_thresh);
       return false;
     }
   }
@@ -390,6 +393,7 @@ bool matchKeypoints(const std::vector<float> &gt_keypoints_x,
   }
 
   float avg_distance = total_distance / keypoints_index_for_distance.size();
+  LOGIP("avg_distance:%f,position_thresh:%f", avg_distance, position_thresh);
   return avg_distance <= position_thresh;
 };
 

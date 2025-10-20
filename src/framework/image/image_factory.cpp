@@ -31,7 +31,7 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
     int32_t ret =
         img->prepareImageInfo(width, height, imageFormat, pixDataType);
     std::shared_ptr<BaseMemoryPool> memory_pool =
-        BaseMemoryPoolFactory::createMemoryPool();
+        MemoryPoolFactory::createMemoryPool();
     img->setMemoryPool(memory_pool);
 
     ret = img->allocateMemory();

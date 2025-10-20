@@ -4,6 +4,7 @@
 #include <bmruntime_legacy.h>
 
 #include <cassert>
+#include <cstring>
 #include <sstream>
 
 #include "memory/bm_memory_pool.hpp"
@@ -21,9 +22,12 @@ BM168xNet::~BM168xNet() {
     delete[] output_tensors_;
     output_tensors_ = 0;
   }
-  bmrt_destroy(p_bmrt_);
-  p_bmrt_ = 0;
-  net_info_ = 0;
+  if (p_bmrt_ != nullptr) {
+    LOGI("destroy bmrt");
+    bmrt_destroy(p_bmrt_);
+    p_bmrt_ = nullptr;
+  }
+  net_info_ = nullptr;
   LOGI("destroy 168xnet:%s", net_name_.c_str());
 }
 
@@ -39,30 +43,17 @@ int32_t BM168xNet::setup() {
   if (bm_handle_ == nullptr) {
     LOGE("get handle failed,device_id:%d", device_id);
   }
+
   memory_pool_ = std::make_shared<BmMemoryPool>(bm_handle_);
 
-  LOGI("toxxx get_model_bmrt: %s", net_param_.model_file_path.c_str());
+  LOGI("to get_model_bmrt: %s", net_param_.model_file_path.c_str());
   p_bmrt_ = bmrt_create(bm_handle_);
-  if (net_param_.model_file_path.empty()) {
-    if (net_param_.model_buffer == nullptr ||
-        net_param_.model_buffer_size == 0) {
-      LOGE("model_buffer is nullptr or model_buffer_size is 0");
-      return -1;
-    }
-    bool flag = bmrt_load_bmodel_data(p_bmrt_, net_param_.model_buffer,
-                                      net_param_.model_buffer_size);
-    if (!flag) {
-      LOGE("model load from buffer failed");
-      return -1;
-    }
-  } else {
-    bool flag = bmrt_load_bmodel(p_bmrt_, net_param_.model_file_path.c_str());
-    if (!flag) {
-      LOGE("model %s load failed", net_param_.model_file_path.c_str());
-      return -1;
-    }
-  }
 
+  int32_t ret = loadModel();
+  if (ret != 0) {
+    LOGE("load model failed");
+    return -1;
+  }
   // if name was not set,use the name inside bmodel as default
   std::string net_name = net_param_.model_config.net_name;
   LOGI("net_name: %s", net_name.c_str());
@@ -96,13 +87,6 @@ int32_t BM168xNet::setup() {
     input_name_index_[net_info_->input_names[i]] = i;
     input_tensor_names_.push_back(net_info_->input_names[i]);
     LOGI("input %d,name:%s", i, net_info_->input_names[i]);
-    // auto &shape0 = net_info_->stages[0].input_shapes[i];
-    // if (shape0.num_dims != 4) {
-    //   LOGE("input %s,dim error,got:%d expect 4",
-    //   input_tensor_names_[i].c_str(),
-    //        shape0.num_dims);
-    //   return -1;
-    // }
 
     input_output_tensor_infos_[input_tensor_names_[i]] =
         extractTensorInfo(true, i);
@@ -136,6 +120,114 @@ int32_t BM168xNet::setup() {
   LOGI("%s is setup", net_name.c_str());
   return 0;
 }
+
+int32_t BM168xNet::loadModel() {
+  bool flag = false;
+  LOGI("runtime_mem_addrs size:%d,runtime_mem_sizes size:%d",
+       net_param_.runtime_mem_addrs.size(),
+       net_param_.runtime_mem_sizes.size());
+  if (net_param_.runtime_mem_addrs.size() == 5) {
+    LOGI("runtime_mem_addrs=[0x%llx, 0x%llx, 0x%llx, 0x%llx, 0x%llx]",
+         (unsigned long long)net_param_.runtime_mem_addrs[0],
+         (unsigned long long)net_param_.runtime_mem_addrs[1],
+         (unsigned long long)net_param_.runtime_mem_addrs[2],
+         (unsigned long long)net_param_.runtime_mem_addrs[3],
+         (unsigned long long)net_param_.runtime_mem_addrs[4]);
+    LOGI("runtime_mem_sizes=[%u, %u, %u, %u, %u]",
+         net_param_.runtime_mem_sizes[0], net_param_.runtime_mem_sizes[1],
+         net_param_.runtime_mem_sizes[2], net_param_.runtime_mem_sizes[3],
+         net_param_.runtime_mem_sizes[4]);
+  }
+  if (net_param_.model_file_path.empty()) {
+    if (net_param_.model_buffer == nullptr ||
+        net_param_.model_buffer_size == 0) {
+      LOGE("model_buffer is nullptr or model_buffer_size is 0");
+      return -1;
+    }
+    if (net_param_.runtime_mem_addrs.size() == 5 &&
+        net_param_.runtime_mem_sizes.size() == 5) {
+#ifndef __BM1684X__
+      mem_info_t mem_info;
+      if (bmrt_get_bmodel_data_info(net_param_.model_buffer,
+                                    net_param_.model_buffer_size,
+                                    &mem_info) == false) {
+        LOGE("bmrt_get_bmodel_data_info failed");
+        return -1;
+      }
+      if (updateMemoryInfo(net_param_.runtime_mem_addrs,
+                           net_param_.runtime_mem_sizes, &mem_info) != 0) {
+        LOGE("updateMemoryInfo failed");
+        return -1;
+      }
+      flag = bmrt_load_bmodel_data_with_mem(p_bmrt_, net_param_.model_buffer,
+                                            net_param_.model_buffer_size,
+                                            &mem_info);
+      if (flag == false) {
+        LOGE("bmrt_load_bmodel_data_with_mem failed");
+        return -1;
+      }
+      // Use the same mem_info for multi-thread pre-allocation
+      flag = bmrt_pre_alloc_mem_multi_thread(p_bmrt_, 0, &mem_info);
+      if (flag == false) {
+        LOGE("bmrt_pre_alloc_mem_multi_thread failed");
+        return -1;
+      }
+      use_runtime_memory_ = true;
+#else
+      LOGE("bm1684x not support load bmodel with mem");
+      return -1;
+#endif
+    } else {
+      flag = bmrt_load_bmodel_data(p_bmrt_, net_param_.model_buffer,
+                                   net_param_.model_buffer_size);
+    }
+
+  } else {
+    if (net_param_.runtime_mem_addrs.size() == 5 &&
+        net_param_.runtime_mem_sizes.size() == 5) {
+#ifndef __BM1684X__
+      mem_info_t mem_info;
+      if (bmrt_get_bmodel_info(net_param_.model_file_path.c_str(), &mem_info) ==
+          false) {
+        LOGE("bmrt_get_bmodel_info failed");
+        return -1;
+      }
+      if (updateMemoryInfo(net_param_.runtime_mem_addrs,
+                           net_param_.runtime_mem_sizes, &mem_info) != 0) {
+        LOGE("updateMemoryInfo failed");
+        return -1;
+      }
+      LOGI("to load bmodel with mem");
+      flag = bmrt_load_bmodel_with_mem(
+          p_bmrt_, net_param_.model_file_path.c_str(), &mem_info);
+      if (flag == false) {
+        LOGE("bmrt_load_bmodel_with_mem failed");
+        return -1;
+      }
+      // Use the same mem_info for multi-thread pre-allocation
+      LOGI("to pre-alloc mem for multi-thread");
+      flag = bmrt_pre_alloc_mem_multi_thread(p_bmrt_, 0, &mem_info);
+      if (flag == false) {
+        LOGE("bmrt_pre_alloc_mem_multi_thread failed");
+        return -1;
+      }
+      use_runtime_memory_ = true;
+      LOGI("load bmodel with mem done,flag:%d", flag);
+#else
+      LOGE("bm1684x not support load bmodel with mem");
+      return -1;
+#endif
+    } else {
+      flag = bmrt_load_bmodel(p_bmrt_, net_param_.model_file_path.c_str());
+    }
+  }
+  if (!flag) {
+    LOGE("model load failed");
+    return -1;
+  }
+  return 0;
+}
+
 TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
   bm_data_type_t *p_data_type = net_info_->input_dtypes;
   if (!is_input) {
@@ -227,12 +319,11 @@ int32_t BM168xNet::addInput(const std::string &name) {
   LOGI(
       "finish add "
       "input:%s,element_bytes:%d,shape:%d,%d,%d,%d,qscale:%f,zero_point:%d,"
-      "dtype:%d,virtual_address:%p",
+      "dtype:%d",
       name.c_str(), element_bytes, shape[0], shape[1], shape[2], shape[3],
       input_output_tensor_infos_[name].qscale,
       input_output_tensor_infos_[name].zero_point,
-      static_cast<int>(input_output_tensor_infos_[name].data_type),
-      (void *)tensor_info.sys_mem);
+      static_cast<int>(input_output_tensor_infos_[name].data_type));
 
   return 0;
 }
@@ -301,27 +392,20 @@ int32_t BM168xNet::updateInputTensors() {
       assert(0);
     }
 
-    // if (bmrt_shape.num_dims != 4) {
-    //   LOGW("input tensor shape size not equal 4,size:%d",
-    //   bmrt_shape.num_dims); assert(0);
-    // }
-    // for (int i = 0; i < 4; i++) {
-    //   LOGI("%d,tensor:%d,bmrt:%d", i, input_shape[i], bmrt_shape.dims[i]);
-    //   if (input_shape[i] != bmrt_shape.dims[i]) LOGE("shape not equal");
-    // }
-
     MemoryBlock *memory_block = input_tensor->getMemoryBlock();
-    bm_device_mem_t input_dev = *(bm_device_mem_t *)memory_block->handle;
+    bm_device_mem_t dev =
+        bm_mem_from_device(memory_block->physicalAddress, memory_block->size);
 
     bmrt_shape.dims[0] = input_shape[0];
     input_tensors_[tensor_idx].dtype = net_info_->input_dtypes[tensor_idx];
     input_tensors_[tensor_idx].shape = bmrt_shape;  //  num_dims = 4;
     // memcpy(input_tensors_[tensor_idx].shape.dims,&input_shape[0],4*sizeof(int));
-    input_tensors_[tensor_idx].device_mem = input_dev;
+    input_tensors_[tensor_idx].device_mem = dev;
     input_tensors_[tensor_idx].st_mode = BM_STORE_1N;
-    LOGI("add input:%s,shape:%d,%d,%d,%d,dev_addr:%d,dtype:%d", name.c_str(),
-         batch_n, input_shape[1], input_shape[2], input_shape[3],
-         bm_mem_get_device_addr(input_dev), input_tensors_[tensor_idx].dtype);
+    LOGI("add input:%s,shape:%d,%d,%d,%d,dev_addr:0x%llx,dtype:%d",
+         name.c_str(), batch_n, input_shape[1], input_shape[2], input_shape[3],
+         (unsigned long long)memory_block->physicalAddress,
+         input_tensors_[tensor_idx].dtype);
     updateTensorInfo(name, input_tensor);
   }
 
@@ -340,11 +424,16 @@ int32_t BM168xNet::updateInputTensors() {
 
     BaseTensor *tensor = dynamic_cast<BaseTensor *>(output_tensor.get());
     MemoryBlock *memory_block = tensor->getMemoryBlock();
-    bm_device_mem_t output_dev_mem = *(bm_device_mem_t *)memory_block->handle;
-    if (batch_n == 1 && out_shape.dims[0] > 1) {
-      LOGW("special case,batch_n:%d,out_shape:%d", batch_n, out_shape.dims[0]);
-      output_tensor->reshape(out_shape.dims[0], st[1], st[2], st[3]);
+    bm_device_mem_t dev =
+        bm_mem_from_device(memory_block->physicalAddress, memory_block->size);
 
+    // Handle special case: when input batch_n=1 but output first dim > 1
+    // This is common for models like simcc_pose where output shape is [1, 17,
+    // 384]
+    if (batch_n == 1 && out_shape.dims[0] > 1) {
+      LOGW("special case,batch_n:%d,out_shape.dims[0]:%d", batch_n,
+           out_shape.dims[0]);
+      output_tensor->reshape(out_shape.dims[0], st[1], st[2], st[3]);
     } else {
       out_shape.dims[0] = batch_n;
       output_tensor->reshape(batch_n, st[1], st[2], st[3]);
@@ -353,10 +442,11 @@ int32_t BM168xNet::updateInputTensors() {
     // output_dev_mem.size = output_tensor->get_size();
     output_tensors_[tensor_idx].dtype = net_info_->output_dtypes[tensor_idx];
     output_tensors_[tensor_idx].shape = out_shape;
-    output_tensors_[tensor_idx].device_mem = output_dev_mem;
+    output_tensors_[tensor_idx].device_mem = dev;
     output_tensors_[tensor_idx].st_mode = (bm_store_mode_t)store_mode_;
-    LOGI("add output:%s,shape:%d,%d,%d,%d,dev_addr:%d,dtype:%d", name.c_str(),
-         batch_n, st[1], st[2], st[3], bm_mem_get_device_addr(output_dev_mem),
+    LOGI("add output:%s,shape:%d,%d,%d,%d,dev_addr:0x%llx,dtype:%d",
+         name.c_str(), batch_n, st[1], st[2], st[3],
+         (unsigned long long)memory_block->physicalAddress,
          output_tensors_[tensor_idx].dtype);
     updateTensorInfo(name, output_tensor);
   }
@@ -384,11 +474,7 @@ int32_t BM168xNet::updateOutputTensors() {
     std::vector<int> shapes = output_tensor->getShape();
 
     int index = output_name_index_[name];
-    // auto &out_shape = net_info_->stages[0].output_shapes[index];
-    // for(int k = 0; k< out_shape.num_dims;k++){
-    //  LOG(INFO)<<"update
-    //  output:"<<name<<",dim"<<k<<",shape:"<<out_shape.dims[k];
-    //}
+
     LOGI("update output:%s,shape:%d,%d,%d,%d", name.c_str(), shapes[0],
          shapes[1], shapes[2], shapes[3]);
 
@@ -423,5 +509,153 @@ int32_t BM168xNet::forward(bool sync) {
   bmrt_thread_sync(p_bmrt_);
 
   LOGI("forward success");
+  return 0;
+}
+
+int32_t BM168xNet::updateMemoryInfo(const std::vector<uint64_t> &mem_addrs,
+                                    const std::vector<uint32_t> &mem_sizes,
+                                    void *mem_info_ptr) {
+#ifndef __BM1684X__
+  mem_info_t *mem_info = (mem_info_t *)mem_info_ptr;
+  if (mem_addrs.size() != 5 || mem_sizes.size() != 5) {
+    LOGE("memory addrs size not equal to 5");
+    return -1;
+  }
+
+  // Helper function to set memory address with validation
+  auto set_addr = [&](memory_t &dst_mem, const uint64_t src_addr,
+                      const uint32_t src_size,
+                      const std::string &name) -> bool {
+    if (dst_mem.size == 0) {
+      LOGI("%s size is 0, skip", name.c_str());
+      return true;
+    }
+    // User-provided memory (src_size) must be >= model requirement
+    // (dst_mem.size)
+    if (src_size < dst_mem.size) {
+      LOGE("%s user_provided_size:%u < required_size:%u", name.c_str(),
+           src_size, dst_mem.size);
+      return false;
+    }
+    dst_mem.addr = src_addr;
+    LOGI("%s set addr:0x%llx, size:%u", name.c_str(),
+         (unsigned long long)dst_mem.addr, dst_mem.size);
+    return true;
+  };
+
+  // Set all memory blocks in the same mem_info structure
+  if (!set_addr(mem_info->instruction_mem, mem_addrs[0], mem_sizes[0],
+                "instruction_mem")) {
+    return -1;
+  }
+  if (!set_addr(mem_info->variable_instruction_mem, mem_addrs[1], mem_sizes[1],
+                "variable_instruction_mem")) {
+    return -1;
+  }
+  if (!set_addr(mem_info->neuron_mem, mem_addrs[2], mem_sizes[2],
+                "neuron_mem")) {
+    return -1;
+  }
+  if (!set_addr(mem_info->coeff_mem, mem_addrs[3], mem_sizes[3], "coeff_mem")) {
+    return -1;
+  }
+  if (!set_addr(mem_info->io_mem, mem_addrs[4], mem_sizes[4], "io_mem")) {
+    return -1;
+  }
+
+  // Set number to 1 for single-thread scenario
+  if (mem_info->neuron_mem.size > 0) {
+    mem_info->neuron_mem.number = 1;
+  }
+  if (mem_info->io_mem.size > 0) {
+    mem_info->io_mem.number = 1;
+  }
+
+  LOGI("mem_info update done");
+  return 0;
+#else
+
+  return -1;
+#endif
+}
+int32_t BM168xNet::getModelMemInfo(const std::string &model_file,
+                                   std::vector<uint64_t> &mem_addrs,
+                                   std::vector<uint32_t> &mem_sizes) {
+#ifndef __BM1684X__
+  mem_info_t mem_info;
+  if (bmrt_get_bmodel_info(model_file.c_str(), &mem_info) == false) {
+    LOGE("bmrt_get_bmodel_info failed, model_file: %s", model_file.c_str());
+    return -1;
+  }
+
+  mem_addrs.push_back(mem_info.instruction_mem.addr);
+  mem_sizes.push_back(mem_info.instruction_mem.size);
+  mem_addrs.push_back(mem_info.variable_instruction_mem.addr);
+  mem_sizes.push_back(mem_info.variable_instruction_mem.size);
+  mem_addrs.push_back(mem_info.neuron_mem.addr);
+  mem_sizes.push_back(mem_info.neuron_mem.size);
+  mem_addrs.push_back(mem_info.coeff_mem.addr);
+  mem_sizes.push_back(mem_info.coeff_mem.size);
+  mem_addrs.push_back(mem_info.io_mem.addr);
+  mem_sizes.push_back(mem_info.io_mem.size);
+
+  LOGI("instruction_mem.addr:0x%llx,instruction_mem.size:%u,number:%d",
+       (unsigned long long)mem_info.instruction_mem.addr,
+       mem_info.instruction_mem.size, mem_info.instruction_mem.number);
+  LOGI(
+      "variable_instruction_mem.addr:0x%llx,variable_instruction_mem.size:%u,"
+      "number:%d",
+      (unsigned long long)mem_info.variable_instruction_mem.addr,
+      mem_info.variable_instruction_mem.size,
+      mem_info.variable_instruction_mem.number);
+  LOGI("neuron_mem.addr:0x%llx,neuron_mem.size:%u,number:%d",
+       (unsigned long long)mem_info.neuron_mem.addr, mem_info.neuron_mem.size,
+       mem_info.neuron_mem.number);
+  LOGI("coeff_mem.addr:0x%llx,coeff_mem.size:%u,number:%d",
+       (unsigned long long)mem_info.coeff_mem.addr, mem_info.coeff_mem.size,
+       mem_info.coeff_mem.number);
+  LOGI("io_mem.addr:0x%llx,io_mem.size:%u,number:%d",
+       (unsigned long long)mem_info.io_mem.addr, mem_info.io_mem.size,
+       mem_info.io_mem.number);
+
+  LOGI("Summary: mem_sizes=[%u, %u, %u, %u, %u]", mem_info.instruction_mem.size,
+       mem_info.variable_instruction_mem.size, mem_info.neuron_mem.size,
+       mem_info.coeff_mem.size, mem_info.io_mem.size);
+#else
+  LOGE("bm1684x not support getModelMemInfo with model_file");
+  return -1;
+#endif
+  return 0;
+}
+
+int32_t BM168xNet::getModelMemInfo(const void *model_buffer,
+                                   const uint32_t model_buffer_size,
+                                   std::vector<uint64_t> &mem_addrs,
+                                   std::vector<uint32_t> &mem_sizes) {
+#ifndef __BM1684X__
+  mem_info_t mem_info;
+  if (bmrt_get_bmodel_data_info(model_buffer, model_buffer_size, &mem_info) ==
+      false) {
+    LOGE(
+        "bmrt_get_bmodel_data_info failed, model_buffer: %p, "
+        "model_buffer_size: %d",
+        model_buffer, model_buffer_size);
+    return -1;
+  }
+
+  mem_addrs.push_back(mem_info.instruction_mem.addr);
+  mem_sizes.push_back(mem_info.instruction_mem.size);
+  mem_addrs.push_back(mem_info.variable_instruction_mem.addr);
+  mem_sizes.push_back(mem_info.variable_instruction_mem.size);
+  mem_addrs.push_back(mem_info.neuron_mem.addr);
+  mem_sizes.push_back(mem_info.neuron_mem.size);
+  mem_addrs.push_back(mem_info.coeff_mem.addr);
+  mem_sizes.push_back(mem_info.coeff_mem.size);
+  mem_addrs.push_back(mem_info.io_mem.addr);
+  mem_sizes.push_back(mem_info.io_mem.size);
+#else
+  LOGE("bm1684x not support getModelMemInfo with model_buffer");
+  return -1;
+#endif
   return 0;
 }
