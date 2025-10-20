@@ -371,11 +371,15 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
  * 2. 传入图像中某个点的位置(x, y)，(此时object_meta size不能为0)
  * 3. 传入object_meta中某个目标的索引，(此时object_meta size不能为0)
  * @param size set_values 元素个数(只能为1或2或4)
+ * @param frame_type 目标框选的方法选择
+ * 0 (TDL_REJECT): 不使用框选方法
+ * 1 (TDL_GRABCUT ): 基于GrabCut框选方法（耗时高）
+ * 2 (TDL_COLOR): 基于颜色阈值框选方法
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
                                     TDLObject *object_meta, int *set_values,
-                                    int size);
+                                    int size, TDLTargetSearchTypeE frame_type);
 
 /**
  * @brief 执行单目追踪

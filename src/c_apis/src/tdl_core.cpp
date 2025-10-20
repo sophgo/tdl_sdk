@@ -1106,7 +1106,7 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
 
 int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
                                     TDLObject *object_meta, int *set_values,
-                                    int size) {
+                                    int size, TDLTargetSearchTypeE frame_type) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
@@ -1143,8 +1143,8 @@ int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
   }
 
   if (size == 2) {
-    return context->tracker->initialize(image_context->image, bboxes,
-                                        set_values[0], set_values[1]);
+    return context->tracker->initialize(
+        image_context->image, bboxes, set_values[0], set_values[1], frame_type);
 
   } else if (size == 4) {
     ObjectBoxInfo init_bbox;
@@ -1154,8 +1154,8 @@ int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
     init_bbox.y2 = set_values[3];
     init_bbox.score = 1.0f;
 
-    return context->tracker->initialize(image_context->image, bboxes,
-                                        init_bbox);
+    return context->tracker->initialize(image_context->image, bboxes, init_bbox,
+                                        frame_type);
   } else {
     LOGE("set_values size should be 1 or 2 or 4, but got %d", size);
     return -1;

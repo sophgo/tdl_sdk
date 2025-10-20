@@ -98,30 +98,47 @@ int32_t YoloV8Detection::onModelOpened() {
            stride_w, stride_h, feat_w, feat_h);
       return -1;
     }
-    if (channel == num_box_channel_) {
-      bbox_out_names[stride_h] = output_layers[j];
-      strides.push_back(stride_h);
-      LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(),
-           stride_h);
-    } else if (num_cls_ == 0 && num_output == 6) {
-      num_cls_ = channel;
-      class_out_names[stride_h] = output_layers[j];
-      LOGI("parse class branch,name:%s,stride:%d,num_cls:%d\n",
-           output_layers[j].c_str(), stride_h, channel);
-    } else if (channel == num_cls_) {
-      class_out_names[stride_h] = output_layers[j];
-      LOGI("parse class branch,name:%s,stride:%d\n", output_layers[j].c_str(),
-           stride_h);
-    } else if (channel == (num_box_channel_ + num_cls_)) {
-      strides.push_back(stride_h);
-      bbox_class_out_names[stride_h] = output_layers[j];
-      LOGI("parse box+class branch,name: %s,stride:%d\n",
-           output_layers[j].c_str(), stride_h);
+    if (num_cls_ == 0) {
+      if (channel == num_box_channel_) {
+        bbox_out_names[stride_h] = output_layers[j];
+        strides.push_back(stride_h);
+        LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      } else {
+        num_cls_ = channel;
+        class_out_names[stride_h] = output_layers[j];
+        LOGI("parse class branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      }
     } else {
-      LOGE("unexpected branch:%s,channel:%d\n", output_layers[j].c_str(),
-           channel);
-      return -1;
+      if (channel == num_box_channel_) {
+        bbox_out_names[stride_h] = output_layers[j];
+        strides.push_back(stride_h);
+        LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      } else if (channel == num_cls_) {
+        class_out_names[stride_h] = output_layers[j];
+        LOGI("parse class branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      } else if (channel == (num_box_channel_ + num_cls_)) {
+        strides.push_back(stride_h);
+        bbox_class_out_names[stride_h] = output_layers[j];
+        LOGI("parse box+class branch,name: %s,stride:%d\n",
+             output_layers[j].c_str(), stride_h);
+      } else {
+        LOGE("unexpected branch:%s,channel:%d\n", output_layers[j].c_str(),
+             channel);
+        return -1;
+      }
     }
+  }
+  if (bbox_out_names.size() != class_out_names.size()) {
+    LOGE(
+        "Unsupported output type: mismatched number of box and class branches. "
+        "bbox branches: %zu, class branches: %zu. "
+        "Possible cause: num_classes = 64 or other unsupported configuration.",
+        bbox_out_names.size(), class_out_names.size());
+    return -1;
   }
 
   return 0;

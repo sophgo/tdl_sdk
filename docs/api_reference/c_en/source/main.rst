@@ -2134,6 +2134,65 @@ Multi-object tracking, associating detected objects across frames.
      - tracker_meta
      - Output tracker status information
 
+
+TDL_SetSingleObjectTracking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
+                                    TDLObject *object_meta, int *set_values,
+                                    int size, TDLTargetSearchTypeE frame_type);
+
+
+【Description】
+
+A monocular tracking method integrating object detection and bounding box selection.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 2 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - TDLImageHandle object
+
+   * - Input/Output
+     - TDLObject\*
+     - object_meta
+     - Input detection results, output tracking IDs
+
+   * - Input
+     - int\*
+     - set_values
+     - Tracking target form
+
+   * - Input
+     - int
+     - size
+     - The number of set_values elements (can only be 1, 2, or 4)
+
+   * - Input
+     - TDLTargetSearchTypeE
+     - frame_type
+     - Method of target search
+
 TDL_CharacterRecognition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

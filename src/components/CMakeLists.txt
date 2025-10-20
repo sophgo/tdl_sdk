@@ -8,6 +8,7 @@ add_subdirectory(encoder/image_encoder)
 add_subdirectory(video_decoder)
 add_subdirectory(cv/intrusion_detect)
 add_subdirectory(cv/occlusion_detect)
+add_subdirectory(cv/target_search)
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR 
     ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR 
     ("${CVI_PLATFORM}" STREQUAL "BM1684"))

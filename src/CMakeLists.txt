@@ -27,6 +27,7 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:app>
                $<TARGET_OBJECTS:intrusion_detect>
                $<TARGET_OBJECTS:occlusion_detect>
+               $<TARGET_OBJECTS:target_search>
                $<TARGET_OBJECTS:encoder>
                )
 if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")

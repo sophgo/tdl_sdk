@@ -100,7 +100,7 @@ TEST_F(SotTestSuite, accuracy) {
       init_bbox.y2 = 655.0;
       init_bbox.score = 1.0;
       init_bbox.class_id = 0;
-      tracker->initialize(image, {}, init_bbox);
+      tracker->initialize(image, {}, init_bbox, 0);
     } else {
       TrackerInfo tracker_info;
       tracker->track(image, frame_id, tracker_info);

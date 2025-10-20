@@ -26,6 +26,11 @@ typedef enum {
   TDL_TYPE_UNKOWN    /**< Equals to unkown. */
 } TDLDataTypeE;
 
+typedef enum {
+  TDL_REJECT = 0,
+  TDL_GRABCUT = 1,
+  TDL_COLOR = 2
+} TDLTargetSearchTypeE;
 typedef struct {
   float x1;
   float y1;

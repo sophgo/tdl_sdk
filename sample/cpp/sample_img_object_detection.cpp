@@ -1,4 +1,6 @@
 
+#include <sys/stat.h>
+#include <unistd.h>
 #include "tdl_model_factory.hpp"
 
 void visualize_object_detection(std::shared_ptr<BaseImage> image,
@@ -36,13 +38,34 @@ void visualize_object_detection(std::shared_ptr<BaseImage> image,
   cv::imwrite(str_img_name, mat);
 }
 
+bool path_exists(const std::string &path) {
+  struct stat buffer;
+  return (stat(path.c_str(), &buffer) == 0);
+}
+
+bool is_directory(const std::string &path) {
+  struct stat buffer;
+  if (stat(path.c_str(), &buffer) != 0) {
+    return false;
+  }
+  return S_ISDIR(buffer.st_mode);
+}
+
+bool is_regular_file(const std::string &path) {
+  struct stat buffer;
+  if (stat(path.c_str(), &buffer) != 0) {
+    return false;
+  }
+  return S_ISREG(buffer.st_mode);
+}
+
 int main(int argc, char **argv) {
   if (argc != 4 && argc != 5) {
     printf(
-        "Usage: %s <model_id_name> <model_dir> <image_path> "
+        "Usage: %s <model_id_name> <model_path> <image_path> "
         "<model_threshold>\n",
         argv[0]);
-    printf("Usage: %s <model_id_name> <model_dir> <image_path>\n", argv[0]);
+    printf("Usage: %s <model_id_name> <model_path> <image_path>\n", argv[0]);
     printf("model_id_name:\n");
     for (auto &item : kAllModelTypes) {
       printf("%s\n", modelTypeToString(item).c_str());
@@ -54,8 +77,7 @@ int main(int argc, char **argv) {
     model_threshold = atof(argv[4]);
   }
   std::string model_id_name = argv[1];
-
-  std::string model_dir = argv[2];
+  std::string model_path = argv[2];
   std::string image_path = argv[3];
 
   std::shared_ptr<BaseImage> image = ImageFactory::readImage(image_path);
@@ -64,9 +86,26 @@ int main(int argc, char **argv) {
     return -1;
   }
   TDLModelFactory &model_factory = TDLModelFactory::getInstance();
-  model_factory.loadModelConfig();
-  model_factory.setModelDir(model_dir);
-  std::shared_ptr<BaseModel> model = model_factory.getModel(model_id_name);
+
+  std::shared_ptr<BaseModel> model;
+  if (path_exists(model_path)) {
+    if (is_directory(model_path)) {
+      std::cout << "model_path is a directory: " << model_path << std::endl;
+      model_factory.loadModelConfig();
+      model_factory.setModelDir(model_path);
+      model = model_factory.getModel(model_id_name);
+    } else if (is_regular_file(model_path)) {
+      std::cout << "model_path is a file: " << model_path << std::endl;
+      model = model_factory.getModel(model_id_name, model_path);
+    } else {
+      std::cout << "model_path is neither a file nor a directory" << std::endl;
+      return -1;
+    }
+  } else {
+    std::cout << "model_path does not exist: " << model_path << std::endl;
+    return -1;
+  }
+
   if (!model) {
     printf("Failed to create model\n");
     return -1;

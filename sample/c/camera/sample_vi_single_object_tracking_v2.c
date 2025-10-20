@@ -18,10 +18,45 @@
 #define VI_WIDTH 960
 #define VI_HEIGHT 540
 
+// 预选区配置
+#define SELECTION_BOX_SIZE 200
+#define CENTER_X (VI_WIDTH / 2)
+#define CENTER_Y (VI_HEIGHT / 2)
+#define BOX_LEFT (CENTER_X - SELECTION_BOX_SIZE / 2)
+#define BOX_TOP (CENTER_Y - SELECTION_BOX_SIZE / 2)
+#define BOX_RIGHT (CENTER_X + SELECTION_BOX_SIZE / 2)
+#define BOX_BOTTOM (CENTER_Y + SELECTION_BOX_SIZE / 2)
+
+// 颜色定义
+#define GREEN_R 0
+#define GREEN_G 255
+#define GREEN_B 0
+#define YELLOW_R 255
+#define YELLOW_G 255
+#define YELLOW_B 0
+TDLObject p_selected_area = {0};
+void init_selected_area() {
+  // 初始化对象元数据，创建一个包含1个对象的预选区
+  TDL_InitObjectMeta(&p_selected_area, 1, 0);
+
+  // 设置预选区的边界框坐标
+  p_selected_area.info[0].box.x1 = BOX_LEFT;
+  p_selected_area.info[0].box.y1 = BOX_TOP;
+  p_selected_area.info[0].box.x2 = BOX_RIGHT;
+  p_selected_area.info[0].box.y2 = BOX_BOTTOM;
+
+  // 设置预选区的类别和置信度
+  p_selected_area.info[0].class_id = 0;
+  p_selected_area.info[0].score = 1.0f;
+}
+
+bool init_success = false;
 static volatile bool to_exit = false;
 static ImageQueue image_queue;
 TDLObject g_obj_meta = {0};
 static uint32_t g_frame_id = 0;
+TDLBrush brush_green = {{0, 255, 0}, 2};
+TDLBrush brush_yellow = {{255, 255, 0}, 2};
 MUTEXAUTOLOCK_INIT(ResultMutex);
 
 // Global state enum
@@ -129,7 +164,7 @@ void *run_det_thread(void *args) {
   TDLObject obj_meta = {0};
   VIDEO_FRAME_INFO_S *frame = NULL;
   TDLImage image = NULL;
-
+  init_selected_area();
   while (to_exit == false) {
     if (g_status == DETECTION) {
       // printf("to do TDL_Detection\n");
@@ -152,16 +187,19 @@ void *run_det_thread(void *args) {
 
         TDL_WrapImage(image, &frame);
 
-        TDLBrush brush = {0};
-        brush.size = 5;
-        brush.color.r = 0;
-        brush.color.g = 255;
-        brush.color.b = 0;
+        TDLBrush brush = {{0, 255, 0}, 5};
         for (int i = 0; i < obj_meta.size; i++) {
           TDLObjectInfo *obj_info = &obj_meta.info[i];
           snprintf(obj_info->name, sizeof(obj_info->name), "index:%d", i);
         }
+        if (init_success) {
+          DrawObjRect(&p_selected_area, frame, true, brush_yellow);
+        } else {
+          DrawObjRect(&p_selected_area, frame, true, brush_green);
+        }
+
         DrawObjRect(&obj_meta, frame, true, brush);
+
         TDL_ReleaseObjectMeta(&obj_meta);
 
         ret = SendFrameRTSP(frame, &rtsp_context);
@@ -232,8 +270,6 @@ void *run_sot_thread(void *args) {
           for (int i = 0; i < num_values; i++) {
             printf("values[%d] = %d\n", i, values[i]);
           }
-
-          bool init_success = false;
           while (true) {
             g_status = TRACKING;
             {
@@ -245,8 +281,10 @@ void *run_sot_thread(void *args) {
 
               int ret = TDL_SetSingleObjectTracking(pstArgs->tdl_handle, image,
                                                     &g_obj_meta, values,
-                                                    num_values, TDL_REJECT);
+                                                    num_values, TDL_COLOR);
+
               if (ret != 0) {
+                init_success = false;
                 printf("TDL_SetSingleObjectTracking failed with %#x!\n", ret);
                 TDL_DestroyImage(image);
                 ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
@@ -314,10 +352,15 @@ void *run_sot_thread(void *args) {
                   LOST_TIMEOUT_SECONDS);
               g_status = DETECTION;
               g_lost_timer_started = false;
+              init_success = false;
             }
           }
         }
-
+        if (init_success) {
+          DrawObjRect(&p_selected_area, frame, true, brush_yellow);
+        } else {
+          DrawObjRect(&p_selected_area, frame, true, brush_green);
+        }
         ret = SendFrameRTSP(frame, &rtsp_context);
         if (ret != 0) {
           printf("SendFrameRTSP failed with %#x!\n", ret);

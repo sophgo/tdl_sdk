@@ -2150,6 +2150,63 @@ TDL_Tracking
      - tracker_meta
      - 输出跟踪器状态信息
 
+TDL_SetSingleObjectTracking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
+                                    TDLObject *object_meta, int *set_values,
+                                    int size, TDLTargetSearchTypeE frame_type);
+
+
+【描述】
+
+集成物体检测和目标框选的单目追踪方法。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 2 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - TDLImage
+     - image_handle
+     - TDLImageHandle 对象
+
+   * - 输入/输出
+     - TDLObject\*
+     - object_meta
+     - 输入检测结果，输出补充跟踪ID
+
+   * - 输入
+     - int\*
+     - set_values
+     - 追踪目标形式
+
+   * - 输入
+     - int
+     - size
+     - set_values 元素个数(只能为1或2或4)
+
+   * - 输入
+     - TDLTargetSearchTypeE
+     - frame_type
+     - 目标框选的方法
+
 TDL_CharacterRecognition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

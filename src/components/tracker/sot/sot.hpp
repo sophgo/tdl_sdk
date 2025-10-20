@@ -27,11 +27,11 @@ class SOT : public Tracker {
 
   int32_t initialize(const std::shared_ptr<BaseImage>& image,
                      const std::vector<ObjectBoxInfo>& detect_boxes,
-                     const ObjectBoxInfo& bbox) override;
+                     const ObjectBoxInfo& bbox, int frame_type) override;
 
   int32_t initialize(const std::shared_ptr<BaseImage>& image,
                      const std::vector<ObjectBoxInfo>& detect_boxes, float x,
-                     float y) override;
+                     float y, int frame_type) override;
   int32_t initialize(const std::shared_ptr<BaseImage>& image,
                      const std::vector<ObjectBoxInfo>& detect_boxes,
                      int index) override;
