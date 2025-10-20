@@ -61,20 +61,30 @@ enum class ImageType {
   UNKOWN
 };
 
+enum class MemoryType {
+  UNKOWN = 0,
+  HOST_MEMORY = 1,
+  SOC_DEVICE_MEMORY = 2,   // could have virtual address
+  PCIE_DEVICE_MEMORY = 3,  // only device address
+};
+
 struct MemoryBlock {
   uint64_t physicalAddress;  // 内存块的物理地址（仅用于 SoC 场景）
   void *virtualAddress;      // 内存块的虚拟地址
-  void *handle;
+  // void *handle;
+
   uint64_t size;  // 内存块的大小（字节数）
   uint32_t id;
   bool own_memory;
+  MemoryType memory_type;
   MemoryBlock() {
     physicalAddress = 0;
     virtualAddress = nullptr;
-    handle = nullptr;
+    // handle = nullptr;
     size = 0;
     id = UINT32_MAX;
     own_memory = false;
+    memory_type = MemoryType::UNKOWN;
   }
 };
 
@@ -90,11 +100,6 @@ struct PreprocessParams {
   float mean[3];
   float scale[3];  // Y=X*scale-mean
   bool keep_aspect_ratio;
-};
-
-enum class MemoryType {
-  HOST_MEMORY = 0,
-  ASIC_DEVICE_MEMORY = 1,
 };
 
 struct ModelConfig {
@@ -123,12 +128,15 @@ struct NetParam {
   InferencePlatform platform;
   int device_id = 0;
 
-  // bool share_output_mem = false;  // do not allocate output tensor memory,
-  // share with other memory
   std::string model_file_path;
   uint8_t *model_buffer;  // if model_file_path is not set,use model_buffer to
                           // load model
   uint32_t model_buffer_size = 0;
+
+  std::vector<uint64_t> runtime_mem_addrs;  // the size should be 0 or 5
+  std::vector<uint32_t> runtime_mem_sizes;  // the size should be equal to the
+                                            // size of runtime_mem_addrs
+
   ModelConfig model_config;
 };
 
