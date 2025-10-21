@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
     printf("TDL_KeypointDetection failed with %#x!\n", ret);
   } else {
     for (int32_t i = 0; i < obj_meta.size; i++) {
-      TDLOcr ocr_meta = {0};
+      TDLText ocr_meta = {0};
       ret = TDL_CharacterRecognition(tdl_handle, model_id_recognition,
                                      crop_image[i], &ocr_meta);
       if (ret != 0) {

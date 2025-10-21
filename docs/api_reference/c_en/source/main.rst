@@ -207,7 +207,7 @@ Lane detection model list
    :widths: 10 9
 
    * - Model Name
-     - Descriptio
+     - Description
 
    * - TDL_MODEL_LSTR_DET_LANE
      - Lane Detection Model
@@ -219,11 +219,32 @@ License plate recognition model list
    :widths: 10 9
 
    * - Model Name
-     - Descriptio
+     - Description
 
    * - TDL_MODEL_RECOGNITION_LICENSE \
        _PLATE
      - License Plate Recognition Model
+
+Speech Recognition Model List
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Description
+
+   * - TDL_MODEL_RECOGNITION_SPEECH \
+       _ZIPFORMER_ENCODER 
+     - zipformer speech recognition encoder model
+
+   * - TDL_MODEL_RECOGNITION_SPEECH \
+       _ZIPFORMER_DECODER
+     - zipformer speech recognition decoder model
+
+   * - TDL_MODEL_RECOGNITION_SPEECH \
+       _ZIPFORMER_JOINER
+     - zipformer speech recognition joiner model
 
 Segmentation model list 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -232,7 +253,7 @@ Segmentation model list
    :widths: 12 9
 
    * - Model Name
-     - Descriptio
+     - Description
 
    * - TDL_MODEL_YOLOV8_SEG_COCO80
      - YOLOv8 COCO80 Segmentation Model
@@ -250,7 +271,7 @@ Feature extraction model list
    :widths: 10 9
 
    * - Model Name
-     - Descriptio
+     - Description
 
    * - TDL_MODEL_FEATURE_IMG
      - Image Feature Extraction Model
@@ -1074,7 +1095,7 @@ Tracking data
    * - out_num
      - Number of times target is out of frame
 
-TDLOcr
+TDLText
 ~~~~~~~~~~~~~~~
 
 【Description】
@@ -1088,7 +1109,7 @@ Text recognition data
   typedef struct {
     uint32_t size;
     char* text_info;
-  } TDLOcr;
+  } TDLText;
 
 【Members】
 
@@ -1339,6 +1360,40 @@ Read file content as a TDLImageHandle object.
      - TDLDataTypeE
      - data_type
      - Input data type
+
+TDL_ReadAudioFrame
+~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  TDLImage TDL_ReadAudioFrame(uint8_t *buffer, int frame_size);
+
+【Description】
+
+Read audio frame as a TDLImageHandle object.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - uint8_t\*
+     - buffer
+     - Audio frame data pointer
+
+   * - Input
+     - int
+     - frame_size
+     - Audio frame data size
 
 TDL_DestroyImage
 ~~~~~~~~~~~~~~~~~~
@@ -2203,7 +2258,7 @@ TDL_CharacterRecognition
   int32_t TDL_CharacterRecognition(TDLHandle handle,
                                    const TDLModel model_id,
                                    TDLImage image_handle,
-                                   TDLOcr *char_meta);
+                                   TDLText *text_meta);
 
 【Description】
 
@@ -2236,9 +2291,109 @@ Character recognition, supporting text detection and recognition.
      - TDLImageHandle object
 
    * - Output
-     - TDLOcr\*
-     - char_meta
+     - TDLText\*
+     - text_meta
      - Output recognition results (text content and position)
+
+TDL_SpeechRecognition_Init
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_SpeechRecognition_Init(TDLHandle handle,
+                                    const TDLModel model_id_encoder,
+                                    const TDLModel model_id_decoder,
+                                    const TDLModel model_id_joiner,
+                                    const char *tokens_path);
+
+【Description】
+
+Speech recognition initialization.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 2 3
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id_encoder
+     - encoder model type enumeration
+
+   * - Input
+     - const TDLModel
+     - model_id_decoder
+     - decoder model type enumeration
+
+   * - Input
+     - const TDLModel
+     - model_id_joiner
+     - joiner model type enumeration
+
+   * - Input
+     - const char\*
+     - tokens_path
+     - tokens file path
+
+TDL_SpeechRecognition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_SpeechRecognition(TDLHandle handle,
+                                const TDLModel model_id_encoder,
+                                TDLImage image_handle,
+                                TDLText *text_meta);
+
+【Description】
+
+Speech recognition.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 2 3
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id_encoder
+     - encoder model type enumeration
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - TDLImageHandle object
+
+   * - Output
+     - TDLText\*
+     - text_meta
+     - Output recognition results
 
 TDL_LoadModelConfig
 ~~~~~~~~~~~~~~~~~~~~~

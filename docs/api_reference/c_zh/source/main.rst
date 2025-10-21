@@ -227,6 +227,27 @@
        _PLATE
      - 车牌识别模型
 
+语音识别类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - 模型名称
+     - 注释
+
+   * - TDL_MODEL_RECOGNITION_SPEECH \
+       _ZIPFORMER_ENCODER 
+     - zipformer语音识别encoder模型
+
+   * - TDL_MODEL_RECOGNITION_SPEECH \
+       _ZIPFORMER_DECODER
+     - zipformer语音识别decoder模型
+
+   * - TDL_MODEL_RECOGNITION_SPEECH \
+       _ZIPFORMER_JOINER
+     - zipformer语音识别joiner模型
+
 分割类模型列表
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1092,7 +1113,7 @@ TDLTracker
    * - out_num
      - 追踪目标的小时次数
 
-TDLOcr
+TDLText
 ~~~~~~~~~~~~~~~
 
 【说明】
@@ -1106,7 +1127,7 @@ TDLOcr
   typedef struct {
     uint32_t size;
     char* text_info;
-  } TDLOcr;
+  } TDLText;
 
 【成员】
 
@@ -1355,6 +1376,40 @@ TDL_ReadBin
      - TDLDataTypeE
      - data_type
      - 输入数据类型
+
+TDL_ReadAudioFrame
+~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  TDLImage TDL_ReadAudioFrame(uint8_t *buffer, int frame_size);
+
+【描述】
+
+读取音频帧为 TDLImageHandle 对象。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - uint8_t\*
+     - buffer
+     - 音频帧数据指针
+
+   * - 输入
+     - int
+     - frame_size
+     - 音频帧数据大小
 
 TDL_DestroyImage
 ~~~~~~~~~~~~~~~~~~
@@ -2217,7 +2272,7 @@ TDL_CharacterRecognition
   int32_t TDL_CharacterRecognition(TDLHandle handle,
                                    const TDLModel model_id,
                                    TDLImage image_handle,
-                                   TDLOcr *char_meta);
+                                   TDLText *text_meta);
 
 【描述】
 
@@ -2250,9 +2305,109 @@ TDL_CharacterRecognition
      - TDLImageHandle 对象
 
    * - 输出
-     - TDLOcr\*
-     - char_meta
+     - TDLText\*
+     - text_meta
      - 输出识别结果（文本内容和位置）
+
+TDL_SpeechRecognition_Init
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_SpeechRecognition_Init(TDLHandle handle,
+                                    const TDLModel model_id_encoder,
+                                    const TDLModel model_id_decoder,
+                                    const TDLModel model_id_joiner,
+                                    const char *tokens_path);
+
+【描述】
+
+语音识别初始化。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 2 3
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id_encoder
+     - encoder模型类型枚举
+
+   * - 输入
+     - const TDLModel
+     - model_id_decoder
+     - decoder模型类型枚举
+
+   * - 输入
+     - const TDLModel
+     - model_id_joiner
+     - joiner模型类型枚举
+
+   * - 输入
+     - const char\*
+     - tokens_path
+     - tokens文件路径
+
+TDL_SpeechRecognition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_SpeechRecognition(TDLHandle handle,
+                                const TDLModel model_id_encoder,
+                                TDLImage image_handle,
+                                TDLText *text_meta);
+
+【描述】
+
+进行语音识别。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 2 3
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id_encoder
+     - encoder模型类型枚举
+
+   * - 输入
+     - TDLImage
+     - image_handle
+     - TDLImageHandle 对象
+
+   * - 输出
+     - TDLText\*
+     - text_meta
+     - 输出识别结果
 
 TDL_LoadModelConfig
 ~~~~~~~~~~~~~~~~~~~~~

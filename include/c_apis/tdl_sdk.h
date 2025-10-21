@@ -63,6 +63,15 @@ TDLImage TDL_ReadImage(const char *path);
 TDLImage TDL_ReadBin(const char *path, TDLDataTypeE data_type);
 
 /**
+ * @brief 读取音频帧为 TDLImageHandle 对象
+ *
+ * @param buffer 音频帧数据指针
+ * @param frame_size 音频帧数据大小
+ * @return  返回读取的 TDLImageHandle 对象, 如果失败返回 NULL
+ */
+TDLImage TDL_ReadAudioFrame(uint8_t *buffer, int frame_size);
+
+/**
  * @brief 销毁一个 TDLImageHandle 对象
  *
  * @param image_handle 需要销毁的 TDLImageHandle 对象
@@ -329,12 +338,38 @@ int32_t TDL_LaneDetection(TDLHandle handle, const TDLModel model_id,
  * @param handle TDLHandle 对象
  * @param model_id 指定字符识别模型类型枚举值
  * @param image_handle TDLImageHandle 对象
- * @param char_meta 输出参数，存储识别结果
+ * @param text_meta 输出参数，存储识别结果
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
-                                 TDLImage image_handle, TDLOcr *char_meta);
+                                 TDLImage image_handle, TDLText *text_meta);
+/**
+ * @brief 语音识别初始化
+ *
+ * @param handle TDLHandle 对象
+ * @param model_id_encoder 指定encoder模型类型枚举值
+ * @param model_id_decoder 指定decoder模型类型枚举值
+ * @param model_id_joiner 指定joiner模型类型枚举值
+ * @param tokens_path tokens文件路径
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_SpeechRecognition_Init(TDLHandle handle,
+                                   const TDLModel model_id_encoder,
+                                   const TDLModel model_id_decoder,
+                                   const TDLModel model_id_joiner,
+                                   const char *tokens_path);
 
+/**
+ * @brief 语音识别
+ *
+ * @param handle TDLHandle 对象
+ * @param model_id_encoder 指定encoder模型类型枚举值
+ * @param image_handle TDLImageHandle 对象
+ * @param text_meta 输出参数，存储识别结果
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_SpeechRecognition(TDLHandle handle, const TDLModel model_id_encoder,
+                              TDLImage image_handle, TDLText *text_meta);
 /**
  * @brief 执行立体视觉深度估计任务
  *

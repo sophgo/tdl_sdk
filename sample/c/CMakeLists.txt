@@ -6,11 +6,13 @@ project(sample_c)
 set(SAMPLE_INCLUDES
     ${MLIR_INCLUDES}
     ${MIDDLEWARE_INCLUDES}
+    ${FBANK_INCLUDES}
     ${REPO_DIR}/include
     ${REPO_DIR}/include/framework
     ${REPO_DIR}/include/components
     ${REPO_DIR}/include/nn
     ${REPO_DIR}/include/c_apis
+    ${REPO_DIR}/src/components/nn
     ${CMAKE_CURRENT_SOURCE_DIR}/utils
 )
 
@@ -64,6 +66,15 @@ if(${CVI_PLATFORM} STREQUAL "CMODEL_CV181X" OR ${CVI_PLATFORM} STREQUAL "CMODEL_
 endif()
 list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_llm_api.c)
 list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_api_client.c)
+
+if (NOT ("${CVI_PLATFORM}" STREQUAL "CV180X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV181X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV182X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV183X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV184X"))
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_microphone_asr.c)
+endif()
+
 message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")
 
 foreach (fname ${SAMPLE_SRC_FILES})
@@ -78,6 +89,14 @@ foreach (fname ${SAMPLE_SRC_FILES})
   if(name STREQUAL "sample_llm_api")
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt atomic m)
     message(STATUS "SAMPLE_LIBS:${SAMPLE_LIBS} for ${name}")
+  endif()
+
+  if(name MATCHES "microphone")
+    if(BUILD_SHARED)
+      set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_AUDIO_LIBS})
+    else()
+      set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_AUDIO_LIBS_STATIC})
+    endif()
   endif()
 
   target_link_libraries(${name} ${SAMPLE_LIBS})

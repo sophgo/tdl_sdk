@@ -46,9 +46,9 @@ int32_t TDL_InitLaneMeta(TDLLane *lane_meta, int output_size);
 
 int32_t TDL_ReleaseLaneMeta(TDLLane *lane_meta);
 
-int32_t TDL_InitCharacterMeta(TDLOcr *char_meta, int length);
+int32_t TDL_InitCharacterMeta(TDLText *text_meta, int length);
 
-int32_t TDL_ReleaseCharacterMeta(TDLOcr *char_meta);
+int32_t TDL_ReleaseCharacterMeta(TDLText *text_meta);
 
 int32_t TDL_InitTrackMeta(TDLTracker *track_meta, int num_track);
 

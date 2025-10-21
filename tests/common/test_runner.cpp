@@ -240,7 +240,8 @@ int main(int argc, char *argv[]) {
           ofs << "total_runs: " << total_runs << "\n";
           ofs << "failed_runs: " << failed_runs << "\n";
           if (!failed_items.empty()) {
-            ofs << "failed_items:" << "\n";
+            ofs << "failed_items:"
+                << "\n";
             for (const auto &it : failed_items) ofs << "  - " << it << "\n";
           }
           ofs.close();

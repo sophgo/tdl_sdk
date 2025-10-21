@@ -25,6 +25,7 @@ typedef struct {
   std::shared_ptr<ImageEncoder> encoder;
   std::shared_ptr<IntrusionDetection> intrusion_detect;
   std::shared_ptr<Tracker> tracker;
+  std::shared_ptr<ModelASRInfo> asr_meta;
 } TDLContext;
 
 typedef struct {

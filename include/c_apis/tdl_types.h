@@ -193,7 +193,7 @@ typedef struct {
 typedef struct {
   uint32_t size;
   char *text_info;
-} TDLOcr;
+} TDLText;
 
 typedef struct {
   float quality;

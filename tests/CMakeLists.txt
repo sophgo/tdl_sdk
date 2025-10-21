@@ -10,7 +10,9 @@ include_directories(${REPO_DIR}/include/framework
                     ${REPO_DIR}/include/nn
                     ${REPO_DIR}/include/components
                     ${GTEST_INCLUDES}
+                    ${FBANK_INCLUDES}
                     ${CMAKE_CURRENT_SOURCE_DIR}/common
+                    ${REPO_DIR}/src/components/nn
 )
 if(${CVI_PLATFORM} STREQUAL "BM1688" OR ${CVI_PLATFORM} STREQUAL "BM1684X" OR ${CVI_PLATFORM} STREQUAL "BM1684")
   set(REG_LIBS

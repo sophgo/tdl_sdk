@@ -351,6 +351,7 @@ set(MIDDLEWARE_AUDIO_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
+    $<$<STREQUAL:${CVI_PLATFORM},CV180X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.so>
     $<$<STREQUAL:${CVI_PLATFORM},CV181X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.so>)
 
 set(MIDDLEWARE_AUDIO_LIBS_STATIC
@@ -361,6 +362,7 @@ set(MIDDLEWARE_AUDIO_LIBS_STATIC
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.a
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.a
     ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.a
+    $<$<STREQUAL:${CVI_PLATFORM},CV180X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.a>
     $<$<STREQUAL:${CVI_PLATFORM},CV181X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.a>
     "-Wl,--no-whole-archive")
 
