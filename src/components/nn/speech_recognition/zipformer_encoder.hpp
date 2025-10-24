@@ -28,12 +28,13 @@ class ZipformerEncoder : public BaseModel {
                         std::shared_ptr<ModelOutputInfo>& out_data);
 
   knf::OnlineFbank* fbank_extractor_ = nullptr;
-  float* float_chached_inputs_;
-  int32_t* int32_chached_inputs_;
+  float* float_chached_inputs_ = nullptr;
+  int32_t* int32_chached_inputs_ = nullptr;
   std::vector<int> float_cached_offset_;
   std::vector<int> int32_cached_offset_;
   bool init_decoder_output_ = false;
   int32_t num_processed_frames_ = 0;
+  int frame_offset_;
   int segment_size_;
   int num_mel_;
   int feature_num_;
