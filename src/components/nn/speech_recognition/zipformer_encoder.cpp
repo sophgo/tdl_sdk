@@ -4,7 +4,6 @@
 #include "utils/tdl_log.hpp"
 
 #define ZIPFORMER_SAMPLE_RATE 16000
-#define ZIPFORMER_OFFSET 64
 #define ZIPFORMER_FEATURE_SIZE 512
 #define ZIPFORMER_TOKENS_SIZE 6257
 
@@ -107,6 +106,12 @@ int32_t ZipformerEncoder::onModelOpened() {
       data_type = tinfo.data_type;
       segment_size_ = tinfo.shape[1];
       num_mel_ = tinfo.shape[2];
+
+      if (segment_size_ == 103) {
+        frame_offset_ = 96;  // model-m
+      } else {
+        frame_offset_ = 64;  // model-s
+      }
       LOGI("ZipformerEncoder segment_size_: %d, num_mel_: %d\n", segment_size_,
            num_mel_);
       continue;
@@ -159,7 +164,7 @@ int32_t ZipformerEncoder::prepareInput() {
             fbank_extractor_->GetFrame(num_processed_frames_ + j);
         memcpy(input_ptr + j * num_mel_, frame, num_mel_ * sizeof(float));
       }
-      num_processed_frames_ += ZIPFORMER_OFFSET;
+      num_processed_frames_ += frame_offset_;
 
     } else if (i <= 5) {
       int32_t *input_ptr = (int32_t *)tinfo.sys_mem;
@@ -282,7 +287,7 @@ int32_t ZipformerEncoder::inference(
 
   hyp_ = {hyp_.back()};
 
-  fbank_extractor_->Pop(used_count * ZIPFORMER_OFFSET);  // release used frames
+  fbank_extractor_->Pop(used_count * frame_offset_);  // release used frames
 
   if (asr_meta->input_finished) {  // for evaluating next sound file
 
