@@ -9,8 +9,9 @@ else
   CLANG_FORMAT=clang-format-5.0
 fi
 
-find $CLANG_ROOT/include -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT -i || exit 1
-find $CLANG_ROOT/modules -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT -i || exit 1
-find $CLANG_ROOT/sample -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT -i || exit 1
-find $CLANG_ROOT/tool -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT -i || exit 1
-find $CLANG_ROOT/regression -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT -i || exit 1
+find $CLANG_ROOT/include -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT --style=file -i || exit 1
+find $CLANG_ROOT/src -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT --style=file -i || exit 1
+find $CLANG_ROOT/sample -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT --style=file -i || exit 1
+# find $CLANG_ROOT/tool -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT --style=file -i || exit 1
+find $CLANG_ROOT/regression -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT --style=file -i || exit 1
+find $CLANG_ROOT/evaluation -regex '.*\.\(cpp\|h\|hpp\|cc\|c\|cxx\|inc\)' | xargs $CLANG_FORMAT --style=file -i || exit 1

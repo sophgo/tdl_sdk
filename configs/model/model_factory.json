@@ -1,0 +1,323 @@
+{
+  "github_url":"https://github.com/sophgo/tdl_models/tree/main/",
+  "_comment":"model_list specify the model maintained in tdl_models,each model should at least have file name and rgb_order(choice:rgb,bgr,gray)",
+  "model_list":{
+    "MBV2_DET_PERSON":{
+      "types":["person"],
+      "file_name":"mbv2_det_person_256_448_INT8",
+      "rgb_order":"rgb"
+    },
+    "YOLOV8N_DET_HAND":{
+      "types":["hand"],
+      "file_name":"yolov8n_det_hand_384_640_INT8"
+    },
+    "YOLOV8N_DET_PET_PERSON":{
+      "types":["cat","dog","person"],
+      "file_name":"yolov8n_det_pet_person_384_640_INT8"
+    },
+    "YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE":{
+      "types":["bicycle","motorcycle","ebicycle"],
+      "file_name":"yolov8n_det_bicycle_motor_ebicycle_384_640_INT8"
+    },
+    "YOLOV8N_DET_PERSON_VEHICLE":{
+      "types":["car","bus","truck","rider with motorcycle","person","bike","motorcycle"],
+      "file_name":"yolov8n_det_person_vehicle_384_640_INT8"
+    },
+    "YOLOV8N_DET_HAND_FACE_PERSON":{
+      "types":["hand","face","person"],
+      "file_name":"yolov8n_det_hand_face_person_384_640_INT8"
+    },
+    "YOLOV8N_DET_FACE_HEAD_PERSON_PET":{
+      "types":["face","head","person","pet"],
+      "file_name":"yolov8n_det_face_head_person_pet_384_640_INT8"
+    },
+    "YOLOV8N_DET_HEAD_PERSON":{
+      "types":["head","person"],
+      "file_name":"yolov8n_det_head_person_384_640_INT8"
+    },
+    "YOLOV8N_DET_HEAD_HARDHAT":{
+      "types":["head","hardhat"],
+      "file_name":"yolov8n_det_head_hardhat_576_960_INT8"
+    },
+    "YOLOV8N_DET_FIRE_SMOKE":{
+      "types":["fire","smoke"],
+      "file_name":"yolov8n_det_fire_smoke_384_640_INT8"
+    },
+    "YOLOV8N_DET_FIRE":{
+      "types":["fire"],
+      "file_name":"yolov8n_det_fire_384_640_INT8"
+    },
+    "YOLOV8N_DET_HEAD_SHOULDER":{
+      "types":["head shoulder"],
+      "file_name":"yolov8n_det_head_shoulder_384_640_INT8"
+    },
+    "YOLOV8N_DET_LICENSE_PLATE":{
+      "types":["license plate"],
+      "file_name":"yolov8n_det_license_plate_384_640_INT8"
+    },
+    "YOLOV8N_DET_TRAFFIC_LIGHT":{
+      "types":["red","yellow","green","off","wait on"],
+      "file_name":"yolov8n_det_traffic_light_384_640_INT8"
+    },
+    "YOLOV8N_DET_MONITOR_PERSON":{  
+      "types":["person"],
+      "file_name":"yolov8n_det_monitor_person_256_448_INT8"
+    },
+    "YOLOV11N_DET_MONITOR_PERSON":{  
+      "types":["person"],
+      "file_name":"yolov11n_det_monitor_person_384_640_INT8"
+    },
+    "YOLOV11N_DET_BICYCLE_MOTOR_EBICYCLE":{  
+      "types":["bicycle","motorcycle","ebicycle"],
+      "file_name":"yolov11n_det_bicycle_motor_ebicycle_384_640_INT8"
+    },
+    "YOLOV5_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov5s_det_coco80_640_640_INT8"
+    },
+    "YOLOV6_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov6n_det_coco80_640_640_INT8"
+    },
+    "YOLOV7_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov7_tiny_det_coco80_640_640_INT8"
+    },
+    "YOLOV8_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov8n_det_coco80_640_640_INT8"
+    },
+    "YOLOV10_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov10n_det_coco80_640_640_INT8"
+    },
+    "YOLOV11N_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolov11n_det_coco80_640_640_INT8"
+    },
+    "PPYOLOE_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"ppyoloe_det_coco80_640_640_INT8"
+    },
+    "YOLOX_DET_COCO80":{
+      "is_coco_types":true,
+      "file_name":"yolox_m_det_coco80_640_640_INT8"
+    },
+    "YOLOV5":{
+      "_comment":"custom model, specify num_cls or branch string",
+      "file_name":""
+    },
+    "YOLOV6":{
+      "_comment":"custom model, specify num_cls or branch string",
+      "file_name":""
+    },
+    "YOLOV8":{
+      "_comment":"custom model, specify num_cls or branch string",
+      "file_name":""
+    },
+    "YOLOV10":{
+      "_comment":"custom model, specify num_cls or branch string",
+      "file_name":""
+    },
+    "PPYOLOE":{
+      "_comment":"custom model, specify num_cls or branch string",
+      "file_name":""
+    },
+    "YOLOX":{
+      "_comment":"custom model, specify num_cls or branch string",
+      "file_name":""
+    },
+    "SCRFD_DET_FACE":{
+      "_comment":"output face and 5 landmarks",
+      "types":["face"],
+      "file_name":"scrfd_det_face_432_768_INT8"
+    },
+
+    "CLS_ATTRIBUTE_GENDER_AGE_GLASS":{
+      "_comment":"output age,gender(0:male,1:female),glass(0:no glass,1:glass)",
+      "types":["age","gender","glass"],
+      "file_name":"cls_attribute_gender_age_glass_112_112_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[255.0,255.0,255.0]
+    },
+    "CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK":{
+      "_comment":"output age,gender(0:male,1:female),glass(0:no glass,1:glass),mask(0:no mask,1:mask)",
+      "types":["age","gender","glass","mask"],
+      "file_name":"cls_attribute_gender_age_glass_mask_112_112_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[255.0,255.0,255.0]
+    },
+    "CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION":{
+      "_comment":"output age,gender(0:male,1:female),glass(0:no glass,1:glass),emotion(0:anger,1:disgut,2:fear,3:happy,4:neutral,5:sad;6:surprise)",
+      "types":["age","gender","glass","emotion"],
+      "file_name":"cls_attribute_gender_age_glass_emotion_112_112_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[255.0,255.0,255.0]
+    },
+    "CLS_RGBLIVENESS":{
+      "_comment":"output 0:live or 1:spoof",
+      "types":["live","spoof"],
+      "file_name":"cls_rgbliveness_256_256_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[255.0,255.0,255.0]
+    },
+    "CLS_YOLOV8":{
+      "file_name":"yolov8_cls_384_640_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[255.0,255.0,255.0]
+    },
+    "CLS_HAND_GESTURE":{
+      "_comment":"output hand gesture(0:fist,1:five,2:none,3:two)",
+      "types":["fist","five","none","two"],
+      "file_name":"cls_hand_gesture_128_128_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[255.0,255.0,255.0]
+    },
+    "CLS_KEYPOINT_HAND_GESTURE":{
+      "_comment":"output hand gesture(0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two)",
+      "types":["fist","five","four","none","ok","one","three","three2","two"],
+      "file_name":"cls_keypoint_hand_gesture_1_42_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[1.0,1.0,1.0]
+    },
+    "CLS_SOUND_BABAY_CRY":{
+      "_comment":"output 0:background or 1:cry,single channel",
+      "types":["background","cry"],
+      "file_name":"cls_sound_babay_cry_188_40_INT8",
+      "rgb_order":"gray"
+    },
+    "CLS_SOUND_COMMAND_NIHAOSHIYUN":{
+      "_comment":"single channel,TODO:add types",
+      "types":["background","nihaoshiyun"],
+      "file_name":"cls_sound_nihaoshiyun_126_40_INT8",
+      "rgb_order":"gray",
+      "hop_len":128,
+      "fix":1
+    },
+    "CLS_SOUND_COMMAND_NIHAOSUANNENG":{
+      "_comment":"single channel,TODO:add types",
+      "types":["background","nihaosuanneng"],
+      "file_name":"my_custom_sound_command",
+      "rgb_order":"gray",
+      "hop_len":128,
+      "fix":1
+    },    
+    "CLS_SOUND_COMMAND_XIAOAIXIAOAI":{
+      "_comment":"single channel,TODO:add types",
+      "types":["background","xiaoaixiaoai"],
+      "file_name":"cls_sound_xiaoaixiaoai_126_40_INT8",
+      "rgb_order":"gray",
+      "hop_len":128,
+      "fix":1
+    },    
+    "CLS_IMG":{
+      "_comment":"custom classification, set types,file_name,specify rgb order and mean/std",
+      "types":["custom"],
+      "file_name":"",
+      "rgb_order":"rgb"
+    },
+    "KEYPOINT_LICENSE_PLATE":{
+      "_comment":"output 4 license plate keypoints",
+      "types":["top_left","top_right","bottom_left","bottom_right"],
+      "file_name":"keypoint_license_plate_64_128_INT8",
+      "rgb_order":"rgb"
+    },
+    "KEYPOINT_HAND":{
+      "_comment":"output 21 hand keypoints",
+      "file_name":"keypoint_hand_128_128_INT8",
+      "rgb_order":"rgb"
+    },
+    "KEYPOINT_YOLOV8POSE_PERSON17":{
+      "_comment":"output 17 person keypoints and box",
+      "file_name":"keypoint_yolov8pose_person17_384_640_INT8",
+      "rgb_order":"rgb"
+    },
+    
+    "KEYPOINT_SIMCC_PERSON17":{
+      "_comment":"output 17 person keypoints from cropped image",
+      "file_name":"keypoint_simcc_person17_256_192_INT8",
+      "rgb_order":"rgb"
+    },
+    "KEYPOINT_FACE_V2": {
+        "_comment": "KEYPOINT_FACE_V2",
+        "file_name": "keypoint_face_v2_64_64_INT8"
+      },
+    "LSTR_DET_LANE":{
+      "_comment":"output lane keypoints",
+      "file_name":"lstr_det_lane_360_640_MIX",
+      "rgb_order":"rgb"
+    },
+    "RECOGNITION_LICENSE_PLATE":{
+      "_comment":"output 7 license plate characters",
+      "file_name":"recognition_license_plate_24_96_MIX",
+      "rgb_order":"bgr"
+    },
+    "YOLOV8_SEG":{
+      "_comment":"custom segmentation,set types,file_name,specify rgb order",
+      "types":[],
+      "file_name":"yolov8_seg_384_640_INT8"
+    },
+    "YOLOV8_SEG_COCO80":{
+      "is_coco_types":true,
+      "_comment":"output 80 segmentation mask",
+      "file_name":"yolov8n_seg_coco80_640_640_INT8"
+    },
+    "TOPFORMER_SEG_PERSON_FACE_VEHICLE":{
+      "_comment":"output mask",
+      "types":["background","person","face","vehicle","license plate"],
+      "file_name":"topformer_seg_person_face_vehicle_384_640_INT8",
+      "rgb_order":"rgb"
+    },
+    "FEATURE_IMG":{
+      "_comment":"custom segmentation,set file_name,specify rgb order,set mean/std",
+      "file_name":"",
+      "rgb_order":"rgb"
+    },
+    "FEATURE_CLIP_IMG":{
+      "_comment":"clip image feature extraction",
+      "file_name":"feature_clip_image_224_224_W4BF16",
+      "rgb_order":"rgb"
+    },
+    "FEATURE_CLIP_TEXT":{
+      "_comment":"clip text feature extraction",
+      "file_name":"feature_clip_text_1_77_W4BF16",
+      "rgb_order":"rgb"
+    },
+    "FEATURE_CVIFACE":{
+      "_comment":"cviface 256-dimensional feature",
+      "file_name":"feature_cviface_112_112_INT8",
+      "rgb_order":"rgb",
+      "mean":[127.5,127.5,127.5],
+      "std":[128,128,128]
+    },
+    "FEATURE_BMFACE_R34":{
+      "_comment":"output 512 dim feature",
+      "file_name":"feature_bmface_r34_112_112_INT8",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[1,1,1]
+    },
+    "FEATURE_BMFACE_R50":{
+      "_comment":"output 512 dim feature",
+      "file_name":"bmface_r50_v1_bmnetp.bmodel",
+      "rgb_order":"rgb",
+      "mean":[0,0,0],
+      "std":[1,1,1]
+    },
+    "TRACKING_FEARTRACK":{
+      "_comment":"single object tracking",
+      "file_name":"tracking_feartrack_128_128_256_256_INT8",
+      "rgb_order":"rgb",
+      "mean":[123.675,116.28,103.53],
+      "std":[58.395,57.12,57.375]
+    }
+    
+  }
+}

@@ -1,0 +1,34 @@
+#ifndef TDL_OBJECT_DEF_H
+#define TDL_OBJECT_DEF_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+  TDL_OBJECT_TYPE_UNDEFINED = 0,
+
+  TDL_OBJECT_TYPE_PERSON = 100,  // human releated object
+  TDL_OBJECT_TYPE_FACE,
+  TDL_OBJECT_TYPE_HAND,
+  TDL_OBJECT_TYPE_HEAD,
+  TDL_OBJECT_TYPE_HEAD_SHOULDER,
+  TDL_OBJECT_TYPE_HARD_HAT,
+  TDL_OBJECT_TYPE_FACE_MASK,
+
+  TDL_OBJECT_TYPE_CAR = 150,  // vehicle related object
+  TDL_OBJECT_TYPE_BUS,
+  TDL_OBJECT_TYPE_TRUCK,
+  TDL_OBJECT_TYPE_MOTORBIKE,
+  TDL_OBJECT_TYPE_BICYCLE,
+  TDL_OBJECT_TYPE_LICENSE_PLATE,
+
+  TDL_OBJECT_TYPE_CAT = 200,
+  TDL_OBJECT_TYPE_DOG,
+
+} TDLObjectTypeE;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
