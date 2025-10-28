@@ -258,24 +258,6 @@ int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
   TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
 
-  if (!images[0]->getVirtualAddress()[1]) {
-    printf("!!!image->getVirtualAddress()[1]:%p\n",
-           images[0]->getVirtualAddress()[1]);
-    printf("!!!image->getVirtualAddress()[1]) is nullptr\n");
-  } else {
-    printf("!!!image->getVirtualAddress()[1]:%p\n",
-           images[0]->getVirtualAddress()[1]);
-  }
-
-  if (!images[0]->getVirtualAddress()[0]) {
-    printf("!!!image->getVirtualAddress()[0]:%p\n",
-           images[0]->getVirtualAddress()[0]);
-    printf("!!!image->getVirtualAddress()[0]) is nullptr\n");
-  } else {
-    printf("!!!image->getVirtualAddress()[0]:%p\n",
-           images[0]->getVirtualAddress()[0]);
-  }
-
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
   if (ret != 0) {
