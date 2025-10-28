@@ -48,8 +48,6 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-set(CMAKE_BUILD_TYPE "Debug")
-
 if("${CVI_PLATFORM}" STREQUAL "CV180X")
   add_definitions(-D__CV180X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CV181X")
