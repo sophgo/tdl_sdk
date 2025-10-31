@@ -1447,9 +1447,9 @@ TDL_OpenModel
 
 .. code-block:: c
 
-  int32_t TDL_OpenModel(TDLHandle handle,
-                        const TDLModel model_id,
-                        const char *model_path);
+  int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
+                        const char *model_path, const char *model_config_json,
+                        const int vpss_dev);
 
 【描述】
 
@@ -1480,6 +1480,76 @@ TDL_OpenModel
      - const char\*
      - model_path
      - 模型路径
+
+   * - 输入
+     - const char\*
+     - model_config_json
+     - 模型配置 JSON 路径
+
+   * - 输入
+     - int
+     - vpss_dev
+     - VPSS 设备 ID
+
+
+
+TDL_OpenModelFromBuffer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_OpenModelFromBuffer(TDLHandle handle, const TDLModel model_id,
+                                  const uint8_t *model_buffer,
+                                  uint32_t model_buffer_size,
+                                  const char *model_config_json,
+                                  const int vpss_dev);
+
+【描述】
+
+从内存加载指定类型的模型到 TDLHandle 对象中。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id
+     - 模型类型枚举
+
+   * - 输入
+     - const uint8_t\*
+     - model_buffer
+     - 模型数据指针
+
+   * - 输入
+     - uint32_t
+     - model_buffer_size
+     - 模型数据大小
+
+   * - 输入
+     - const char\*
+     - model_config_json
+     - 模型配置 JSON 路径
+
+   * - 输入
+     - int
+     - vpss_dev
+     - VPSS 设备 ID
 
 TDL_CloseModel
 ~~~~~~~~~~~~~~~~~~

@@ -148,20 +148,21 @@ int main(int argc, char *argv[]) {
   }
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
-  ret = TDL_OpenModel(tdl_handle, model_id_detect, model_path_detect, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id_detect, model_path_detect, NULL, 0);
   if (ret != 0) {
     printf("open detect model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id_keypoint, model_path_keypoint, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id_keypoint, model_path_keypoint, NULL,
+                      0);
   if (ret != 0) {
     printf("open keypoint model failed with %#x!\n", ret);
     goto exit1;
   }
 
   ret = TDL_OpenModel(tdl_handle, model_id_recognition, model_path_recognition,
-                      NULL);
+                      NULL, 0);
   if (ret != 0) {
     printf("open recognition model failed with %#x!\n", ret);
     goto exit2;

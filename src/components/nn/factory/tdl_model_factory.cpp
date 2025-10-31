@@ -420,7 +420,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModelImpl(
 
   model->setNetParam(net_param_default);
 
-  int ret = model->modelOpen();
+  int ret = model->modelOpen(device_id);
   if (ret != 0) {
     return nullptr;
   }

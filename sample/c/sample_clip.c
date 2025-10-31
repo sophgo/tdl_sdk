@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id1, image_model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id1, image_model_path, NULL, 0);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
   }
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
     printf("unsupported model: %s\n", text_model_path);
     return -1;
   }
-  ret = TDL_OpenModel(tdl_handle, model_id2, text_model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id2, text_model_path, NULL, 0);
 
   TDLImage image = TDL_ReadImage(input_image);
   if (image == NULL) {

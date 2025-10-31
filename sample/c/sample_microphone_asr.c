@@ -312,19 +312,21 @@ int main(int argc, char **argv) {
   }
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
-  ret = TDL_OpenModel(tdl_handle, model_id_encoder, model_path_encoder, NULL);
+  ret =
+      TDL_OpenModel(tdl_handle, model_id_encoder, model_path_encoder, NULL, 0);
   if (ret != 0) {
     printf("open encoder model failed with %#x!\n", ret);
     goto exit1;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id_decoder, model_path_decoder, NULL);
+  ret =
+      TDL_OpenModel(tdl_handle, model_id_decoder, model_path_decoder, NULL, 0);
   if (ret != 0) {
     printf("open decoder model failed with %#x!\n", ret);
     goto exit2;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id_joiner, model_path_joiner, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id_joiner, model_path_joiner, NULL, 0);
   if (ret != 0) {
     printf("open joiner model failed with %#x!\n", ret);
     goto exit3;

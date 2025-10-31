@@ -181,7 +181,8 @@ int32_t TDL_SetModelDir(TDLHandle handle, const char *model_dir) {
   return 0;
 }
 int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
-                      const char *model_path, const char *model_config_json) {
+                      const char *model_path, const char *model_config_json,
+                      const int vpss_dev) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
@@ -202,7 +203,7 @@ int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
 
   ModelConfig model_config = factory.getModelConfig(model_type);
   std::shared_ptr<BaseModel> model =
-      factory.getModel(model_type, str_model_path, model_config);
+      factory.getModel(model_type, str_model_path, model_config, vpss_dev);
   if (model == nullptr) {
     return -1;
   }
@@ -213,7 +214,8 @@ int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
 int32_t TDL_OpenModelFromBuffer(TDLHandle handle, const TDLModel model_id,
                                 const uint8_t *model_buffer,
                                 uint32_t model_buffer_size,
-                                const char *model_config_json) {
+                                const char *model_config_json,
+                                const int vpss_dev) {
   TDLContext *context = (TDLContext *)handle;
   if (context->models.find(model_id) != context->models.end()) {
     return 0;
@@ -226,8 +228,9 @@ int32_t TDL_OpenModelFromBuffer(TDLHandle handle, const TDLModel model_id,
   }
 
   ModelConfig model_config = factory.getModelConfig(model_type);
-  std::shared_ptr<BaseModel> model = factory.getModel(
-      model_type, model_buffer, model_buffer_size, model_config);
+  std::shared_ptr<BaseModel> model =
+      factory.getModel(model_type, model_buffer, model_buffer_size,
+                       model_config, {}, {}, vpss_dev);
   if (model == nullptr) {
     return -1;
   }

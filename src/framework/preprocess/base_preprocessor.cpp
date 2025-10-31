@@ -115,7 +115,7 @@ std::shared_ptr<BaseImage> BasePreprocessor::cropResize(
   return preprocess(image, params, nullptr);
 }
 std::shared_ptr<BasePreprocessor> PreprocessorFactory::createPreprocessor(
-    InferencePlatform platform) {
+    InferencePlatform platform, const int device_id) {
   if (platform == InferencePlatform::UNKOWN ||
       platform == InferencePlatform::AUTOMATIC) {
     platform = CommonUtils::getPlatform();
@@ -127,7 +127,7 @@ std::shared_ptr<BasePreprocessor> PreprocessorFactory::createPreprocessor(
     case InferencePlatform::CV184X:
 #if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
     not defined(__CMODEL_CV184X__)
-      return std::make_shared<VpssPreprocessor>();
+      return std::make_shared<VpssPreprocessor>(device_id);
       // return std::make_shared<OpenCVPreprocessor>();
 #else
       return nullptr;

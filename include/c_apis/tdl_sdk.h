@@ -107,10 +107,12 @@ int32_t TDL_SetModelDir(TDLHandle handle, const char *model_dir);
  * 1）使用TDL_LoadModelConfig加载后可以传入NULL,
  * 2）不使用TDL_LoadModelConfig加载，大部分专有模型也可以传入NULL，此时会使用算法类内部的默认配置，
  *    部分通用模型如特征提取、声音指令等需要传入模型配置信息，可以参考configs/model/model_config.json
+ * @param vpss_dev 指定模型预处理的vpss设备ID，0或1
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
-                      const char *model_path, const char *model_config_json);
+                      const char *model_path, const char *model_config_json,
+                      const int vpss_dev);
 
 /**
  * @brief 加载指定模型到 TDLHandle 对象
@@ -124,12 +126,14 @@ int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
  * 1）使用TDL_LoadModelConfig加载后可以传入NULL,
  * 2）不使用TDL_LoadModelConfig加载，大部分专有模型也可以传入NULL，此时会使用算法类内部的默认配置，
  *    部分通用模型如特征提取、声音指令等需要传入模型配置信息，可以参考configs/model/model_config.json
+ * @param vpss_dev 指定模型预处理的vpss设备ID，0或1
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_OpenModelFromBuffer(TDLHandle handle, const TDLModel model_id,
                                 const uint8_t *model_buffer,
                                 uint32_t model_buffer_size,
-                                const char *model_config_json);
+                                const char *model_config_json,
+                                const int vpss_dev);
 /**
  * @brief 卸载指定模型并释放相关资源
  *

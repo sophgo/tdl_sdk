@@ -34,7 +34,7 @@ int32_t BaseModel::setPreprocessor(
   preprocessor_ = preprocessor;
   return 0;
 }
-int32_t BaseModel::modelOpen() {
+int32_t BaseModel::modelOpen(const int device_id) {
   // net_param_.model_file_path = model_path;
   print_netparam(net_param_);
   int32_t ret = setupNetwork(net_param_);
@@ -52,7 +52,7 @@ int32_t BaseModel::modelOpen() {
   }
   if (preprocessor_ == nullptr) {
     preprocessor_ =
-        PreprocessorFactory::createPreprocessor(net_param_.platform);
+        PreprocessorFactory::createPreprocessor(net_param_.platform, device_id);
   }
   return 0;
 }
