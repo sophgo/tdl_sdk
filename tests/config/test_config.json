@@ -249,6 +249,25 @@
           "tracking_feartrack_128_128_256_256_INT8.json"
         ]
       }
+    },
+    {
+      "name": "AsrTestSuite.*",
+      "_comment": "AsrTestSuite model test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "recognition_speech_zipformer-s_71_80_BF16.json"
+        ],
+        "exclude": {
+          "CV181X": [
+            "recognition_speech_zipformer-s_71_80_BF16.json"
+          ],
+          "BM1684X": [
+            "recognition_speech_zipformer-s_71_80_BF16.json"
+          ]
+        }
+      }
     }
   ]
 }
