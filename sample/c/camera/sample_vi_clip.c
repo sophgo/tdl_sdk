@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id, image_model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id, image_model_path, NULL, 0);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     DestoryCamera(tdl_handle);
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
     TDL_DestroyHandle(tdl_handle);
     return -1;
   }
-  ret = TDL_OpenModel(tdl_handle, model_id2, text_model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id2, text_model_path, NULL, 0);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     DestoryCamera(tdl_handle);

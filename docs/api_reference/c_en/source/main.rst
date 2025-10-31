@@ -1431,9 +1431,9 @@ TDL_OpenModel
 
 .. code-block:: c
 
-  int32_t TDL_OpenModel(TDLHandle handle,
-                        const TDLModel model_id,
-                        const char *model_path);
+  int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
+                        const char *model_path, const char *model_config_json,
+                        const int vpss_dev);
 
 【Description】
 
@@ -1464,6 +1464,74 @@ Load a specified type of model into the TDLHandle object.
      - const char\*
      - model_path
      - Model path
+
+   * - Input
+     - const char\*
+     - model_config_json
+     - Model config JSON path
+
+   * - Input
+     - int
+     - vpss_dev
+     - VPSS device ID
+
+TDL_OpenModelFromBuffer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_OpenModelFromBuffer(TDLHandle handle, const TDLModel model_id,
+                                  const uint8_t *model_buffer,
+                                  uint32_t model_buffer_size,
+                                  const char *model_config_json,
+                                  const int vpss_dev);
+
+【Description】
+
+Load a specified type of model into the TDLHandle object from buffer.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Model type enumeration
+
+   * - Input
+     - const uint8_t\*
+     - model_buffer
+     - Model buffer pointer
+
+   * - Input
+     - uint32_t
+     - model_buffer_size
+     - Model buffer size
+
+   * - Input
+     - const char\*
+     - model_config_json
+     - Model config JSON path
+
+   * - Input
+     - int
+     - vpss_dev
+     - VPSS device ID
 
 TDL_CloseModel
 ~~~~~~~~~~~~~~~~~~

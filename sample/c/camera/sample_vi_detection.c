@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   // system("cat /proc/cvitek/vpss");
   // system("cat /proc/cvitek/vb");
   // system("cat /proc/cvitek/vi");
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL, 0);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     DestoryCamera(tdl_handle);

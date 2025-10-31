@@ -136,13 +136,13 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id_d, detect_model, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id_d, detect_model, NULL, 0);
   if (ret != 0) {
     printf("open hand keypoint model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id_k, kp_model, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id_k, kp_model, NULL, 0);
   if (ret != 0) {
     printf("open hand keypoint model failed with %#x!\n", ret);
     goto exit1;

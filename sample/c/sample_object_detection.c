@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL, 0);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
@@ -146,7 +146,10 @@ int main(int argc, char *argv[]) {
   }
 
   TDLObject obj_meta = {0};
-  ret = TDL_Detection(tdl_handle, model_id, image, &obj_meta);
+  for (int i = 0; i < 10; i++) {
+    ret = TDL_Detection(tdl_handle, model_id, image, &obj_meta);
+    TDL_ReleaseObjectMeta(&obj_meta);
+  }
   if (ret != 0) {
     printf("TDL_Detection failed with %#x!\n", ret);
   } else {

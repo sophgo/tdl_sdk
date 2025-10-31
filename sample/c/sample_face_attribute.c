@@ -125,13 +125,14 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  ret = TDL_OpenModel(tdl_handle, TDL_MODEL_SCRFD_DET_FACE, detect_model, NULL);
+  ret = TDL_OpenModel(tdl_handle, TDL_MODEL_SCRFD_DET_FACE, detect_model, NULL,
+                      0);
   if (ret != 0) {
     printf("open face detection model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id, attr_model, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id, attr_model, NULL, 0);
   if (ret != 0) {
     printf("open face attribute model failed with %#x!\n", ret);
     goto exit1;
