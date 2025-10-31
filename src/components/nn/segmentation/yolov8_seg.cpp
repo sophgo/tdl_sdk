@@ -98,36 +98,50 @@ int YoloV8Segmentation::onModelOpened() {
            stride_w, stride_h, feat_w, feat_h);
       return -1;
     }
-    if (channel == num_box_channel_) {
-      bbox_out_names[stride_h] = output_layers[j];
-      strides.push_back(stride_h);
-      LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(),
-           stride_h);
-    } else if (num_cls_ == 0 && num_output == 6) {
-      num_cls_ = channel;
-      class_out_names[stride_h] = output_layers[j];
-      LOGI("parse class branch,name:%s,stride:%d,num_cls:%d\n",
-           output_layers[j].c_str(), stride_h, channel);
-    } else if (channel == num_cls_) {
-      class_out_names[stride_h] = output_layers[j];
-      LOGI("parse class branch,name:%s,stride:%d\n", output_layers[j].c_str(),
-           stride_h);
-    } else if (channel == num_mask_channel_) {
-      mask_out_names[stride_h] = output_layers[j];
-      LOGI("parse mask branch,name:%s,stride:%d\n", output_layers[j].c_str(),
-           stride_h);
-    } else if (channel == (num_box_channel_ + num_cls_)) {
-      strides.push_back(stride_h);
-      bbox_class_out_names[stride_h] = output_layers[j];
-      LOGI("parse box+class branch,name: %s,stride:%d\n",
-           output_layers[j].c_str(), stride_h);
+
+    if (num_cls_ == 0) {
+      if (channel == num_box_channel_) {
+        bbox_out_names[stride_h] = output_layers[j];
+        strides.push_back(stride_h);
+        LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      } else if (channel == num_mask_channel_) {
+        mask_out_names[stride_h] = output_layers[j];
+        LOGI("parse mask branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      } else {
+        num_cls_ = channel;
+        class_out_names[stride_h] = output_layers[j];
+        LOGI("parse class branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      }
     } else {
-      LOGE("unexpected branch:%s,channel:%d\n", output_layers[j].c_str(),
-           channel);
-      return -1;
+      if (channel == num_box_channel_) {
+        bbox_out_names[stride_h] = output_layers[j];
+        strides.push_back(stride_h);
+        LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      } else if (channel == num_cls_) {
+        class_out_names[stride_h] = output_layers[j];
+        LOGI("parse class branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      } else if (channel == num_mask_channel_) {
+        mask_out_names[stride_h] = output_layers[j];
+        LOGI("parse mask branch,name:%s,stride:%d\n", output_layers[j].c_str(),
+             stride_h);
+      } else if (channel == (num_box_channel_ + num_cls_)) {
+        strides.push_back(stride_h);
+        bbox_class_out_names[stride_h] = output_layers[j];
+        LOGI("parse box+class branch,name: %s,stride:%d\n",
+             output_layers[j].c_str(), stride_h);
+      } else {
+        LOGE("unexpected branch:%s,channel:%d\n", output_layers[j].c_str(),
+             channel);
+        return -1;
+      }
     }
   }
-  if (!mask_out_names.empty()) {
+  if (!class_out_names.empty() && !mask_out_names.empty()) {
     auto min_it = mask_out_names.begin();
     for (auto it = mask_out_names.begin(); it != mask_out_names.end(); ++it) {
       if (it->first < min_it->first) {
@@ -138,6 +152,10 @@ int YoloV8Segmentation::onModelOpened() {
     proto_out_names[min_it->first] = min_it->second;
     // remove the entry with the smallest key from mask_out_name
     mask_out_names.erase(min_it);
+  } else {
+    LOGE(
+        "Error: the number of category channels may be 32 or 64, which is not "
+        "supported");
   }
 
   return 0;
