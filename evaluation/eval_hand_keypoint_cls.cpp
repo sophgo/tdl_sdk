@@ -7,22 +7,35 @@
 #include "tdl_model_factory.hpp"
 
 int main(int argc, char** argv) {
-  if (argc != 4) {
-    printf("Usage: %s <model_name> <model_dir> <input_txt_list> <result_txt>\n",
-           argv[0]);
+  if (argc != 6) {
+    printf(
+        "Usage: %s <model_name> <model_dir> <txt_root> <input_txt_list> "
+        "<result_txt>\n",
+        argv[0]);
     return -1;
   }
   std::string model_name = argv[1];
   std::string model_dir = argv[2];
-  std::string input_txt_list = argv[3];
-  std::string result_txt = argv[4];
+  std::string txt_root = argv[3];
+  std::string input_txt_list = argv[4];
+  std::string result_txt = argv[5];
 
+  struct stat root_stat;
+  if (stat(txt_root.c_str(), &root_stat) != 0 || !S_ISDIR(root_stat.st_mode)) {
+    printf("Error: txt_root is not a valid directory: %s\n", txt_root.c_str());
+    return -1;
+  }
+
+  if (txt_root.back() != '/') {
+    txt_root += "/";
+  }
   std::vector<std::string> keypoints_files;
   std::ifstream infile(input_txt_list);
   std::string line;
   while (std::getline(infile, line)) {
     if (!line.empty()) {
-      keypoints_files.push_back(line);
+      std::string full_path = txt_root + line;
+      keypoints_files.push_back(full_path);
     }
   }
   infile.close();

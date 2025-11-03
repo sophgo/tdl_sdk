@@ -3,6 +3,7 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <fstream>
@@ -18,21 +19,19 @@
 void save_classification_results(
     std::ofstream& ofs,
     const std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas,
-    const std::string& image_name) {
+    const std::string& image_name, int real_id) {
   std::stringstream res_ss;
-  res_ss << image_name << " ";
+  res_ss << image_name << ",";
+  int predict_id = -1;
   for (const auto& out_data : out_datas) {
-    if (out_data->getType() != ModelOutputType::CLASSIFICATION) {
-      continue;
+    if (out_data->getType() == ModelOutputType::CLASSIFICATION) {
+      std::shared_ptr<ModelClassificationInfo> cls_meta =
+          std::static_pointer_cast<ModelClassificationInfo>(out_data);
+      predict_id = cls_meta->topk_class_ids[0];
+      break;
     }
-    std::shared_ptr<ModelClassificationInfo> cls_meta =
-        std::static_pointer_cast<ModelClassificationInfo>(out_data);
-
-    res_ss << " " << cls_meta->topk_class_ids[0] << " "
-           << cls_meta->topk_scores[0];
   }
-  res_ss << "\n";
-
+  res_ss << predict_id << "," << real_id << "\n";
   ofs << res_ss.str();
 }
 
@@ -57,6 +56,20 @@ void bench_mark_all(std::string bench_path, std::string image_root,
       std::stringstream ss(line);
       std::string image_name;
       while (ss >> image_name) {
+        size_t first_slash = image_name.find('/');
+        int real_id = -1;
+        if (first_slash != std::string::npos) {
+          std::string id_str = image_name.substr(0, first_slash);
+          try {
+            real_id = std::stoi(id_str);  // 字符串转整数ID
+          } catch (...) {
+            std::cerr << "Warning: 路径中real_ID无效 " << image_name
+                      << std::endl;
+          }
+        } else {
+          std::cerr << "Warning: 传入路径格式错误(无'/')" << image_name
+                    << std::endl;
+        }
         if (++cnt % 100 == 0) {
           std::cout << "processing idx: " << cnt << std::endl;
         }
@@ -69,7 +82,7 @@ void bench_mark_all(std::string bench_path, std::string image_root,
         std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
         std::vector<std::shared_ptr<BaseImage>> input_images = {image};
         model->inference(input_images, out_datas);
-        save_classification_results(ofs, out_datas, image_name);
+        save_classification_results(ofs, out_datas, image_name, real_id);
       }
     }
   }

@@ -27,7 +27,8 @@ std::string get_basename_noext(const std::string& path) {
 void dump_kp_to_dir_txt(
     const std::string& img_path,
     const std::vector<std::shared_ptr<ModelOutputInfo>>& outs,
-    const std::string& result_dir, std::string& model_name) {
+    const std::string& result_dir, std::string& model_id_name,
+    float image_width, float image_height, float conf_threshold) {
   std::string base_name = get_basename_noext(img_path);
   std::string txt_path = result_dir;
 
@@ -44,33 +45,48 @@ void dump_kp_to_dir_txt(
   for (size_t h = 0; h < outs.size(); ++h) {
     std::shared_ptr<ModelLandmarksInfo> lm =
         std::static_pointer_cast<ModelLandmarksInfo>(outs[h]);
-    ofs << h;
-    for (size_t k = 0; k < lm->landmarks_x.size(); ++k)
-      ofs << ' ' << lm->landmarks_x[k] << ' ' << lm->landmarks_y[k];
-    if (model_name == "KEYPOINT_FACE_V2") {
-      ofs << ' ' << lm->landmarks_score[0] << ' ' << lm->landmarks_score[1];
+
+    for (size_t k = 0; k < lm->landmarks_x.size(); ++k) {
+      float x = lm->landmarks_x[k];
+      float y = lm->landmarks_y[k];
+
+      if (model_id_name == "KEYPOINT_FACE_V2" ||
+          model_id_name == "KEYPOINT_SIMCC_PERSON17") {
+        x /= image_width;
+        y /= image_height;
+      }
+
+      if (model_id_name == "KEYPOINT_SIMCC_PERSON17" &&
+          lm->landmarks_score[k] < conf_threshold) {
+        x = 0;
+        y = 0;
+      }
+
+      ofs << ' ' << x << ' ' << y << "\n";
     }
-    ofs << '\n';
   }
   ofs.close();
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 5) {
+  if (argc != 6 && argc != 7) {
     printf(
-        "Usage: %s MODEL_NAME MODEL_DIR LIST_TXT RESULT_DIR\n"
-        "   MODEL_PATH : hand keypoint cvimodel / onnx / bin\n"
-        "   MODEL_NAME : hand_kp | hand_keypoint | hand21_kp\n"
-        "   LIST_TXT   : 每行一张图片路径（绝对或相对）\n"
-        "   RESULT_DIR : 结果保存目录，需提前创建好\n",
+        "Usage: %s <model_id_name> <model_dir or model_path> <image_dir> "
+        "<image_list.txt> <result_dir> ( optional: <conf_threshold>)  \n",
         argv[0]);
     return -1;
   }
 
-  std::string model_name = argv[1];
+  std::string model_id_name = argv[1];
   std::string model_dir = argv[2];
-  std::string list_txt = argv[3];
-  std::string result_dir = argv[4];
+  std::string image_dir = argv[3];
+  std::string list_txt = argv[4];
+  std::string result_dir = argv[5];
+
+  float conf_threshold = 0.5f;
+  if (argc == 7) {
+    conf_threshold = atof(argv[6]);
+  }
 
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();
   model_factory.loadModelConfig();
@@ -80,10 +96,10 @@ int main(int argc, char* argv[]) {
   if (stat(model_dir.c_str(), &path_stat) == 0) {
     if (S_ISDIR(path_stat.st_mode)) {  // model_dir是文件夹：原有getModel调用
       model_factory.setModelDir(model_dir);
-      kp_model = model_factory.getModel(model_name);
+      kp_model = model_factory.getModel(model_id_name);
     } else if (S_ISREG(
                    path_stat.st_mode)) {  // model_dir是绝对路径：新getModel调用
-      kp_model = model_factory.getModel(model_name, model_dir);
+      kp_model = model_factory.getModel(model_id_name, model_dir);
     } else {
       printf("Error: MODEL_DIR is neither dir nor file\n");
       return -1;
@@ -104,13 +120,14 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
-  std::string img_path;
+  std::string img_name;
   size_t img_idx = 0;
-  while (std::getline(fin, img_path)) {
-    if (img_path.empty()) continue;
+  while (std::getline(fin, img_name)) {
+    if (img_name.empty()) continue;
     ++img_idx;
     if (img_idx % 20 == 0) std::cout << "processed " << img_idx << " images\n";
 
+    const std::string img_path = image_dir + "/" + img_name;
     auto img = ImageFactory::readImage(img_path);
     if (!img) {
       std::cerr << "readImage fail: " << img_path << '\n';
@@ -120,7 +137,11 @@ int main(int argc, char* argv[]) {
     std::vector<std::shared_ptr<ModelOutputInfo>> kp_out;
     kp_model->inference({img}, kp_out);
 
-    dump_kp_to_dir_txt(img_path, kp_out, result_dir, model_name);
+    uint32_t image_width = img->getWidth();
+    uint32_t image_height = img->getHeight();
+
+    dump_kp_to_dir_txt(img_path, kp_out, result_dir, model_id_name, image_width,
+                       image_height, conf_threshold);
   }
 
   std::cout << "All done. total = " << img_idx << '\n';
