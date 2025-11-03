@@ -395,35 +395,32 @@ int32_t YoloV8Segmentation::outputParse(
     int proto_w = protoinfo.shape[3];
     int proto_hw = proto_h * proto_w;
 
-    Eigen::MatrixXf proto_output(proto_c, proto_hw);  // (32,96*160)
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        proto_output(proto_c, proto_hw);  // (32,96*160)
     if (protoinfo.data_type == TDLDataType::INT8) {
       int8_t *p_proto_int8 = proto_tensor->getBatchPtr<int8_t>(b);
-      for (int i = 0; i < proto_c; i++) {
-        for (int j = 0; j < proto_hw; j++) {
-          proto_output(i, j) =
-              p_proto_int8[i * proto_hw + j] * protoinfo.qscale;
-        }
+      for (int i = 0; i < proto_c; ++i) {
+        std::memcpy(proto_output.row(i).data(), p_proto_int8 + i * proto_hw,
+                    proto_hw * sizeof(float));
       }
     } else if (protoinfo.data_type == TDLDataType::UINT8) {
       uint8_t *p_proto_uint8 = proto_tensor->getBatchPtr<uint8_t>(b);
-      for (int i = 0; i < proto_c; i++) {
-        for (int j = 0; j < proto_hw; j++) {
-          proto_output(i, j) =
-              p_proto_uint8[i * proto_hw + j] * protoinfo.qscale;
-        }
+      for (int i = 0; i < proto_c; ++i) {
+        std::memcpy(proto_output.row(i).data(), p_proto_uint8 + i * proto_hw,
+                    proto_hw * sizeof(float));
       }
     } else if (protoinfo.data_type == TDLDataType::FP32) {
       float *p_proto_float = proto_tensor->getBatchPtr<float>(b);
-      for (int i = 0; i < proto_c; i++) {
-        for (int j = 0; j < proto_hw; j++) {
-          proto_output(i, j) = p_proto_float[i * proto_hw + j];
-        }
+      for (int i = 0; i < proto_c; ++i) {
+        std::memcpy(proto_output.row(i).data(), p_proto_float + i * proto_hw,
+                    proto_hw * sizeof(float));
       }
     } else {
       LOGE("unsupported data type:%d\n", static_cast<int>(protoinfo.data_type));
       assert(0);
     }
-    Eigen::MatrixXf masks_output = mask_map * proto_output;
+    Eigen::MatrixXf masks_output = mask_map * proto_output * protoinfo.qscale;
+    ;
 
     obj_seg->mask_height = proto_h;
     obj_seg->mask_width = proto_w;
