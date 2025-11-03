@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <opencv2/opencv.hpp>
 
 #include "evaluator.hpp"
@@ -95,31 +96,78 @@ void TrackingEvaluator::evaluate_video(const std::string &video_file,
 }
 
 int main(int argc, char **argv) {
-  if (argc != 4) {
-    printf("Usage: %s <model_dir> <video_file> <output_dir>\n", argv[0]);
+  if (argc != 4 && argc != 5) {
+    printf("Usage 1 : %s <model_dir> <video_file> <output_dir>\n", argv[0]);
+    printf(
+        "Usage 2 : %s <face_model_path> <person_model_path> <video_file> "
+        "<output_dir>\n",
+        argv[0]);
     return -1;
   }
-  std::string model_dir = argv[1];
-  std::string video_file = argv[2];
-  std::string output_dir = argv[3];
+  std::string model_dir, face_model_path, person_model_path;
+  std::string video_file, output_dir;
+  bool is_folder_mode = (argc == 4);
+  if (is_folder_mode) {
+    // 只传一个文件夹
+    model_dir = argv[1];
+    video_file = argv[2];
+    output_dir = argv[3];
+  } else {
+    // 传两个模型的绝对路径
+    face_model_path = argv[1];
+    person_model_path = argv[2];
+    video_file = argv[3];
+    output_dir = argv[4];
+  }
 
   TDLModelFactory &model_factory = TDLModelFactory::getInstance();
   model_factory.loadModelConfig();
-  model_factory.setModelDir(model_dir);
-  std::vector<std::string> video_files = {video_file};
 
-  std::shared_ptr<BaseModel> face_model =
-      model_factory.getModel(ModelType::SCRFD_DET_FACE);
-  if (face_model == nullptr) {
-    printf("Failed to get face model\n");
-    return -1;
+  std::shared_ptr<BaseModel> face_model;
+  std::shared_ptr<BaseModel> person_model;
+  struct stat path_stat;
+
+  if (is_folder_mode) {
+    model_factory.setModelDir(model_dir);
+    face_model = model_factory.getModel(ModelType::SCRFD_DET_FACE);
+    if (face_model == nullptr) {
+      printf("Failed to get face model\n");
+      return -1;
+    }
+    person_model = model_factory.getModel(ModelType::MBV2_DET_PERSON);
+    if (person_model == nullptr) {
+      printf("Failed to get person model\n");
+      return -1;
+    }
+  } else {
+    if (stat(face_model_path.c_str(), &path_stat) != 0 ||
+        !S_ISREG(path_stat.st_mode)) {
+      printf("Error: face model path is not a valid file: %s\n",
+             face_model_path.c_str());
+      return -1;
+    }
+    if (stat(person_model_path.c_str(), &path_stat) != 0 ||
+        !S_ISREG(path_stat.st_mode)) {
+      printf("Error: person model path is not a valid file: %s\n",
+             person_model_path.c_str());
+      return -1;
+    }
+    // 直接通过绝对路径加载两个模型
+    face_model =
+        model_factory.getModel(ModelType::SCRFD_DET_FACE, face_model_path);
+    if (!face_model) {
+      printf("Failed to load face model from path\n");
+      return -1;
+    }
+    person_model =
+        model_factory.getModel(ModelType::MBV2_DET_PERSON, person_model_path);
+    if (!person_model) {
+      printf("Failed to load person model from path\n");
+      return -1;
+    }
   }
-  std::shared_ptr<BaseModel> person_model =
-      model_factory.getModel(ModelType::MBV2_DET_PERSON);
-  if (person_model == nullptr) {
-    printf("Failed to get person model\n");
-    return -1;
-  }
+
+  std::vector<std::string> video_files = {video_file};
   std::shared_ptr<Tracker> tracker =
       TrackerFactory::createTracker(TrackerType::TDL_MOT_SORT);
   std::map<TDLObjectType, TDLObjectType> object_pair_config;

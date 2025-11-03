@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -30,9 +31,25 @@ int main(int argc, char **argv) {
 
   TDLModelFactory &model_factory = TDLModelFactory::getInstance();
   model_factory.loadModelConfig();
-  model_factory.setModelDir(model_dir);
 
-  std::shared_ptr<BaseModel> model = model_factory.getModel(model_id_name);
+  std::shared_ptr<BaseModel> model;
+  struct stat path_stat;
+  if (stat(model_dir.c_str(), &path_stat) == 0) {
+    if (S_ISDIR(path_stat.st_mode)) {  // model_dir是文件夹：原有getModel调用
+      model_factory.setModelDir(model_dir);
+      model = model_factory.getModel(model_id_name);
+    } else if (S_ISREG(
+                   path_stat.st_mode)) {  // model_dir是绝对路径：新getModel调用
+      model = model_factory.getModel(model_id_name, model_dir);
+    } else {
+      printf("Error: MODEL_DIR is neither dir nor file\n");
+      return -1;
+    }
+  } else {
+    printf("Error: Cannot access MODEL_DIR: %s\n", model_dir.c_str());
+    return -1;
+  }
+
   if (!model) {
     printf("Failed to create model\n");
     return -1;
