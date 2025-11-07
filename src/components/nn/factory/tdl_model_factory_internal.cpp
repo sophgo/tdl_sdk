@@ -28,11 +28,13 @@
 #include "object_tracking/feartrack.hpp"
 #include "segmentation/topformer_seg.hpp"
 #include "segmentation/yolov8_seg.hpp"
+#include "utils/common_utils.hpp"
+#include "utils/tdl_log.hpp"
+#ifndef DISABLE_SPEECH_RECOGNITION
 #include "speech_recognition/zipformer_decoder.hpp"
 #include "speech_recognition/zipformer_encoder.hpp"
 #include "speech_recognition/zipformer_joiner.hpp"
-#include "utils/common_utils.hpp"
-#include "utils/tdl_log.hpp"
+#endif
 
 std::shared_ptr<BaseModel> TDLModelFactory::getModelInstance(
     const ModelType model_type) {
@@ -189,6 +191,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
   std::map<int, TDLObjectType> model_type_mapping;
   int model_category =
       0;  // 0:yolov8,1:yolov10,2:yolov6,3:yolov3,4:yolov5,5:yolov6,6:mbv2,7:ppyoloe,8:yolox,9:yolov7
+
+#ifndef DISABLE_OBJECT_DETECTION
   if (model_type == ModelType::YOLOV8N_DET_PERSON_VEHICLE) {
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_CAR;
     model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_BUS;
@@ -330,6 +334,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
         static_cast<int>(model_type), model_category);
   model->setTypeMapping(model_type_mapping);
 
+#endif
   return model;
 }
 
@@ -337,21 +342,22 @@ std::shared_ptr<BaseModel> TDLModelFactory::createFaceDetectionModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
 
+#ifndef DISABLE_FACE_DETECTION
   if (model_type == ModelType::SCRFD_DET_FACE) {
     model = std::make_shared<SCRFD>();
   }
-
+#endif
   return model;
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::createLaneDetectionModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
-
+#ifndef DISABLE_KEYPOINTS_DETECTION
   if (model_type == ModelType::LSTR_DET_LANE) {
     model = std::make_shared<LstrLane>();
   }
-
+#endif
   return model;
 }
 
@@ -359,6 +365,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createSegmentationModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
 
+#ifndef DISABLE_SEGMENTATION
   if (model_type == ModelType::YOLOV8_SEG_COCO80) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));
   } else if (model_type == ModelType::YOLOV8_SEG) {
@@ -368,7 +375,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createSegmentationModel(
   } else if (model_type == ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE) {
     model = std::make_shared<TopformerSeg>(16);  // Downsampling ratio
   }
-
+#endif
   return model;
 }
 
@@ -376,6 +383,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createFeatureExtractionModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
 
+#ifndef DISABLE_FEATURE_EXTRACT
   if (model_type == ModelType::FEATURE_CLIP_IMG ||
       model_type == ModelType::FEATURE_MOBILECLIP2_IMG) {
     model = std::make_shared<Clip_Image>();
@@ -388,26 +396,30 @@ std::shared_ptr<BaseModel> TDLModelFactory::createFeatureExtractionModel(
              model_type == ModelType::FEATURE_IMG) {
     model = std::make_shared<FeatureExtraction>();
   }
-
+#endif
   return model;
 }
 
 std::shared_ptr<BaseModel> TDLModelFactory::createKeypointDetectionModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
-
+#ifndef DISABLE_KEYPOINTS_DETECTION
   if (model_type == ModelType::KEYPOINT_SIMCC_PERSON17) {
     model = std::make_shared<SimccPose>();
   } else if (model_type == ModelType::KEYPOINT_HAND) {
     model = std::make_shared<HandKeypoint>();
-  } else if (model_type == ModelType::KEYPOINT_LICENSE_PLATE) {
-    model = std::make_shared<LicensePlateKeypoint>();
   } else if (model_type == ModelType::KEYPOINT_YOLOV8POSE_PERSON17) {
     model = std::make_shared<YoloV8Pose>(std::make_tuple(64, 17, 1));
-  } else if (model_type == ModelType::KEYPOINT_FACE_V2) {
+  } else if (model_type == ModelType::KEYPOINT_LICENSE_PLATE) {
+    model = std::make_shared<LicensePlateKeypoint>();
+  }
+#endif
+
+#ifndef DISABLE_FACE_LANDMARK
+  if (model_type == ModelType::KEYPOINT_FACE_V2) {
     model = std::make_shared<FaceLandmarkerDet2>();
   }
-
+#endif
   return model;
 }
 
@@ -415,20 +427,20 @@ std::shared_ptr<BaseModel> TDLModelFactory::createClassificationModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
 
+#ifndef DISABLE_IMAGE_CLASSIFICATION
   if (model_type == ModelType::CLS_HAND_GESTURE ||
       model_type == ModelType::CLS_RGBLIVENESS ||
       model_type == ModelType::CLS_YOLOV8 || model_type == ModelType::CLS_IMG) {
     model = std::make_shared<RgbImageClassification>();
   } else if (model_type == ModelType::CLS_KEYPOINT_HAND_GESTURE) {
     model = std::make_shared<HandKeypointClassification>();
-  } else if (model_type == ModelType::CLS_SOUND_BABAY_CRY) {
-    model = std::make_shared<AudioClassification>();
-  } else if (model_type == ModelType::CLS_SOUND_COMMAND ||
-             model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSHIYUN ||
-             model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSUANNENG ||
-             model_type == ModelType::CLS_SOUND_COMMAND_XIAOAIXIAOAI) {
-    model = std::make_shared<AudioClassification>();
-  } else if (model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS) {
+  } else if (model_type == ModelType::CLS_ISP_SCENE) {
+    model = std::make_shared<IspImageClassification>();
+  }
+#endif
+
+#ifndef DISABLE_FACE_ATTRIBUTE
+  if (model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS) {
     model = std::make_shared<FaceAttribute_CLS>(
         FaceAttributeModel::GENDER_AGE_GLASS);
   } else if (model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK) {
@@ -437,10 +449,19 @@ std::shared_ptr<BaseModel> TDLModelFactory::createClassificationModel(
   } else if (model_type == ModelType::CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION) {
     model = std::make_shared<FaceAttribute_CLS>(
         FaceAttributeModel::GENDER_AGE_GLASS_EMOTION);
-  } else if (model_type == ModelType::CLS_ISP_SCENE) {
-    model = std::make_shared<IspImageClassification>();
   }
+#endif
 
+#ifndef DISABLE_AUDIO_CLASSIFICATION
+  if (model_type == ModelType::CLS_SOUND_BABAY_CRY) {
+    model = std::make_shared<AudioClassification>();
+  } else if (model_type == ModelType::CLS_SOUND_COMMAND ||
+             model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSHIYUN ||
+             model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSUANNENG ||
+             model_type == ModelType::CLS_SOUND_COMMAND_XIAOAIXIAOAI) {
+    model = std::make_shared<AudioClassification>();
+  }
+#endif
   return model;
 }
 
@@ -448,9 +469,11 @@ std::shared_ptr<BaseModel> TDLModelFactory::createOCRModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
 
+#ifndef DISABLE_LICENSE_PLATE_RECOGNITION
   if (model_type == ModelType::RECOGNITION_LICENSE_PLATE) {
     model = std::make_shared<LicensePlateRecognition>();
   }
+#endif
 
   return model;
 }
@@ -458,10 +481,11 @@ std::shared_ptr<BaseModel> TDLModelFactory::createOCRModel(
 std::shared_ptr<BaseModel> TDLModelFactory::createObjectTrackingModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
-
+#ifndef DISABLE_OBJECT_TRACKING
   if (model_type == ModelType::TRACKING_FEARTRACK) {
     model = std::make_shared<FearTrack>();
   }
+#endif
 
   return model;
 }
@@ -469,7 +493,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectTrackingModel(
 std::shared_ptr<BaseModel> TDLModelFactory::createSpeechRecognitionModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
-
+#ifndef DISABLE_SPEECH_RECOGNITION
   if (model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_ENCODER) {
     model = std::make_shared<ZipformerEncoder>();
   } else if (model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_DECODER) {
@@ -477,6 +501,6 @@ std::shared_ptr<BaseModel> TDLModelFactory::createSpeechRecognitionModel(
   } else if (model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_JOINER) {
     model = std::make_shared<ZipformerJoiner>();
   }
-
+#endif
   return model;
 }

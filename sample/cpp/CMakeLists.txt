@@ -96,6 +96,18 @@ message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")
 foreach (fname ${SAMPLE_SRC_FILES})
   set(EXAMPLE_SRC_FILES ${EXAMPLE_SRC_FILES} ${fname})
   get_filename_component(name ${fname} NAME_WE)
+
+  string(FIND "${name}" "_asr" pos)
+  if(pos GREATER_EQUAL 0 AND DEFINED ENABLE_SPEECH_RECOGNITION AND NOT ENABLE_SPEECH_RECOGNITION)
+    continue()
+  endif()
+
+  string(FIND "${name}" "_app" pos)
+  if(pos GREATER_EQUAL 0 AND DEFINED ENABLE_APP_PIPELINE AND NOT ENABLE_APP_PIPELINE)
+    continue()
+  endif()
+
+
   add_executable(${name} ${fname})
 
   set(SAMPLE_LIBS ${CORE_LIBS} dl rt stdc++fs)

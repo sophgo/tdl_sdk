@@ -9,8 +9,10 @@
 add_subdirectory(framework)
 add_subdirectory(components)
 add_subdirectory(c_apis)
-add_subdirectory(pipeline)
-add_subdirectory(app)
+if(NOT DEFINED ENABLE_APP_PIPELINE OR ENABLE_APP_PIPELINE)
+   add_subdirectory(pipeline)
+   add_subdirectory(app)
+endif()
 
 set(CORES_SRCS
                $<TARGET_OBJECTS:framework>
@@ -19,17 +21,20 @@ set(CORES_SRCS
                $<TARGET_OBJECTS:snapshot>
                $<TARGET_OBJECTS:nn>
                $<TARGET_OBJECTS:c_apis_core>
-               $<TARGET_OBJECTS:pipeline>
-               $<TARGET_OBJECTS:face_capture_app>
-               $<TARGET_OBJECTS:face_pet_capture_app>
-               $<TARGET_OBJECTS:fall_detection_app>
-               $<TARGET_OBJECTS:consumer_counting_app>
-               $<TARGET_OBJECTS:app>
                $<TARGET_OBJECTS:intrusion_detect>
                $<TARGET_OBJECTS:occlusion_detect>
                $<TARGET_OBJECTS:target_search>
                $<TARGET_OBJECTS:encoder>
                )
+
+# 条件添加 pipeline 和 app（满足任一条件即添加）
+if(NOT DEFINED ENABLE_APP_PIPELINE OR ENABLE_APP_PIPELINE)
+    list(APPEND CORES_SRCS 
+        $<TARGET_OBJECTS:pipeline>
+        $<TARGET_OBJECTS:app>
+    )
+endif()
+
 if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
    set(EX_SRCS $<TARGET_OBJECTS:c_apis_ex> $<TARGET_OBJECTS:network>)
 endif()
@@ -56,13 +61,23 @@ endif()
 
 # shared library
 add_library(tdl_core SHARED ${CORES_SRCS})
-target_link_libraries(tdl_core
+
+if(NOT DEFINED ENABLE_APP_PIPELINE OR ENABLE_APP_PIPELINE)
+   target_link_libraries(tdl_core
+      ${MLIR_LIBS}
+      ${OPENCV_LIBS_IMCODEC}
+      ${IVE_LIBS}
+      ${ZLIB_LIBRARY}
+      kaldi-native-fbank-core
+   )
+else()
+   target_link_libraries(tdl_core
    ${MLIR_LIBS}
    ${OPENCV_LIBS_IMCODEC}
    ${IVE_LIBS}
    ${ZLIB_LIBRARY}
-   kaldi-native-fbank-core
-)
+   )
+endif()
 
 # if("${CVI_PLATFORM}" STREQUAL "SOPHON" OR "${CVI_PLATFORM}" STREQUAL "BM1688")
 #    target_link_libraries(tdl_core
@@ -78,7 +93,11 @@ target_link_libraries(tdl_ex ${LIBWEBSOCKETS_LIBS}
 
 # static library
 add_library(tdl_core-static STATIC ${CORES_SRCS})
-target_link_libraries(tdl_core-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC} kaldi-native-fbank-core)
+if(NOT DEFINED ENABLE_SPEECH_RECOGNITION OR ENABLE_SPEECH_RECOGNITION)
+   target_link_libraries(tdl_core-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC} kaldi-native-fbank-core)
+else()
+   target_link_libraries(tdl_core-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC})
+endif()
 
 add_library(tdl_ex-static STATIC ${EX_SRCS})
 target_link_libraries(tdl_ex-static ${LIBWEBSOCKETS_LIBS_STATIC} ${CURL_LIBRARY_STATIC} ${OPENSSL_LIBRARY_STATIC} ${ZLIB_LIBRARY_STATIC} )

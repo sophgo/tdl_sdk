@@ -14,6 +14,7 @@ tmp
 scripts/credential.sh
 build*
 !build_tdl_sdk.sh
+!build_config.yaml
 sophon_sdk
 _deps/
 *.jpg
