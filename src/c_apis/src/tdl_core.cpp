@@ -5,13 +5,15 @@
 #include "app/app_data_types.hpp"
 #include "common/common_types.hpp"
 #include "consumer_counting/consumer_counting_app.hpp"
-#include "speech_recognition/zipformer_encoder.hpp"
 #include "tdl_type_internal.hpp"
 #include "tdl_utils.h"
 #include "tracker/tracker_types.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
 #include "utils/tokenizer_bpe.hpp"
+#ifndef DISABLE_SPEECH_RECOGNITION
+#include "speech_recognition/zipformer_encoder.hpp"
+#endif
 
 static std::shared_ptr<BaseModel> get_model(TDLHandle handle,
                                             const TDLModel model_id) {
@@ -1062,6 +1064,7 @@ int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
   return 0;
 }
 
+#ifndef DISABLE_SPEECH_RECOGNITION
 int32_t TDL_SpeechRecognition_Init(TDLHandle handle,
                                    const TDLModel model_id_encoder,
                                    const TDLModel model_id_decoder,
@@ -1141,6 +1144,7 @@ int32_t TDL_SpeechRecognition(TDLHandle handle, const TDLModel model_id_encoder,
 
   return 0;
 }
+#endif
 
 int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
                      TDLObject *obj_meta, TDLTracker *track_meta) {
@@ -1424,6 +1428,7 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
 
 #endif
 
+#ifndef DISABLE_APP_PIPELINE
 /*******************************************
  *          APP API implementation         *
  *******************************************/
@@ -1835,3 +1840,5 @@ int32_t TDL_APP_ObjectCountingSetLine(TDLHandle handle,
     return -1;
   }
 }
+
+#endif

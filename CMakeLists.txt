@@ -238,6 +238,27 @@ set(APP_VIDEO_ENABLE OFF)
 
 set(REPO_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+
+# 解析 build_config.yaml 生成 CMake 变量
+set(BUILD_CONFIG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build_config.yaml")
+set(GENERATED_CMAKE_CONFIG "${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_config.cmake")
+
+# 调用 Python 脚本生成配置
+execute_process(
+    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/parse_build_config.py"
+        "${BUILD_CONFIG_PATH}"
+        "${GENERATED_CMAKE_CONFIG}"
+    RESULT_VARIABLE PARSE_RESULT
+    ERROR_VARIABLE PARSE_ERROR
+)
+
+# 检查解析是否成功
+if(PARSE_RESULT OR NOT EXISTS "${GENERATED_CMAKE_CONFIG}")
+    message(FATAL_ERROR "Failed to parse build_config.yaml: ${PARSE_ERROR}")
+endif()
+
+include(${GENERATED_CMAKE_CONFIG})
+
 # Check if OpenCV exists.
 include(cmake/opencv.cmake)
 
@@ -267,17 +288,21 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 if("${BUILD_OPTION}" STREQUAL "")
   add_subdirectory(src)
   add_subdirectory(sample)
-  add_subdirectory(evaluation)
-  add_subdirectory(tests)
+  if(NOT ${ENABLE_SLIM})
+    add_subdirectory(evaluation)
+    add_subdirectory(tests)
+  endif()
 elseif("${BUILD_OPTION}" STREQUAL "sample")
   add_subdirectory(sample)
 elseif("${BUILD_OPTION}" STREQUAL "all")
   add_subdirectory(src)
   add_subdirectory(sample)
-  if(IS_LOCAL)
+  if(IS_LOCAL AND NOT ${ENABLE_SLIM})
     add_subdirectory(tests)
   endif()
-  add_subdirectory(evaluation)
+  if(NOT ${ENABLE_SLIM})
+    add_subdirectory(evaluation)
+  endif()
 else()
   message(FATAL_ERROR "Error: BUILD_OPTION is set to an invalid value: ${BUILD_OPTION}.
                        Valid options are '', 'sample', or 'all', and 'clean'.")

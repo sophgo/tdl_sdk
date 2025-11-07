@@ -50,93 +50,95 @@ endif()
 include_directories(${BUILD_DOWNLOAD_DIR}/libeigen-src/include/eigen3)
 # ===============Eigen===============
 
-# ===============kissfft===============
-if(EXISTS "${OSS_TARBALL_PATH}/kissfft.tar.gz")
-  set(KISSFFT_URL ${OSS_TARBALL_PATH}/kissfft.tar.gz)
-elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/kissfft.tar.gz")
-  set(KISSFFT_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/kissfft.tar.gz)
-elseif(IS_LOCAL)
-  set(KISSFFT_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/kissfft.tar.gz)
-else()
-  set(KISSFFT_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/kissfft.tar.gz)
-endif()
+if( NOT DEFINED ENABLE_SPEECH_RECOGNITION  OR  ENABLE_SPEECH_RECOGNITION)
+  # ===============kissfft===============
+  if(EXISTS "${OSS_TARBALL_PATH}/kissfft.tar.gz")
+    set(KISSFFT_URL ${OSS_TARBALL_PATH}/kissfft.tar.gz)
+  elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/kissfft.tar.gz")
+    set(KISSFFT_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/kissfft.tar.gz)
+  elseif(IS_LOCAL)
+    set(KISSFFT_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/kissfft.tar.gz)
+  else()
+    set(KISSFFT_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/kissfft.tar.gz)
+  endif()
 
-if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/kissfft-src")
-  FetchContent_Declare(
-    kissfft
-    URL ${KISSFFT_URL}
-  )
-  set(CMAKE_POSITION_INDEPENDENT_CODE ON)  # 确保全局PIC设置
-  set(KISSFFT_TEST OFF CACHE BOOL "KISSFFT TEST")
-  set(KISSFFT_TOOLS OFF CACHE BOOL "KISSFFT TOOLS")
-  set(KISSFFT_PKGCONFIG OFF CACHE BOOL "KISSFFT PKGCONFIG")
-  set(KISSFFT_STATIC ON CACHE BOOL "KISSFFT STATIC")
-
-  FetchContent_MakeAvailable(kissfft)
-  
-  # 强制设置目标属性
-  if(TARGET kissfft)
-    set_target_properties(kissfft PROPERTIES
-        POSITION_INDEPENDENT_CODE ON
-        C_VISIBILITY_PRESET hidden
-        CXX_VISIBILITY_PRESET hidden
+  if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/kissfft-src")
+    FetchContent_Declare(
+      kissfft
+      URL ${KISSFFT_URL}
     )
-    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-      target_compile_options(kissfft PRIVATE -fPIC)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)  # 确保全局PIC设置
+    set(KISSFFT_TEST OFF CACHE BOOL "KISSFFT TEST")
+    set(KISSFFT_TOOLS OFF CACHE BOOL "KISSFFT TOOLS")
+    set(KISSFFT_PKGCONFIG OFF CACHE BOOL "KISSFFT PKGCONFIG")
+    set(KISSFFT_STATIC ON CACHE BOOL "KISSFFT STATIC")
+
+    FetchContent_MakeAvailable(kissfft)
+    
+    # 强制设置目标属性
+    if(TARGET kissfft)
+      set_target_properties(kissfft PROPERTIES
+          POSITION_INDEPENDENT_CODE ON
+          C_VISIBILITY_PRESET hidden
+          CXX_VISIBILITY_PRESET hidden
+      )
+      if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(kissfft PRIVATE -fPIC)
+      endif()
+    endif()
+    
+  else()
+    project(kissfft)
+    add_subdirectory(${BUILD_DOWNLOAD_DIR}/kissfft-src
+                    ${BUILD_DOWNLOAD_DIR}/kissfft-build)
+    
+    # 对已存在的目标设置属性
+    if(TARGET kissfft)
+      set_target_properties(kissfft PROPERTIES
+          POSITION_INDEPENDENT_CODE ON
+      )
+      if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(kissfft PRIVATE -fPIC)
+      endif()
     endif()
   endif()
-  
-else()
-  project(kissfft)
-  add_subdirectory(${BUILD_DOWNLOAD_DIR}/kissfft-src
-                   ${BUILD_DOWNLOAD_DIR}/kissfft-build)
-  
-  # 对已存在的目标设置属性
-  if(TARGET kissfft)
-    set_target_properties(kissfft PROPERTIES
-        POSITION_INDEPENDENT_CODE ON
-    )
-    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-      target_compile_options(kissfft PRIVATE -fPIC)
-    endif()
+
+  set(KISSFFT_INCLUDES ${BUILD_DOWNLOAD_DIR}/kissfft-src)
+  # ===============kissfft===============
+
+
+  # ===============kaldi native fbank===============
+  if(EXISTS "${OSS_TARBALL_PATH}/kaldi-native-fbank.tar.gz")
+    set(KALDI_URL ${OSS_TARBALL_PATH}/kaldi-native-fbank.tar.gz)
+  elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/kaldi-native-fbank.tar.gz")
+    set(KALDI_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/kaldi-native-fbank.tar.gz)
+  elseif(IS_LOCAL)
+    set(KALDI_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/kaldi-native-fbank.tar.gz)
+  else()
+    set(KALDI_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/kaldi-native-fbank.tar.gz)
   endif()
-endif()
 
-set(KISSFFT_INCLUDES ${BUILD_DOWNLOAD_DIR}/kissfft-src)
-# ===============kissfft===============
+  if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/kaldi-native-fbank-src")
+    FetchContent_Declare(
+      kaldi-native-fbank
+      URL ${KALDI_URL}
+    )
+    FetchContent_MakeAvailable(kaldi-native-fbank)
+    message("Content downloaded to ${kaldi-native-fbank_SOURCE_DIR}")
+  else()
+    project(kaldi-native-fbank-src)
+    add_subdirectory(${BUILD_DOWNLOAD_DIR}/kaldi-native-fbank-src/)
 
+  endif()
 
-# ===============kaldi native fbank===============
-if(EXISTS "${OSS_TARBALL_PATH}/kaldi-native-fbank.tar.gz")
-  set(KALDI_URL ${OSS_TARBALL_PATH}/kaldi-native-fbank.tar.gz)
-elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/kaldi-native-fbank.tar.gz")
-  set(KALDI_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/kaldi-native-fbank.tar.gz)
-elseif(IS_LOCAL)
-  set(KALDI_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/kaldi-native-fbank.tar.gz)
-else()
-  set(KALDI_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/kaldi-native-fbank.tar.gz)
-endif()
+  set(KISSFFT_STATIC_LIB  "${BUILD_DOWNLOAD_DIR}/kissfft-build/libkissfft-float.a" CACHE FILEPATH "" FORCE)
+  target_include_directories(kaldi-native-fbank-core PUBLIC ${KISSFFT_INCLUDES})
+  target_link_libraries(kaldi-native-fbank-core ${KISSFFT_STATIC_LIB})
 
-if (NOT IS_DIRECTORY  "${BUILD_DOWNLOAD_DIR}/kaldi-native-fbank-src")
-  FetchContent_Declare(
-    kaldi-native-fbank
-    URL ${KALDI_URL}
-  )
-  FetchContent_MakeAvailable(kaldi-native-fbank)
-  message("Content downloaded to ${kaldi-native-fbank_SOURCE_DIR}")
-else()
-  project(kaldi-native-fbank-src)
-  add_subdirectory(${BUILD_DOWNLOAD_DIR}/kaldi-native-fbank-src/)
+  set(FBANK_INCLUDES ${BUILD_DOWNLOAD_DIR}/kaldi-native-fbank-src)
+  # ===============kaldi native fbank===============
 
 endif()
-
-set(KISSFFT_STATIC_LIB  "${BUILD_DOWNLOAD_DIR}/kissfft-build/libkissfft-float.a" CACHE FILEPATH "" FORCE)
-target_include_directories(kaldi-native-fbank-core PUBLIC ${KISSFFT_INCLUDES})
-target_link_libraries(kaldi-native-fbank-core ${KISSFFT_STATIC_LIB})
-
-set(FBANK_INCLUDES ${BUILD_DOWNLOAD_DIR}/kaldi-native-fbank-src)
-# ===============kaldi native fbank===============
-
 
 # ===============Google Test===============
 if(EXISTS "${OSS_TARBALL_PATH}/googletest.tar.gz")
