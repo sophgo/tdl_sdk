@@ -89,6 +89,11 @@ class BaseModel {
   const std::vector<std::string>& getInputNames() const;
   const std::vector<std::string>& getOutputNames() const;
   int32_t getTensorInfo(const std::string& name, TensorInfo& info);
+  uint32_t getIOTensorBytes() { return net_->getIOTensorBytes(); }
+  int32_t setIOTensorMemory(uint64_t phy_addr, uint8_t* sys_mem,
+                            uint32_t size) {
+    return net_->setIOTensorMemory(phy_addr, sys_mem, size);
+  }
 
  private:
   int getFitBatchSize(int left_size) const;
@@ -119,3 +124,4 @@ class BaseModel {
 };
 
 #endif  // INCLUDE_BASE_MODEL_H_
+// INCLUDE_BASE_MODEL_H_

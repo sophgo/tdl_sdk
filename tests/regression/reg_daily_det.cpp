@@ -186,8 +186,8 @@ class DetectionTestSuite : public CVI_TDLModelTestSuite {
         gt_dets.push_back(
             {bbox_x1, bbox_y1, bbox_x2, bbox_y2, score, class_id});
       }
-      // EXPECT_TRUE(matchObjects(gt_dets, pred_dets, reg_nms_threshold,
-      //                          reg_score_diff_threshold));
+      EXPECT_TRUE(matchObjects(gt_dets, pred_dets, reg_nms_threshold,
+                               reg_score_diff_threshold));
     }
     if (context.getTestFlag() == TestFlag::GENERATE_FUNCTION_RES) {
       m_json_object[platform] = results;
@@ -197,10 +197,12 @@ class DetectionTestSuite : public CVI_TDLModelTestSuite {
 };
 
 TEST_F(DetectionTestSuite, accuracy) {
-  std::shared_ptr<BaseModel> det = TDLModelFactory::getInstance().getModel(
+  std::shared_ptr<BaseModel> det;
+  det = TDLModelFactory::getInstance().getModel(
       model_id_, model_path_);  // One model id may correspond to multiple
                                 // models with different sizes
   ASSERT_NE(det, nullptr);
+
   det->setModelThreshold(m_json_object["model_score_threshold"]);
   runAccuracy(det);
 
@@ -223,20 +225,51 @@ TEST_F(DetectionTestSuite, accuracy) {
   std::vector<std::unique_ptr<MemoryBlock>> mem_blocks;
   std::shared_ptr<BaseMemoryPool> pool = MemoryPoolFactory::createMemoryPool();
   mem_addrs.clear();
+
+  // Calculate aligned sizes and total memory needed
+  // CRITICAL: BMRT requires 4096-byte alignment (4KB page size) for device
+  // memory Using smaller alignment (e.g. 128 bytes) will cause segmentation
+  // fault during inference
+  const uint32_t align_size = 4096;
+  std::vector<uint32_t> aligned_mem_sizes;
   for (uint32_t i = 0; i < mem_sizes.size(); i++) {
     if (mem_sizes[i] == 0) {
-      mem_addrs.push_back(0);
+      aligned_mem_sizes.push_back(0);
+      mem_addrs.push_back(-1);
       continue;
     }
-    std::unique_ptr<MemoryBlock> mem_block = pool->allocate(mem_sizes[i]);
+    // Align to 4096 bytes (4KB page boundary) as required by BMRT hardware
+    uint32_t aligned_mem_size =
+        ((mem_sizes[i] + align_size - 1) / align_size) * align_size;
+    aligned_mem_sizes.push_back(aligned_mem_size);
+    std::unique_ptr<MemoryBlock> mem_block = pool->allocate(aligned_mem_size);
+    if (!mem_block) {
+      LOGE("Failed to allocate memory of %u bytes", aligned_mem_size);
+      return;
+    }
     mem_addrs.push_back(mem_block->physicalAddress);
     mem_blocks.push_back(std::move(mem_block));
   }
 
   ModelType model_type = modelTypeFromString(model_id_);
+
+  LOGIP("DEBUG: About to call getModel with pre-allocated memory");
+  LOGIP("DEBUG: mem_addrs.size()=%zu, mem_sizes.size()=%zu", mem_addrs.size(),
+        mem_sizes.size());
+  for (size_t i = 0; i < mem_addrs.size(); i++) {
+    LOGIP("DEBUG: mem_addrs[%zu]=0x%llx, mem_sizes[%zu]=%u", i,
+          (unsigned long long)mem_addrs[i], i, mem_sizes[i]);
+  }
+
   std::shared_ptr<BaseModel> det_with_mem =
       TDLModelFactory::getInstance().getModel(model_type, model_path_,
                                               mem_addrs, mem_sizes);
+  uint32_t io_mem_size = det_with_mem->getIOTensorBytes();
+  std::unique_ptr<MemoryBlock> io_mem_block = pool->allocate(io_mem_size);
+  det_with_mem->setIOTensorMemory(io_mem_block->physicalAddress,
+                                  (uint8_t *)io_mem_block->virtualAddress,
+                                  io_mem_size);
+  mem_blocks.push_back(std::move(io_mem_block));
   ASSERT_NE(det_with_mem, nullptr);
   det_with_mem->setModelThreshold(m_json_object["model_score_threshold"]);
   runAccuracy(det_with_mem);

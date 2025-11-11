@@ -40,6 +40,12 @@ class BaseNet {
   int32_t getDeviceId() const;
   const std::vector<std::string>& getInputNames() const;
   const std::vector<std::string>& getOutputNames() const;
+  virtual uint32_t getIOTensorBytes() { return 0; }
+  virtual int32_t setIOTensorMemory(uint64_t phy_addr, uint8_t* sys_mem,
+                                    uint32_t size) {
+    return -1;
+  }
+  bool useRuntimeMemory() { return use_runtime_memory_; }
 
  protected:
   NetParam net_param_;
@@ -54,6 +60,7 @@ class BaseNet {
   std::vector<std::string> input_tensor_names_;
   std::vector<std::string> output_tensor_names_;
   int device_id_ = 0;
+  bool use_runtime_memory_ = false;
 
  private:
   BaseNet(const BaseNet&) = delete;

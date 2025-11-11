@@ -118,6 +118,11 @@ int main(int argc, char **argv) {
     }
     model = TDLModelFactory::getInstance().getModel(
         modelTypeFromString(model_id_name), model_path, mem_addrs, mem_sizes);
+    uint32_t io_mem_size = model->getIOTensorBytes();
+    std::unique_ptr<MemoryBlock> io_mem_block = pool->allocate(io_mem_size);
+    model->setIOTensorMemory(io_mem_block->physicalAddress,
+                             (uint8_t *)io_mem_block->virtualAddress,
+                             io_mem_size);
   } else {
     model = model_factory.getModel(modelTypeFromString(model_id_name));
   }

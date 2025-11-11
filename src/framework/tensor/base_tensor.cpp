@@ -10,7 +10,7 @@
 #include "utils/tdl_log.hpp"
 BaseTensor::BaseTensor(int element_bytes,
                        std::shared_ptr<BaseMemoryPool> memory_pool)
-    : element_bytes_(element_bytes), num_elements_(0), owns_data_(false) {
+    : element_bytes_(element_bytes), owns_data_(false) {
   shape_.resize(4, 0);
   memory_block_ = nullptr;
   memory_pool_ = memory_pool;
@@ -18,28 +18,45 @@ BaseTensor::BaseTensor(int element_bytes,
 
 BaseTensor::~BaseTensor() { release(); }
 
-void BaseTensor::reshape(int n, int c, int h, int w) {
+void BaseTensor::reshape(int n, int c, int h, int w,
+                         bool alloc_memory /* = true */) {
   shape_ = {n, c, h, w};
+  if (!alloc_memory) {
+    if (memory_block_ != nullptr) {
+      uint32_t expected_size = n * c * h * w * element_bytes_;
+      if (memory_block_->size < expected_size) {
+        LOGE(
+            "memory_block_->size < expected_size, memory_block_->size:%d, "
+            "expected_size:%d",
+            memory_block_->size, expected_size);
+        assert(false);
+      }
+    }
+    return;
+  }
   uint64_t capacity = n * c * h * w * element_bytes_;
+
   if (memory_block_ == nullptr) {
     memory_block_ = memory_pool_->allocate(capacity);
   } else if (memory_block_->size < capacity) {
-    memory_pool_->release(memory_block_);
+    if (memory_block_->own_memory) {
+      memory_pool_->release(memory_block_);
+    }
     memory_block_ = memory_pool_->allocate(capacity);
   } else {
-    // do nothing
+    // do nothing,use original memory block
   }
 }
 
-void BaseTensor::shareMemory(void* host_memory, uint64_t device_address,
-                             int element_size, const std::vector<int>& shape) {
-  if (owns_data_) {
-    LOGE("host_memory is not nullptr, cannot share memory\n");
-    return;
-  }
+int32_t BaseTensor::shareMemory(void* host_memory, uint64_t device_address,
+                                const std::vector<int>& shape) {
   if (shape.size() != 4) {
     LOGE("shape size must be 4\n");
-    return;
+    return -1;
+  }
+  if (owns_data_) {
+    memory_pool_->release(memory_block_);
+    LOGW("release memory block before share memory\n");
   }
   memory_block_ = std::make_unique<MemoryBlock>();
   memset(memory_block_.get(), 0, sizeof(MemoryBlock));
@@ -48,9 +65,9 @@ void BaseTensor::shareMemory(void* host_memory, uint64_t device_address,
   memory_block_->size =
       shape[0] * shape[1] * shape[2] * shape[3] * element_bytes_;
   shape_ = shape;
-  num_elements_ =
-      std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+
   memory_block_->own_memory = false;
+  return 0;
 }
 
 std::vector<int> BaseTensor::getShape() const { return shape_; }
@@ -120,6 +137,10 @@ int32_t BaseTensor::constructImage(std::shared_ptr<BaseImage> image,
   }
   if (!image->isAligned()) {
     LOGE("image is not aligned\n");
+    return -1;
+  }
+  if (memory_block_ == nullptr) {
+    LOGE("memory_block is nullptr");
     return -1;
   }
 
@@ -212,7 +233,7 @@ int32_t BaseTensor::release() {
     memory_pool_->release(memory_block_);
     memory_block_ = nullptr;
   }
-  num_elements_ = 0;
+
   shape_.clear();
   owns_data_ = false;
   return 0;
