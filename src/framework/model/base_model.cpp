@@ -66,7 +66,7 @@ void BaseModel::setInputBatchSize(const std::string& layer_name,
   }
   input_tensor->reshape(batch_size, input_tensor->getShape()[1],
                         input_tensor->getShape()[2],
-                        input_tensor->getShape()[3]);
+                        input_tensor->getShape()[3], net_->useRuntimeMemory());
   input_batch_size_ = batch_size;
 }
 

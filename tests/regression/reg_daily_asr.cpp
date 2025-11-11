@@ -79,7 +79,7 @@ class AsrTestSuite : public CVI_TDLModelTestSuite {
     ASSERT_NE(joiner_model_, nullptr);
 
     std::string tokens_path =
-        m_image_dir.string() + "/" + std::string(m_json_object["attachment"]);
+        m_image_dir.string() + "/" + std::string(m_json_object["appendix"]);
 
     if (model_id_encoder == "RECOGNITION_SPEECH_ZIPFORMER_ENCODER") {
       zipformer_model_ =

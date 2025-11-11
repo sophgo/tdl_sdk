@@ -164,8 +164,7 @@ int32_t CviNet::addInput(const std::string& name) {
   input_tensor_hash_[name] =
       std::make_shared<BaseTensor>(element_bytes, memory_pool_);
   auto& shape = input_output_tensor_infos_[name].shape;
-  input_tensor_hash_[name]->shareMemory(tinfo.sys_mem, tinfo.phy_addr,
-                                        element_bytes, shape);
+  input_tensor_hash_[name]->shareMemory(tinfo.sys_mem, tinfo.phy_addr, shape);
   LOGI(
       "finish add "
       "input:%s,reset input "
@@ -192,8 +191,7 @@ int32_t CviNet::addOutput(const std::string& name) {
   output_tensor_hash_[name] =
       std::make_shared<BaseTensor>(element_bytes, memory_pool_);
   auto& shape = input_output_tensor_infos_[name].shape;
-  output_tensor_hash_[name]->shareMemory(tinfo.sys_mem, tinfo.phy_addr,
-                                         element_bytes, shape);
+  output_tensor_hash_[name]->shareMemory(tinfo.sys_mem, tinfo.phy_addr, shape);
 
   LOGI(
       "finish add output:%s,use share "

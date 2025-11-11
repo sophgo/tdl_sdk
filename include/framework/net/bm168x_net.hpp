@@ -24,6 +24,9 @@ class BM168xNet : public BaseNet {
                                  const uint32_t model_buffer_size,
                                  std::vector<uint64_t>& mem_addrs,
                                  std::vector<uint32_t>& mem_sizes);
+  uint32_t getIOTensorBytes() override;
+  int32_t setIOTensorMemory(uint64_t phy_addr, uint8_t* sys_mem,
+                            uint32_t size) override;
 
  private:
   TensorInfo extractTensorInfo(bool is_input, int idx);
@@ -45,6 +48,5 @@ class BM168xNet : public BaseNet {
   bm_tensor_t* input_tensors_ = 0;
   bm_tensor_t* output_tensors_ = 0;
   std::shared_ptr<BaseMemoryPool> memory_pool_;
-  bool use_runtime_memory_ = false;
 };
 #endif

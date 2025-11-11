@@ -95,6 +95,10 @@ int32_t BM168xNet::setup() {
       auto &bmrt_shape = net_info_->stages[j].input_shapes[i];
       supported_batch_sizes_[input_tensor_names_[i]].push_back(
           bmrt_shape.dims[0]);
+      if (use_runtime_memory_) {  // only use first batch when use runtime
+                                  // memory
+        break;
+      }
     }
   }
   // TODO(fuquan.ke) fix me, add specified outputs only
@@ -117,7 +121,6 @@ int32_t BM168xNet::setup() {
   input_tensors_ = new bm_tensor_t[net_info_->input_num];
   output_tensors_ = new bm_tensor_t[net_info_->output_num];
   net_name_ = net_name;
-  LOGI("%s is setup", net_name.c_str());
   return 0;
 }
 
@@ -293,6 +296,8 @@ TensorInfo BM168xNet::extractTensorInfo(bool is_input, int idx) {
   tensor_info.tensor_size =
       CommonUtils::getDataTypeSize(tensor_info.data_type) *
       tensor_info.tensor_elem;
+  tensor_info.sys_mem = nullptr;
+  tensor_info.phy_addr = 0;
   return tensor_info;
 }
 int32_t BM168xNet::addInput(const std::string &name) {
@@ -310,12 +315,15 @@ int32_t BM168xNet::addInput(const std::string &name) {
   input_tensor_hash_[name] =
       std::make_shared<BaseTensor>(element_bytes, memory_pool_);
   auto &shape = input_output_tensor_infos_[name].shape;
-  input_tensor_hash_[name]->reshape(shape[0], shape[1], shape[2], shape[3]);
-  TensorInfo &tensor_info = input_output_tensor_infos_[name];
-  tensor_info.sys_mem = reinterpret_cast<uint8_t *>(
-      input_tensor_hash_[name]->getMemoryBlock()->virtualAddress);
-  tensor_info.phy_addr =
-      input_tensor_hash_[name]->getMemoryBlock()->physicalAddress;
+  input_tensor_hash_[name]->reshape(shape[0], shape[1], shape[2], shape[3],
+                                    !use_runtime_memory_);
+  MemoryBlock *memory_block = input_tensor_hash_[name]->getMemoryBlock();
+  if (memory_block != nullptr) {
+    TensorInfo &tensor_info = input_output_tensor_infos_[name];
+    tensor_info.sys_mem =
+        reinterpret_cast<uint8_t *>(memory_block->virtualAddress);
+    tensor_info.phy_addr = memory_block->physicalAddress;
+  }
   LOGI(
       "finish add "
       "input:%s,element_bytes:%d,shape:%d,%d,%d,%d,qscale:%f,zero_point:%d,"
@@ -344,7 +352,8 @@ int32_t BM168xNet::addOutput(const std::string &name) {
   output_tensor_hash_[name] =
       std::make_shared<BaseTensor>(element_bytes, memory_pool_);
   auto &shape = input_output_tensor_infos_[name].shape;
-  output_tensor_hash_[name]->reshape(shape[0], shape[1], shape[2], shape[3]);
+  output_tensor_hash_[name]->reshape(shape[0], shape[1], shape[2], shape[3],
+                                     !use_runtime_memory_);
   LOGI(
       "finish add output:%s,element_bytes:%d,shape:%d,%d,%d,%d,qscale:%f,"
       "zero_point:%d,dtype:%d",
@@ -433,10 +442,12 @@ int32_t BM168xNet::updateInputTensors() {
     if (batch_n == 1 && out_shape.dims[0] > 1) {
       LOGW("special case,batch_n:%d,out_shape.dims[0]:%d", batch_n,
            out_shape.dims[0]);
-      output_tensor->reshape(out_shape.dims[0], st[1], st[2], st[3]);
+      output_tensor->reshape(out_shape.dims[0], st[1], st[2], st[3],
+                             !use_runtime_memory_);
     } else {
       out_shape.dims[0] = batch_n;
-      output_tensor->reshape(batch_n, st[1], st[2], st[3]);
+      output_tensor->reshape(batch_n, st[1], st[2], st[3],
+                             !use_runtime_memory_);
     }
 
     // output_dev_mem.size = output_tensor->get_size();
@@ -444,8 +455,9 @@ int32_t BM168xNet::updateInputTensors() {
     output_tensors_[tensor_idx].shape = out_shape;
     output_tensors_[tensor_idx].device_mem = dev;
     output_tensors_[tensor_idx].st_mode = (bm_store_mode_t)store_mode_;
+    int shape_dim0 = use_runtime_memory_ ? out_shape.dims[0] : batch_n;
     LOGI("add output:%s,shape:%d,%d,%d,%d,dev_addr:0x%llx,dtype:%d",
-         name.c_str(), batch_n, st[1], st[2], st[3],
+         name.c_str(), shape_dim0, st[1], st[2], st[3],
          (unsigned long long)memory_block->physicalAddress,
          output_tensors_[tensor_idx].dtype);
     updateTensorInfo(name, output_tensor);
@@ -657,5 +669,71 @@ int32_t BM168xNet::getModelMemInfo(const void *model_buffer,
   LOGE("bm1684x not support getModelMemInfo with model_buffer");
   return -1;
 #endif
+  return 0;
+}
+
+uint32_t BM168xNet::getIOTensorBytes() {
+  uint32_t io_tensor_size = 0;
+  const int align_size = 4096;
+  for (int i = 0; i < net_info_->input_num; i++) {
+    TensorInfo &tensor_info =
+        input_output_tensor_infos_[net_info_->input_names[i]];
+    io_tensor_size +=
+        (tensor_info.tensor_size + align_size - 1) / align_size * align_size;
+  }
+  // TODO(fuquan.ke) fix me, add specified outputs only
+  for (int i = 0; i < net_info_->output_num; i++) {
+    TensorInfo &tensor_info =
+        input_output_tensor_infos_[net_info_->output_names[i]];
+    io_tensor_size +=
+        (tensor_info.tensor_size + align_size - 1) / align_size * align_size;
+  }
+  LOGI("io_tensor_size:%u", io_tensor_size);
+  return io_tensor_size;
+}
+
+int32_t BM168xNet::setIOTensorMemory(uint64_t phy_addr, uint8_t *sys_mem,
+                                     uint32_t size) {
+  uint32_t acc_offset = 0;
+
+  const int align_size = 4096;
+  int32_t ret = 0;
+  for (int i = 0; i < net_info_->input_num; i++) {
+    const std::string &name = net_info_->input_names[i];
+    std::shared_ptr<BaseTensor> tensor = input_tensor_hash_[name];
+    uint32_t tensor_size =
+        (tensor->getCapacity() + align_size - 1) / align_size * align_size;
+    ret = tensor->shareMemory(sys_mem + acc_offset, phy_addr + acc_offset,
+                              tensor->getShape());
+    TensorInfo &tensor_info = input_output_tensor_infos_[name];
+    tensor_info.sys_mem =
+        reinterpret_cast<uint8_t *>(tensor->getMemoryBlock()->virtualAddress);
+    tensor_info.phy_addr = tensor->getMemoryBlock()->physicalAddress;
+    if (ret != 0) {
+      LOGE("failed to share memory for input:%s", name.c_str());
+      return -1;
+    }
+    acc_offset += tensor_size;
+  }
+  for (int i = 0; i < net_info_->output_num; i++) {
+    const std::string &name = net_info_->output_names[i];
+    std::shared_ptr<BaseTensor> tensor = output_tensor_hash_[name];
+    uint32_t tensor_size =
+        (tensor->getCapacity() + align_size - 1) / align_size * align_size;
+    ret = tensor->shareMemory(sys_mem + acc_offset, phy_addr + acc_offset,
+                              tensor->getShape());
+    if (ret != 0) {
+      LOGE("failed to share memory for output:%s", name.c_str());
+      return -1;
+    }
+    acc_offset += tensor_size;
+  }
+  if (acc_offset > size) {
+    LOGE("share memory size overflow,need:%u > provided size:%u", acc_offset,
+         size);
+    return -1;
+  }
+  LOGIP("set io tensor memory done,acc_offset:%u,src_size:%u", acc_offset,
+        size);
   return 0;
 }
