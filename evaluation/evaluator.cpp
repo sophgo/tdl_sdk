@@ -13,7 +13,7 @@ int32_t Evaluator::writeResult(const std::string &result_file,
   }
   ofs << str_content;
   ofs.close();
-  printf("writeResult: %s\n %s\n", result_file.c_str(), str_content.c_str());
+  // printf("writeResult: %s\n %s\n", result_file.c_str(), str_content.c_str());
   return 0;
 }
 

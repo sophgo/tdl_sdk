@@ -213,7 +213,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModel(
 ModelConfig TDLModelFactory::getModelConfig(const ModelType model_type) {
   std::string model_type_str = modelTypeToString(model_type);
   if (model_config_map_.find(model_type_str) == model_config_map_.end()) {
-    LOGE("model config not found for model type: %s", model_type_str.c_str());
+    LOGW("model config not found for model type: %s", model_type_str.c_str());
     return ModelConfig();
   }
   auto json_config = model_config_map_[model_type_str];

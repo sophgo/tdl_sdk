@@ -203,10 +203,11 @@ int main(int argc, char *argv[]) {
       }
       if (output_image2 != NULL) {
         if (i == 0) {
-          VisualizeRectangle(boxes, obj_meta.size, input_image, output_image1);
+          VisualizeRectangleFromFile(boxes, obj_meta.size, input_image,
+                                     output_image1);
         } else {
-          VisualizeRectangle(boxes, obj_meta.size, output_image1,
-                             output_image1);
+          VisualizeRectangleFromFile(boxes, obj_meta.size, output_image1,
+                                     output_image1);
         }
         char crop_image[128] = "";
         snprintf(crop_image, sizeof(crop_image), "%s%d.jpg", basename, i);

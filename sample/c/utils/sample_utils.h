@@ -1,7 +1,9 @@
 #ifndef _RTSP_UTILS_H_
 #define _RTSP_UTILS_H_
 
+#if !defined(__BM168X__)
 #include <cvi_comm_video.h>
+#endif
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,12 +15,14 @@ extern "C" {
 
 #define QUEUE_SIZE 8
 
+#if !defined(__BM168X__)
 typedef struct {
   int32_t chn;
   PAYLOAD_TYPE_E pay_load_type;
   int32_t frame_width;
   int32_t frame_height;
 } RtspContext;
+#endif
 
 typedef enum {
   IMAGE_GRAY = 0,
@@ -118,7 +122,6 @@ int32_t ReleaseCameraFrame(TDLHandle handle, int chn);
  * @return 成功返回 0，失败返回-1
  */
 int32_t DestoryCamera(TDLHandle handle);
-#endif
 
 /**
  * @brief 发送图像到RTSP服务器
@@ -137,6 +140,17 @@ int32_t SendFrameRTSP(VIDEO_FRAME_INFO_S *frame, RtspContext *rtsp_context);
  * @return 成功返回 0，失败返回-1
  */
 int32_t DumpFrame(char *filename, VIDEO_FRAME_INFO_S *pstVideoFrame);
+
+#endif
+
+/**
+ * @brief 获取视频文件的一帧图像
+ *
+ * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
+ * @param video_path 视频文件路径
+ * @return 返回包装的TDLImageHandle对象, 如果失败返回 NULL
+ */
+TDLImage GetVideoFrame(TDLHandle handle, const char *video_path);
 
 #ifdef __cplusplus
 }

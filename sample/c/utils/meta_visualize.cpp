@@ -4,13 +4,14 @@
 #include <cstdlib>
 #include <cstring>
 #include <opencv2/opencv.hpp>
+#include "tdl_type_internal.hpp"
 #include "utils/tdl_log.hpp"
 
 #define min(x, y) (((x) <= (y)) ? (x) : (y))
 #define max(x, y) (((x) >= (y)) ? (x) : (y))
 
-int32_t VisualizeRectangle(box_t *box, int32_t num, char *input_path,
-                           char *output_path) {
+int32_t VisualizeRectangleFromFile(box_t *box, int32_t num, char *input_path,
+                                   char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     LOGE("input path is empty\n");
@@ -26,6 +27,35 @@ int32_t VisualizeRectangle(box_t *box, int32_t num, char *input_path,
   }
 
   cv::imwrite(output_path, image);
+
+  return 0;
+}
+
+int32_t VisualizeRectangle(box_t *box, int32_t num, TDLImage image_handle,
+                           char *output_path) {
+  cv::Mat mat;
+  bool is_rgb;
+
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+
+  int32_t ret = ImageFactory::convertToMat(image_context->image, mat, is_rgb);
+  if (ret != 0) {
+    std::cout << "Failed to convert to mat" << std::endl;
+    return -1;
+  }
+  if (is_rgb) {
+    cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+  }
+
+  for (int32_t i = 0; i < num; i++) {
+    cv::rectangle(mat,
+                  cv::Rect(int32_t(box[i].x1), int32_t(box[i].y1),
+                           int32_t(box[i].x2 - box[i].x1),
+                           int32_t(box[i].y2 - box[i].y1)),
+                  cv::Scalar(0, 0, 255), 2);
+  }
+
+  cv::imwrite(output_path, mat);
 
   return 0;
 }
