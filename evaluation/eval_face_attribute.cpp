@@ -5,17 +5,18 @@
 #include "tdl_model_factory.hpp"
 
 int main(int argc, char **argv) {
-  if (argc != 5) {
+  if (argc != 6) {
     printf(
-        "Usage: %s <model_id_name> <model_dir> <input_txt_path> "
+        "Usage: %s <model_id_name> <model_dir> <img_root> <input_txt_path> "
         "<output_txt_path>\n",
         argv[0]);
     return -1;
   }
   std::string model_id_name = argv[1];
   std::string model_dir = argv[2];
-  std::string input_txt_path = argv[3];
-  std::string output_txt_path = argv[4];
+  std::string img_root = argv[3];
+  std::string input_txt_path = argv[4];
+  std::string output_txt_path = argv[5];
 
   std::ifstream input_file(input_txt_path);
   if (!input_file.is_open()) {
@@ -27,6 +28,16 @@ int main(int argc, char **argv) {
   if (!output_file.is_open()) {
     printf("Failed to open output txt file: %s\n", output_txt_path.c_str());
     return -1;
+  }
+
+  struct stat root_stat;
+  if (stat(img_root.c_str(), &root_stat) != 0 || !S_ISDIR(root_stat.st_mode)) {
+    printf("Error: img_root is not a valid directory: %s\n", img_root.c_str());
+    return -1;
+  }
+
+  if (!img_root.empty() && img_root.back() != '/') {
+    img_root += "/";
   }
 
   TDLModelFactory &model_factory = TDLModelFactory::getInstance();
@@ -66,25 +77,29 @@ int main(int argc, char **argv) {
 
     // 找到第一个 '|' 分隔符
     size_t sep_pos = line.find('|');
-    std::string image_path;
+    std::string rel_image_path;
     std::string rest;
     if (sep_pos != std::string::npos) {
-      image_path = line.substr(0, sep_pos);
+      rel_image_path = line.substr(0, sep_pos);
       rest = line.substr(sep_pos);  // 包含 '|'
     } else {
-      image_path = line;
+      rel_image_path = line;
       rest = "";
     }
 
-    if (image_path.empty()) {
+    if (rel_image_path.empty()) {
       output_file << line << " - Failed: empty image path\n";
       continue;
     }
 
-    std::shared_ptr<BaseImage> image = ImageFactory::readImage(image_path);
+    std::string full_image_path = img_root + rel_image_path;
+    std::shared_ptr<BaseImage> image = ImageFactory::readImage(full_image_path);
     if (!image) {
-      printf("Failed to create image: %s\n", image_path.c_str());
-      output_file << line << " - Failed to load image\n";
+      printf("Failed to create image: %s (relative path: %s)\n",
+             full_image_path.c_str(), rel_image_path.c_str());
+      output_file << line
+                  << " - Failed to load image (full path: " << full_image_path
+                  << ")\n";
       continue;
     }
 
