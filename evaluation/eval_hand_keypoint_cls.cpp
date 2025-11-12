@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <fstream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 #include "tdl_model_factory.hpp"
@@ -30,10 +31,18 @@ int main(int argc, char** argv) {
     txt_root += "/";
   }
   std::vector<std::string> keypoints_files;
+  std::vector<int> real_ids;
   std::ifstream infile(input_txt_list);
   std::string line;
   while (std::getline(infile, line)) {
     if (!line.empty()) {
+      // 读取真实ID
+      std::stringstream ss(line);
+      std::string real_id_str;
+      std::getline(ss, real_id_str, '/');
+      int real_id = std::stoi(real_id_str);
+      real_ids.push_back(real_id);
+
       std::string full_path = txt_root + line;
       keypoints_files.push_back(full_path);
     }
@@ -72,7 +81,10 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  for (const auto& keypoints_txt : keypoints_files) {
+  for (size_t idx = 0; idx < keypoints_files.size(); ++idx) {
+    const auto& keypoints_txt = keypoints_files[idx];
+    int real_id = real_ids[idx];
+
     std::vector<float> keypoints(42);
     FILE* fp = fopen(keypoints_txt.c_str(), "r");
     if (!fp) {
@@ -110,8 +122,8 @@ int main(int argc, char** argv) {
     if (!out_datas.empty()) {
       std::shared_ptr<ModelClassificationInfo> cls_meta =
           std::static_pointer_cast<ModelClassificationInfo>(out_datas[0]);
-      outfile << keypoints_txt << " " << cls_meta->topk_class_ids[0] << " "
-              << cls_meta->topk_scores[0] << "\n";
+      outfile << keypoints_txt << "," << cls_meta->topk_class_ids[0] << ","
+              << real_id << "\n";
     } else {
       outfile << keypoints_txt << " No_output\n";
     }
