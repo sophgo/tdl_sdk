@@ -125,7 +125,8 @@ int main(int argc, char *argv[]) {
     }
     printf("]\n");
     if (output_image != NULL) {
-      VisualizeRectangle(boxes, obj_meta.size, input_image, output_image);
+      VisualizeRectangleFromFile(boxes, obj_meta.size, input_image,
+                                 output_image);
     }
   }
 

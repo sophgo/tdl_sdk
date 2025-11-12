@@ -1,18 +1,23 @@
 #include "sample_utils.h"
 #include <memory>
+#if !defined(__BM168X__)
 #include "encoder/rtsp/rtsp.hpp"
-#include "tdl_type_internal.hpp"
 #include "utils/frame_dump.hpp"
+#endif
+#include "tdl_type_internal.hpp"
 #include "utils/tdl_log.hpp"
 #include "video_decoder/video_decoder_type.hpp"
 
+#if !defined(__BM168X__)
 namespace {
 // 全局存储RTSP实例
 std::shared_ptr<RTSP> g_rtsp_instance;
 }  // namespace
+#endif
 
 extern "C" {
 
+#if !defined(__BM168X__)
 int32_t SendFrameRTSP(VIDEO_FRAME_INFO_S *frame, RtspContext *rtsp_context) {
   if (g_rtsp_instance == nullptr) {
     g_rtsp_instance = std::make_shared<RTSP>(
@@ -22,6 +27,7 @@ int32_t SendFrameRTSP(VIDEO_FRAME_INFO_S *frame, RtspContext *rtsp_context) {
   g_rtsp_instance->sendFrame(frame);
   return 0;
 }
+#endif
 
 void InitQueue(ImageQueue *q) {
   q->front = q->rear = q->count = 0;
@@ -150,10 +156,41 @@ int32_t DestoryCamera(TDLHandle handle) {
   return 0;
 }
 
-#endif
-
 int32_t DumpFrame(char *filename, VIDEO_FRAME_INFO_S *pstVideoFrame) {
   return FrameDump::saveFrame(filename, pstVideoFrame);
+}
+
+#endif
+
+TDLImage GetVideoFrame(TDLHandle handle, const char *video_path) {
+  TDLContext *context = (TDLContext *)handle;
+
+  if (context == nullptr) {
+    LOGE("context is nullptr\n");
+    return NULL;
+  }
+
+  if (!context->video_decoder) {
+    context->video_decoder =
+        VideoDecoderFactory::createVideoDecoder(VideoDecoderType::OPENCV);
+    if (context->video_decoder == nullptr) {
+      LOGE("create video decoder failed\n");
+      return NULL;
+    }
+
+    context->video_decoder->init(std::string(video_path));
+  }
+
+  TDLImageContext *image_context = new TDLImageContext();
+  context->video_decoder->read(image_context->image);
+
+  if (image_context->image == NULL) {
+    delete image_context;
+    image_context = NULL;
+    return NULL;
+  }
+
+  return (TDLImage)image_context;
 }
 
 }  // extern "C"

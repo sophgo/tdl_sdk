@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
         }
       }
       if (output_file != NULL) {
-        VisualizeRectangle(boxes, track_meta.out_num, outpath, outpath);
+        VisualizeRectangleFromFile(boxes, track_meta.out_num, outpath, outpath);
       }
     }
 

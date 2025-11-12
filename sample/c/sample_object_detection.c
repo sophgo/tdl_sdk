@@ -170,7 +170,8 @@ int main(int argc, char *argv[]) {
         boxes[i].y2 = obj_meta.info[i].box.y2;
       }
       if (output_image != NULL) {
-        VisualizeRectangle(boxes, obj_meta.size, input_image, output_image);
+        VisualizeRectangleFromFile(boxes, obj_meta.size, input_image,
+                                   output_image);
       }
     }
   }

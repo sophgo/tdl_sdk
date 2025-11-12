@@ -69,7 +69,12 @@ inline void parse_regression_data(T* p_reg_ptr, int score_size, int i, int j,
   *y2 = grid_y[i][j] + std::exp(reg_y2);
 }
 
-FearTrack::FearTrack() { makeGrid(); }
+FearTrack::FearTrack() {
+  net_param_.model_config.mean = {123.675, 116.28, 103.53};
+  net_param_.model_config.std = {58.395, 57.12, 57.375};
+  net_param_.model_config.rgb_order = "rgb";
+  makeGrid();
+}
 
 FearTrack::~FearTrack() {}
 
