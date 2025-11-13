@@ -190,9 +190,9 @@ PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
   } else if (img_format == ImageFormat::YUV420SP_VU) {
     pixel_format = PIXEL_FORMAT_NV21;
   } else if (img_format == ImageFormat::YUV420P_UV) {
-    LOGE("YUV420SP_VU not support, imageFormat: %d", (int)img_format);
+    pixel_format = PIXEL_FORMAT_YUV_PLANAR_420;
   } else if (img_format == ImageFormat::YUV420P_VU) {
-    LOGE("YUV420SP_VU not support, imageFormat: %d", (int)img_format);
+    LOGE("YUV420P_VU not support, imageFormat: %d", (int)img_format);
   } else if (img_format == ImageFormat::RGB_PACKED) {
     pixel_format = PIXEL_FORMAT_RGB_888;
   } else if (img_format == ImageFormat::BGR_PACKED) {
