@@ -277,5 +277,36 @@ TEST_F(DetectionTestSuite, accuracy) {
     pool->release(mem_blocks[i]);
   }
 }
+
+TEST_F(DetectionTestSuite, performance) {
+  std::shared_ptr<BaseModel> det = TDLModelFactory::getInstance().getModel(
+      model_id_, model_path_);  // One model id may correspond to multiple
+                                // models with different sizes
+  ASSERT_NE(det, nullptr);
+  det->setModelThreshold(m_json_object["model_score_threshold"]);
+
+  std::string model_path = m_model_dir.string() + "/" + gen_model_dir() + "/" +
+                           m_json_object["model_name"].get<std::string>() +
+                           gen_model_suffix();
+
+  std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
+  std::string platform = get_platform_str();
+  TestFlag test_flag = CVI_TDLTestContext::getInstance().getTestFlag();
+  nlohmann::ordered_json results;
+  LOGIP("test_flag: %d", static_cast<int>(test_flag));
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    LOGIP("checkToGetProcessResult failed");
+    return;
+  }
+
+  auto iter = results.begin();
+  std::string image_path =
+      (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
+
+  std::shared_ptr<BaseImage> frame =
+      ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
+
+  run_performance(model_path, frame, det);
+}
 }  // namespace unitest
 }  // namespace cvitdl

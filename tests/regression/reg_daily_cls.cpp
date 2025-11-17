@@ -116,7 +116,44 @@ TEST_F(ClassificationTestSuite, accuracy) {
   } else {
     LOGIP("check_num: %d", check_num);
   }
-}
+}  // end of TEST_F
+
+TEST_F(ClassificationTestSuite, performance) {
+  std::string model_path = m_model_dir.string() + "/" + gen_model_dir() + "/" +
+                           m_json_object["model_name"].get<std::string>() +
+                           gen_model_suffix();
+
+  std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
+  std::string platform = get_platform_str();
+  CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
+  TestFlag test_flag = context.getTestFlag();
+  nlohmann::ordered_json results;
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    LOGIP("checkToGetProcessResult failed");
+    return;
+  }
+
+  auto it = results.begin();
+  std::string image_path =
+      (m_image_dir / m_json_object["image_dir"] / it.key()).string();
+  LOGIP("image path : %s", image_path.c_str());
+  std::shared_ptr<BaseImage> frame = loadInputData(image_path);
+  if (!frame) {
+    LOGE("performance: failed to read image %s", image_path.c_str());
+  }
+
+  std::string model_id_str = std::string(m_json_object["model_id"]);
+
+  if (model_id_str == "CLS_SOUND_COMMAND_NIHAOSHIYUN" ||
+      model_id_str == "CLS_SOUND_COMMAND_XIAOAIXIAOAI") {
+    run_performance(model_path, frame, cls_, 2000.0);
+  } else if (model_id_str == "CLS_SOUND_BABAY_CRY") {
+    run_performance(model_path, frame, cls_, 3000.0);
+  } else {
+    run_performance(model_path, frame, cls_);
+  }
+
+}  // end of TEST_F
 
 }  // namespace unitest
 }  // namespace cvitdl

@@ -4,6 +4,7 @@ message(STATUS "REPO_DIR:${REPO_DIR}")
 include_directories(
                     ${REPO_DIR}/include/framework
                     ${REPO_DIR}/include/components
+                    ${REPO_DIR}/include/nn
                     )
 
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR

@@ -2,6 +2,7 @@ project(app)
 
 include_directories(${REPO_DIR}/include)
 include_directories(${REPO_DIR}/include/framework)
+include_directories(${REPO_DIR}/include/nn)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB_RECURSE SRC_FRAMWORK_FILES_CUR ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)

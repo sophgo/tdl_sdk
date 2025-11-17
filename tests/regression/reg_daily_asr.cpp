@@ -154,5 +154,58 @@ TEST_F(AsrTestSuite, accuracy) {
     writeJsonFile(context.getJsonFilePath().string(), m_json_object);
   }
 }  // end of TEST_F
+
+TEST_F(AsrTestSuite, performance) {
+  std::string model_path_encoder =
+      m_model_dir.string() + "/" + gen_model_dir() + "/" +
+      m_json_object["encoder_model_name"].get<std::string>() +
+      gen_model_suffix();
+
+  std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
+  std::string platform = get_platform_str();
+  CVI_TDLTestContext& context = CVI_TDLTestContext::getInstance();
+  TestFlag test_flag = context.getTestFlag();
+  nlohmann::ordered_json results;
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    return;
+  }
+  if (results.empty()) {
+    LOGIP("performance: no images available, skip");
+    return;
+  }
+
+  auto iter = results.begin();
+  std::string image_path =
+      (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
+  LOGIP("image_path: %s\n", image_path.c_str());
+
+  // 创建缓冲区并读取音频文件的二进制内容，如果读取失败则断言失败
+  std::vector<uint8_t> buffer;
+  ASSERT_TRUE(CommonUtils::readBinaryFile(image_path, buffer));
+  for (int i = 0; i < sample_rate_ * 0.5 * 2;
+       i++) {  // pad 0.5s, *2 for uint8_t to int16
+    buffer.push_back(0);
+  }
+  // 获取填充后的音频数据总大小
+  int frame_size = buffer.size();
+  // 创建一个BaseImage对象，用来承载音频数据
+  std::shared_ptr<BaseImage> bin_data = ImageFactory::createImage(
+      frame_size, 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
+  if (!bin_data) {
+    LOGE("performance: failed to create image %s", image_path.c_str());
+  }
+  // 获取图像对象的第一个通道的虚拟地址阵阵
+  uint8_t* data_buffer = bin_data->getVirtualAddress()[0];
+  // 将音频数据拷贝到图像对象的内存中
+  memcpy(data_buffer, buffer.data(), frame_size * sizeof(uint8_t));
+  // images.push_back(ImgItem{iter.key(), image_path, bin_data});
+
+  std::string model_id_encoder = std::string(m_json_object["model_id_encoder"]);
+
+  if (model_id_encoder == "RECOGNITION_SPEECH_ZIPFORMER_ENCODER") {
+    run_performance(model_path_encoder, bin_data, zipformer_model_, 1000.0);
+  }
+
+}  // end of TEST_F
 }  // namespace unitest
 }  // namespace cvitdl

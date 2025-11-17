@@ -84,11 +84,12 @@ int32_t AudioClassification::inference(
     int img_width = image->getWidth() / 2;  // unit: 16 bits
     int img_height = image->getHeight();
 
+    model_timer_.TicToc("runstart");
+
     // save audio to image array
     short *temp_buffer = (short *)image->getVirtualAddress()[0];
     normalizeSound(temp_buffer, img_width * img_height);
     mp_extractor_->update_data(temp_buffer, img_width * img_height);
-
     std::string input_layer = net_->getInputNames()[0];
 
     const TensorInfo &tinfo = net_->getTensorInfo(input_layer);
@@ -104,15 +105,15 @@ int32_t AudioClassification::inference(
                                             input_ptr, int(tinfo.tensor_elem),
                                             tinfo.qscale, fix_);
     }
-
+    model_timer_.TicToc("preprocess");
     net_->updateInputTensors();
     net_->forward();
+    model_timer_.TicToc("tpu");
     net_->updateOutputTensors();
     std::vector<std::shared_ptr<ModelOutputInfo>> batch_results;
-
     std::vector<std::shared_ptr<BaseImage>> batch_images = {image};
     outputParse(batch_images, batch_results);
-
+    model_timer_.TicToc("post");
     out_datas.insert(out_datas.end(), batch_results.begin(),
                      batch_results.end());
   }

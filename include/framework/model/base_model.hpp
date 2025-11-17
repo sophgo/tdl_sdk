@@ -11,7 +11,7 @@
 #include "image/base_image.hpp"
 #include "net/base_net.hpp"
 #include "preprocess/base_preprocessor.hpp"
-
+#include "tdl_model_defs.hpp"
 #include "utils/profiler.hpp"
 
 class BaseModel {
@@ -74,6 +74,9 @@ class BaseModel {
   virtual int32_t onModelOpened() { return 0; }
   virtual int32_t onModelClosed() { return 0; }
 
+  ModelType getModelType() const { return model_type_; }
+  void setModelType(ModelType model_type) { model_type_ = model_type; }
+
   void setTypeMapping(const std::map<int, TDLObjectType>& type_mapping);
   virtual void setModelThreshold(float threshold);
   virtual void setExportFeature(int flag);
@@ -114,6 +117,8 @@ class BaseModel {
   std::string output_layer_;
   float model_threshold_ = 0.5;
   int export_feature = 0;
+
+  ModelType model_type_;
 
   std::map<std::string, std::vector<std::vector<float>>> batch_rescale_params_;
 
