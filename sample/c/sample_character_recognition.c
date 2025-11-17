@@ -93,7 +93,9 @@ int main(int argc, char *argv[]) {
   }
 
   TDLText obj_meta = {0};
+
   ret = TDL_CharacterRecognition(tdl_handle, model_id, image, &obj_meta);
+
   if (ret != 0) {
     printf("TDL_CharacterRecognition failed with %#x!\n", ret);
   } else {

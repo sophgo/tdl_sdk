@@ -30,6 +30,8 @@ class NetTestSuite : public CVI_TDLTestSuite {
         TDLModelFactory::getInstance().getModelPath(ModelType::SCRFD_DET_FACE);
     EXPECT_NE(model_path_, "");
     std::ifstream model_file(model_path_, std::ios::binary | std::ios::ate);
+    // 打印加载的模型路径，查看为什么加载失败
+    std::cout << "model path: " << model_path_ << std::endl;
     ASSERT_TRUE(model_file.is_open());
     std::streampos file_size = model_file.tellg();
     ASSERT_GT(file_size, 0);

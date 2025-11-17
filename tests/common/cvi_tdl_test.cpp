@@ -64,7 +64,7 @@ bool CVI_TDLTestContext::setTestFlag(const std::string &test_flag) {
     test_flag_ = TestFlag::PERFORMANCE;
   } else if (test_flag == "generate_func") {
     test_flag_ = TestFlag::GENERATE_FUNCTION_RES;
-  } else if (test_flag == "generate_perf") {
+  } else if (test_flag == "generate_performance") {
     test_flag_ = TestFlag::GENERATE_PERFORMANCE_RES;
   } else {
     return false;

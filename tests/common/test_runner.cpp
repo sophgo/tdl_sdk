@@ -74,7 +74,8 @@ int main(int argc, char *argv[]) {
   if (argc != 4 && argc != 5 && argc != 6) {
     std::cerr << "Usage: " << argv[0]
               << " <config.json> <model_dir> <dataset_dir> "
-                 "[test_flag(func,perf,generate_func,generate_perf)] "
+                 "[test_flag(func,performance,generate_function_res,generate_"
+                 "performance,perf_summary)] "
                  "[test_type(regression,unit,all)]"
               << std::endl;
     return 1;
@@ -245,6 +246,8 @@ int main(int argc, char *argv[]) {
             for (const auto &it : failed_items) ofs << "  - " << it << "\n";
           }
           ofs.close();
+          if (test_flag == "generate_performance")
+            summary(log_dir, (rpt_dir / "summary.md").string());
         }
       }
     }

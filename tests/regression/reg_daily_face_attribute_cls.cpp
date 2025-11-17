@@ -113,7 +113,35 @@ TEST_F(AttributesTestSuite, accuracy) {
     m_json_object[platform] = results;
     writeJsonFile(context.getJsonFilePath().string(), m_json_object);
   }
-}
+}  // end of TEST_F
+
+TEST_F(AttributesTestSuite, performance) {
+  std::string model_path = m_model_dir.string() + "/" + gen_model_dir() + "/" +
+                           m_json_object["model_name"].get<std::string>() +
+                           gen_model_suffix();
+
+  std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
+  std::string platform = get_platform_str();
+  CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
+  TestFlag test_flag = context.getTestFlag();
+  nlohmann::ordered_json results;
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    return;
+  }
+
+  auto iter = results.begin();
+  std::string image_path =
+      (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
+  LOGIP("image_path: %s\n", image_path.c_str());
+  std::shared_ptr<BaseImage> frame =
+      ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
+  if (!frame) {
+    LOGE("performance: failed to read image %s", image_path.c_str());
+  }
+
+  run_performance(model_path, frame, m_model);
+
+}  // end of TEST_F
 
 }  // namespace unitest
 }  // namespace cvitdl

@@ -3,32 +3,8 @@
   "report_dir": "./report",
 
   "test_suites": [
-    {     
-      "name": "MatcherTestSuite.*",
-      "_comment": "feature matching test",
-      "type": "unit",
-      "platforms": ["ALL"]
-    },
-    {
-      "name": "PreprocessorTestSuite.*",
-      "_comment": "image preprocess test",
-      "type": "unit",
-      "platforms": ["ALL"]
-    },
-    {      
-      "name": "ImageTestSuite.*",
-      "_comment": "image test",
-      "type": "unit",
-      "platforms": ["ALL"]
-    },
-    {
-      "name": "NetTestSuite.*",
-      "_comment": "net test",
-      "type": "unit",
-      "platforms": ["ALL"]
-    },
     {    
-      "name": "DetectionTestSuite.accuracy",
+      "name": "DetectionTestSuite.performance",
       "_comment": "object detection test",
       "type": "regression",
       "platforms": ["ALL"],
@@ -116,7 +92,7 @@
       }
     },
     {
-      "name": "ClassificationTestSuite.accuracy",
+      "name": "ClassificationTestSuite.performance",
       "_comment": "classification model test",
       "type": "regression",
       "platforms": ["ALL"],
@@ -140,7 +116,7 @@
       }
     },
     {
-      "name": "AttributesTestSuite.accuracy",
+      "name": "AttributesTestSuite.performance",
       "_comment": "face attribute test",
       "type": "regression",
       "platforms": ["ALL"],
@@ -166,7 +142,7 @@
     },
     {
      
-      "name": "KeypointTestSuite.accuracy",
+      "name": "KeypointTestSuite.performance",
       "_comment": "keypoint detection test",
       "type": "regression",
       "platforms": ["ALL"],
@@ -191,7 +167,7 @@
     },
     {
      
-      "name": "FeatureExtraTestSuite.accuracy",
+      "name": "FeatureExtraTestSuite.performance",
       "_comment": "feature extraction test",
       "type": "regression",
       "platforms": ["ALL"],
@@ -211,7 +187,7 @@
     },
     {
      
-      "name": "SegmentationTestSuite.accuracy",
+      "name": "SegmentationTestSuite.performance",
       "_comment": "segmentation model test",
       "type": "regression",
       "platforms": ["ALL"],
@@ -237,7 +213,7 @@
     },
     {
      
-      "name": "OcrTestSuite.accuracy",
+      "name": "OcrTestSuite.performance",
       "_comment": "ocr test",
       "type": "regression",
       "platforms": ["ALL"],
@@ -256,8 +232,7 @@
       }
     },
     {
-     
-      "name": "SotTestSuite.accuracy",
+      "name": "SotTestSuite.performance",
       "_comment": "SOT model test",
       "type": "regression",
       "platforms": ["ALL"],
@@ -265,54 +240,6 @@
         "common": [
           "tracking_feartrack_128_128_256_256_INT8.json"
         ]
-      }
-    },
-    {
-      "name": "AsrTestSuite.accuracy",
-      "_comment": "AsrTestSuite model test",
-      "type": "regression",
-      "platforms": ["ALL"],
-      "files": {
-        "common": [
-          "recognition_speech_zipformer-s_71_80_BF16.json"
-        ],
-        "exclude": {
-          "CV180X": [
-            "recognition_speech_zipformer-s_71_80_BF16.json"
-          ],
-          "CV181X": [
-            "recognition_speech_zipformer-s_71_80_BF16.json"
-          ],
-          "BM1684X": [
-            "recognition_speech_zipformer-s_71_80_BF16.json"
-          ]
-        }
-      }
-    },
-    {
-      "name": "ClipTestSuite.*",
-      "_comment": "clip model test",
-      "type": "regression",
-      "platforms": ["ALL"],
-      "files": {
-        "common": [
-          "feature_clip_224_224_W4BF16.json",
-          "feature_mobileclip2_B_224_224_INT8.json",
-          "feature_mobileclip2_S2_224_224_INT8.json"
-        ],
-        "exclude": {
-          "BM1688": [
-            "feature_clip_224_224_W4BF16.json"
-          ],
-          "CV186X": [
-            "feature_clip_224_224_W4BF16.json"
-          ],
-          "CV181X": [
-            "feature_clip_224_224_W4BF16.json",
-            "feature_mobileclip2_B_224_224_INT8.json",
-            "feature_mobileclip2_S2_224_224_INT8.json"
-          ]
-        }
       }
     }
   ]

@@ -394,6 +394,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModelImpl(
     LOGE("model not found for model type: %d", static_cast<int>(model_type));
     return nullptr;
   }
+  model->setModelType(model_type);
   NetParam net_param_default = model->getNetParam();
   net_param_default.device_id = device_id;
   // merge net_param_default into  model_config

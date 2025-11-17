@@ -209,5 +209,33 @@ TEST_F(SegmentationTestSuite, accuracy) {
   }
 }
 
+TEST_F(SegmentationTestSuite, performance) {
+  std::string model_path = m_model_dir.string() + "/" + gen_model_dir() + "/" +
+                           m_json_object["model_name"].get<std::string>() +
+                           gen_model_suffix();
+
+  std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
+  std::string platform = get_platform_str();
+  CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
+  TestFlag test_flag = context.getTestFlag();
+  nlohmann::ordered_json results;
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    return;
+  }
+  if (results.empty()) {
+    LOGIP("performance: no images available, skip");
+    return;
+  }
+
+  auto iter = results.begin();
+  std::string image_path =
+      (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
+  std::shared_ptr<BaseImage> frame =
+      ImageFactory::readImage(image_path, ImageFormat::RGB_PACKED);
+  ASSERT_NE(frame, nullptr);
+
+  run_performance(model_path, frame, det_);
+
+}  // end of test
 }  // namespace unitest
 }  // namespace cvitdl

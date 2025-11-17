@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "cvi_tdl_test.hpp"
-
+#include "parse_logs.hpp"
 int main(int argc, char *argv[]) {
   testing::InitGoogleTest(&argc, argv);
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         argv[0]);
     printf(
         "test_flag: "
-        "function,performance,generate_function_res,generate_performance_"
+        "func,performance,generate_function_res,generate_performance"
         "res\n");
     return -1;
   }
