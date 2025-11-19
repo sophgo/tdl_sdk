@@ -51,7 +51,8 @@ void dump_kp_to_dir_txt(
       float y = lm->landmarks_y[k];
 
       if (model_id_name == "KEYPOINT_FACE_V2" ||
-          model_id_name == "KEYPOINT_SIMCC_PERSON17") {
+          model_id_name == "KEYPOINT_SIMCC_PERSON17" ||
+          model_id_name == "KEYPOINT_LICENSE_PLATE") {
         x /= image_width;
         y /= image_height;
       }

@@ -23,8 +23,9 @@ std::string remove_extension(const std::string& filename) {
 }
 
 static std::string dump_all_poses_to_txt(
-    const std::vector<ObjectBoxLandmarkInfo>& box_landmarks,
-    const std::string& img_path, const std::string& out_dir = ".") {
+    const std::vector<ObjectBoxLandmarkInfo>& box_landmarks, float image_width,
+    float image_height, const std::string& img_path,
+    const std::string& out_dir = ".") {
   std::string filename = get_filename(img_path);
   std::string prefix = remove_extension(filename);
 
@@ -42,7 +43,8 @@ static std::string dump_all_poses_to_txt(
   // x1 y1 x2 y2 ... x17 y17
   for (const auto& one : box_landmarks) {
     for (int k = 0; k < 17; ++k) {
-      fout << one.landmarks_x[k] << " " << one.landmarks_y[k] << "\n";
+      fout << one.landmarks_x[k] / image_width << " "
+           << one.landmarks_y[k] / image_height << "\n";
     }
     fout << "\n";
   }
@@ -146,9 +148,12 @@ int main(int argc, char* argv[]) {
       continue;
     }
 
+    uint32_t image_width = img->getWidth();
+    uint32_t image_height = img->getHeight();
+
     auto meta = std::static_pointer_cast<ModelBoxLandmarkInfo>(outs[0]);
-    std::string txt_path =
-        dump_all_poses_to_txt(meta->box_landmarks, img_path, res_dir);
+    std::string txt_path = dump_all_poses_to_txt(
+        meta->box_landmarks, image_width, image_height, img_path, res_dir);
     if (!txt_path.empty()) {
       std::cout << "  saved: " << txt_path << std::endl;
     }
