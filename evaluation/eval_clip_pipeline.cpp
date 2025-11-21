@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 #include "tdl_model_factory.hpp"
+#include "utils/common_utils.hpp"
 #include "utils/tokenizer_bpe.hpp"
-
 // 读取图片路径列表
 std::vector<std::string> read_image_list(const std::string& list_file,
                                          std::vector<int>& real_classes) {
@@ -35,33 +35,6 @@ std::vector<std::string> read_image_list(const std::string& list_file,
   return image_paths;
 }
 
-// 计算点积
-float dot_product(const std::vector<float>& a, const std::vector<float>& b) {
-  float sum = 0.0f;
-  for (size_t i = 0; i < a.size(); ++i) sum += a[i] * b[i];
-  return sum;
-}
-
-// L2归一化
-void normalize(std::vector<float>& v) {
-  float norm = 0.0f;
-  for (float f : v) norm += f * f;
-  norm = std::sqrt(norm);
-  if (norm > 1e-6)
-    for (float& f : v) f /= norm;
-}
-
-std::vector<float> softmax(const std::vector<float>& logits) {
-  std::vector<float> result(logits.size());
-  float max_logit = *std::max_element(logits.begin(), logits.end());
-  float sum = 0.0f;
-  for (size_t i = 0; i < logits.size(); ++i) {
-    result[i] = std::exp(logits[i] - max_logit);  // for numerical stability
-    sum += result[i];
-  }
-  for (float& v : result) v /= sum;
-  return result;
-}
 // 检查模型ID是否在允许的列表中
 int is_valid_model_id(const char* id, const char* const valid_ids[],
                       int count) {
@@ -235,11 +208,7 @@ int main(int argc, char** argv) {
   }
 
   std::vector<std::shared_ptr<ModelOutputInfo>> out_txt;
-  // model_clip_text->inference(input_texts, out_txt);
-  for (int i = 0; i < 1001; i++) {
-    out_txt.clear();
-    model_clip_text->inference(input_texts, out_txt);
-  }
+  model_clip_text->inference(input_texts, out_txt);
 
   if (out_txt.empty()) {
     printf("No text features extracted\n");
@@ -255,7 +224,7 @@ int main(int argc, char** argv) {
     for (size_t j = 0; j < feature_meta->embedding_num; j++) {
       feature_vec[j] = feature_ptr[j];
     }
-    normalize(feature_vec);
+    CommonUtils::normalize(feature_vec);
     text_features.push_back(feature_vec);
   }
 
@@ -292,15 +261,15 @@ int main(int argc, char** argv) {
     for (size_t j = 0; j < feature_meta->embedding_num; j++) {
       image_feature[j] = feature_ptr[j];
     }
-    normalize(image_feature);
+    CommonUtils::normalize(image_feature);
 
     // 计算相似度
     std::vector<float> logits;
     for (size_t j = 0; j < text_features.size(); ++j) {
-      float sim = dot_product(image_feature, text_features[j]);
+      float sim = CommonUtils::dot_product(image_feature, text_features[j]);
       logits.push_back(sim * 100.0f);
     }
-    std::vector<float> probs = softmax(logits);
+    std::vector<float> probs = CommonUtils::softmax(logits);
 
     // 找最大概率对应的文本索引
     size_t max_idx = 0;

@@ -3,6 +3,7 @@
 #include <libgen.h>
 #include <limits.h>  // for PATH_MAX
 #include <unistd.h>
+#include <algorithm>
 #include <random>
 #include <string>
 #include "utils/tdl_log.hpp"
@@ -51,9 +52,9 @@ InferencePlatform CommonUtils::getPlatform() {
 #endif
 }
 
-bool CommonUtils::readBinaryFile(const std::string &strf,
-                                 std::vector<uint8_t> &buffer) {
-  FILE *fp = fopen(strf.c_str(), "rb");
+bool CommonUtils::readBinaryFile(const std::string& strf,
+                                 std::vector<uint8_t>& buffer) {
+  FILE* fp = fopen(strf.c_str(), "rb");
   if (fp == nullptr) {
     LOGE("read file failed,%s\n", strf.c_str());
     return false;
@@ -70,7 +71,7 @@ bool CommonUtils::readBinaryFile(const std::string &strf,
 std::string CommonUtils::getLibraryPath() {
   Dl_info info{};
   // use the address of any function or static in your .so:
-  if (dladdr((void *)&CommonUtils::getLibraryPath, &info) && info.dli_fname) {
+  if (dladdr((void*)&CommonUtils::getLibraryPath, &info) && info.dli_fname) {
     // info.dli_fname is the path as the dynamic loader saw it
     char resolved[PATH_MAX];
     if (realpath(info.dli_fname, resolved))
@@ -87,7 +88,7 @@ std::string CommonUtils::getLibraryDir() {
   return (pos != std::string::npos ? full.substr(0, pos) : std::string{});
 }
 
-std::string CommonUtils::getParentDir(const std::string &path) {
+std::string CommonUtils::getParentDir(const std::string& path) {
   auto pos = path.find_last_of('/');
   return (pos != std::string::npos ? path.substr(0, pos) : std::string{});
 }
@@ -104,7 +105,7 @@ std::string CommonUtils::getExecutableDir() {
   return std::string(dirname(dir));
 }
 
-int32_t CommonUtils::randomFill(uint8_t *data, uint32_t size) {
+int32_t CommonUtils::randomFill(uint8_t* data, uint32_t size) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<> dis(0, 255);
@@ -112,4 +113,32 @@ int32_t CommonUtils::randomFill(uint8_t *data, uint32_t size) {
     data[i] = static_cast<uint8_t>(dis(gen));
   }
   return 0;
+}
+
+float CommonUtils::dot_product(const std::vector<float>& a,
+                               const std::vector<float>& b) {
+  float sum = 0.0f;
+  for (size_t i = 0; i < a.size(); ++i) sum += a[i] * b[i];
+  return sum;
+}
+
+// L2归一化
+void CommonUtils::normalize(std::vector<float>& v) {
+  float norm = 0.0f;
+  for (float f : v) norm += f * f;
+  norm = std::sqrt(norm);
+  if (norm > 1e-6)
+    for (float& f : v) f /= norm;
+}
+
+std::vector<float> CommonUtils::softmax(const std::vector<float>& logits) {
+  std::vector<float> result(logits.size());
+  float max_logit = *std::max_element(logits.begin(), logits.end());
+  float sum = 0.0f;
+  for (size_t i = 0; i < logits.size(); ++i) {
+    result[i] = std::exp(logits[i] - max_logit);  // for numerical stability
+    sum += result[i];
+  }
+  for (float& v : result) v /= sum;
+  return result;
 }
