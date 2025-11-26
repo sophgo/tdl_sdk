@@ -420,7 +420,6 @@ int32_t YoloV8Segmentation::outputParse(
       assert(0);
     }
     Eigen::MatrixXf masks_output = mask_map * proto_output * protoinfo.qscale;
-    ;
 
     obj_seg->mask_height = proto_h;
     obj_seg->mask_width = proto_w;
