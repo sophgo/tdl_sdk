@@ -165,8 +165,8 @@ int main(int argc, char* argv[]) {
     printf(
         "\n用法: %s MODEL_DIR IMAGE_DIR IMAGE_LIST  RESULT_FILE\n\n"
         "\tMODEL_DIR, 模型文件或目录路径\n"
-        "\tIMAGE_DIR, 图片根目录\n"
         "\tIMAGE_LIST, 存储图片相对路径的txt文件\n"
+        "\tIMAGE_DIR, 图片根目录\n"
         "\tRESULT_FILE, "
         "最终结果保存的txt文件路径（如：./all_license_plates.txt）\n",
         argv[0]);
@@ -174,8 +174,8 @@ int main(int argc, char* argv[]) {
   }
 
   std::string model_dir = argv[1];
-  std::string image_dir = argv[2];
-  std::string image_list = argv[3];
+  std::string image_list = argv[2];
+  std::string image_dir = argv[3];
   std::string result_file_path = argv[4];  // 结果文件路径
 
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();

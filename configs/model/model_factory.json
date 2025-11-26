@@ -176,8 +176,8 @@
       "types":["fist","five","none","two"],
       "file_name":"cls_hand_gesture_128_128_INT8",
       "rgb_order":"rgb",
-      "mean":[0,0,0],
-      "std":[255.0,255.0,255.0]
+      "mean":[123.675, 116.28, 103.52],
+      "std":[58.395, 57.12, 57.375]
     },
     "CLS_KEYPOINT_HAND_GESTURE":{
       "_comment":"output hand gesture(0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two)",

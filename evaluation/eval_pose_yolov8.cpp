@@ -67,7 +67,7 @@ int make_dir(const std::string& path) {
 int main(int argc, char* argv[]) {
   if (argc != 6) {
     printf(
-        "Usage: %s <model_id_name> <model_dir> <image_dir> <image_list.txt> "
+        "Usage: %s <model_id_name> <model_dir> <image_list.txt> <image_dir> "
         "<result_dir>\n",
         argv[0]);
     return -1;
@@ -75,8 +75,8 @@ int main(int argc, char* argv[]) {
 
   std::string model_id_name = argv[1];
   std::string model_dir = argv[2];
-  std::string image_dir = argv[3];  // 新增：图像根目录
-  std::string list_path = argv[4];  // 图像列表（可为相对路径）
+  std::string list_path = argv[3];  // 图像列表（可为相对路径）
+  std::string image_dir = argv[4];  // 新增：图像根目录
   std::string res_dir = argv[5];
 
   // 创建结果目录
