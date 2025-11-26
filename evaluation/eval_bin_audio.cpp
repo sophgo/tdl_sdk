@@ -25,10 +25,10 @@ static void append_result(const std::string& res_path,
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 8) {
+  if (argc != 6) {
     printf(
         "Usage: %s <model_id_name> <model_dir> "
-        "<bin_list_path> <sample_rate> <seconds> <audio_root> <res_txt_path>\n",
+        "<bin_list_path> <audio_root> <res_txt_path>\n",
         argv[0]);
     printf("model_id_name candidates:\n");
     return -1;
@@ -37,11 +37,8 @@ int main(int argc, char* argv[]) {
   std::string model_id_name = argv[1];
   std::string model_dir = argv[2];
   std::string list_path = argv[3];
-  int sample_rate = std::atoi(argv[4]);
-  int seconds = std::atoi(argv[5]);
-  std::string audio_root = argv[6];
-  std::string res_txt_path = argv[7];
-  const int frame_size = sample_rate * AUDIOFORMATSIZE * seconds;
+  std::string audio_root = argv[4];
+  std::string res_txt_path = argv[5];
 
   struct stat root_stat;
   if (stat(audio_root.c_str(), &root_stat) != 0 ||
@@ -92,7 +89,6 @@ int main(int argc, char* argv[]) {
 
   std::string rel_bin_path;
   size_t line_idx = 0;
-  std::vector<uint8_t> host_buf(frame_size);
 
   while (std::getline(list_file, rel_bin_path)) {
     ++line_idx;
@@ -119,10 +115,10 @@ int main(int argc, char* argv[]) {
       continue;
     }
 
+    int frame_size = buffer.size();
     auto in_image = ImageFactory::createImage(frame_size, 1, ImageFormat::GRAY,
                                               TDLDataType::UINT8, true);
-    size_t copy_size = std::min(buffer.size(), (size_t)frame_size);
-    std::memcpy(in_image->getVirtualAddress()[0], buffer.data(), copy_size);
+    std::memcpy(in_image->getVirtualAddress()[0], buffer.data(), frame_size);
     std::vector<std::shared_ptr<BaseImage>> input_datas = {in_image};
     std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
 

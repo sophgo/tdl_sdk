@@ -10,15 +10,15 @@
 int main(int argc, char** argv) {
   if (argc != 6) {
     printf(
-        "Usage: %s <model_name> <model_dir> <txt_root> <input_txt_list> "
+        "Usage: %s <model_name> <model_dir> <input_txt_list> <txt_root> "
         "<result_txt>\n",
         argv[0]);
     return -1;
   }
   std::string model_name = argv[1];
   std::string model_dir = argv[2];
-  std::string txt_root = argv[3];
-  std::string input_txt_list = argv[4];
+  std::string input_txt_list = argv[3];
+  std::string txt_root = argv[4];
   std::string result_txt = argv[5];
 
   struct stat root_stat;
@@ -30,24 +30,6 @@ int main(int argc, char** argv) {
   if (txt_root.back() != '/') {
     txt_root += "/";
   }
-  std::vector<std::string> keypoints_files;
-  std::vector<int> real_ids;
-  std::ifstream infile(input_txt_list);
-  std::string line;
-  while (std::getline(infile, line)) {
-    if (!line.empty()) {
-      // 读取真实ID
-      std::stringstream ss(line);
-      std::string real_id_str;
-      std::getline(ss, real_id_str, '/');
-      int real_id = std::stoi(real_id_str);
-      real_ids.push_back(real_id);
-
-      std::string full_path = txt_root + line;
-      keypoints_files.push_back(full_path);
-    }
-  }
-  infile.close();
 
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();
   model_factory.loadModelConfig();
@@ -81,54 +63,76 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  for (size_t idx = 0; idx < keypoints_files.size(); ++idx) {
-    const auto& keypoints_txt = keypoints_files[idx];
-    int real_id = real_ids[idx];
-
-    std::vector<float> keypoints(42);
-    FILE* fp = fopen(keypoints_txt.c_str(), "r");
-    if (!fp) {
-      printf("Failed to open %s\n", keypoints_txt.c_str());
-      outfile << keypoints_txt << " Failed_to_open_file\n";
-      continue;
-    }
-    bool read_ok = true;
-    for (int i = 0; i < 21; ++i) {
-      float x, y;
-      if (fscanf(fp, "%f %f", &x, &y) != 2) {
-        printf("Failed to read keypoint %d from %s\n", i,
-               keypoints_txt.c_str());
-        outfile << keypoints_txt << " Failed_to_read_keypoints\n";
-        read_ok = false;
-        break;
+  int cnt = 0;
+  std::ifstream infile(input_txt_list);
+  std::string line;
+  while (std::getline(infile, line)) {
+    if (!line.empty()) {
+      // 读取真实ID
+      size_t first_slash = line.find('/');
+      int real_id = -1;
+      if (first_slash != std::string::npos) {
+        std::string id_str = line.substr(0, first_slash);
+        try {
+          real_id = std::stoi(id_str);  // 字符串转整数ID
+        } catch (...) {
+          std::cerr << "Warning: 路径中real_ID无效 " << line << std::endl;
+          continue;
+        }
+      } else {
+        std::cout << line << std::endl;
+        std::cerr << "Warning: 传入路径格式错误(无'/')" << line << std::endl;
+        continue;
       }
-      keypoints[2 * i] = x;
-      keypoints[2 * i + 1] = y;
-    }
-    fclose(fp);
-    if (!read_ok) continue;
 
-    std::shared_ptr<BaseImage> bin_data = ImageFactory::createImage(
-        42, 1, ImageFormat::GRAY, TDLDataType::FP32, true);
+      if (++cnt % 100 == 0) {
+        std::cout << "processing idx: " << cnt << std::endl;
+      }
 
-    float* data_buffer =
-        reinterpret_cast<float*>(bin_data->getVirtualAddress()[0]);
-    memcpy(data_buffer, &keypoints[0], 42 * sizeof(float));
-    std::vector<std::shared_ptr<BaseImage>> input_datas = {bin_data};
+      std::string full_path = txt_root + line;
 
-    std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
-    model_hc->inference(input_datas, out_datas);
+      std::vector<float> keypoints(42);
+      FILE* fp = fopen(full_path.c_str(), "r");
+      if (!fp) {
+        printf("Failed to open %s\n", full_path.c_str());
+        continue;
+      }
+      bool read_ok = true;
+      for (int i = 0; i < 21; ++i) {
+        float x, y;
+        if (fscanf(fp, "%f %f", &x, &y) != 2) {
+          printf("Failed to read keypoint %d from %s\n", i, full_path.c_str());
+          read_ok = false;
+          break;
+        }
+        keypoints[2 * i] = x;
+        keypoints[2 * i + 1] = y;
+      }
+      fclose(fp);
+      if (!read_ok) return -1;
 
-    if (!out_datas.empty()) {
-      std::shared_ptr<ModelClassificationInfo> cls_meta =
-          std::static_pointer_cast<ModelClassificationInfo>(out_datas[0]);
-      outfile << keypoints_txt << "," << cls_meta->topk_class_ids[0] << ","
-              << real_id << "\n";
-    } else {
-      outfile << keypoints_txt << " No_output\n";
+      std::shared_ptr<BaseImage> bin_data = ImageFactory::createImage(
+          42, 1, ImageFormat::GRAY, TDLDataType::FP32, true);
+
+      float* data_buffer =
+          reinterpret_cast<float*>(bin_data->getVirtualAddress()[0]);
+      memcpy(data_buffer, &keypoints[0], 42 * sizeof(float));
+      std::vector<std::shared_ptr<BaseImage>> input_datas = {bin_data};
+
+      std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
+      model_hc->inference(input_datas, out_datas);
+
+      if (!out_datas.empty()) {
+        std::shared_ptr<ModelClassificationInfo> cls_meta =
+            std::static_pointer_cast<ModelClassificationInfo>(out_datas[0]);
+        outfile << line << "," << cls_meta->topk_class_ids[0] << "," << real_id
+                << "\n";
+      } else {
+        std::cerr << "Warning: No_output" << line << std::endl;
+      }
     }
   }
-
+  infile.close();
   outfile.close();
   return 0;
 }

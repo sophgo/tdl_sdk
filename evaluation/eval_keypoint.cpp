@@ -73,15 +73,15 @@ int main(int argc, char* argv[]) {
   if (argc != 6 && argc != 7) {
     printf(
         "Usage: %s <model_id_name> <model_dir or model_path> <image_dir> "
-        "<image_list.txt> <result_dir> ( optional: <conf_threshold>)  \n",
+        "<result_dir> <image_list.txt> ( optional: <conf_threshold>)  \n",
         argv[0]);
     return -1;
   }
 
   std::string model_id_name = argv[1];
   std::string model_dir = argv[2];
-  std::string image_dir = argv[3];
-  std::string list_txt = argv[4];
+  std::string list_txt = argv[3];
+  std::string image_dir = argv[4];
   std::string result_dir = argv[5];
 
   float conf_threshold = 0.5f;

@@ -93,7 +93,7 @@ void bench_mark_all(std::string bench_path, std::string image_root,
 int main(int argc, char* argv[]) {
   if (argc != 6) {
     printf(
-        "\nUsage: %s MODEL_DIR MODEL_NAME BENCH_PATH IMAGE_ROOT RES_PATH\n\n"
+        "\nUsage: %s MODEL_NAME MODEL_DIR BENCH_PATH IMAGE_ROOT RES_PATH\n\n"
         "\tMODEL_DIR, store cvimodel or bmodel path\n"
         "\tMODEL_NAME, detection model name should be one of:\n"
         "\t    mask_cls, isp_scene_cls, rgbliveness_cls\n"
@@ -104,8 +104,8 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
-  std::string model_dir = argv[1];
-  std::string model_name = argv[2];
+  std::string model_name = argv[1];
+  std::string model_dir = argv[2];
   std::string bench_path = argv[3];
   std::string image_root = argv[4];
   std::string res_path = argv[5];

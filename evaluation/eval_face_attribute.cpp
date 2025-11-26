@@ -7,15 +7,15 @@
 int main(int argc, char **argv) {
   if (argc != 6) {
     printf(
-        "Usage: %s <model_id_name> <model_dir> <img_root> <input_txt_path> "
+        "Usage: %s <model_id_name> <model_dir> <input_txt_path> <img_root> "
         "<output_txt_path>\n",
         argv[0]);
     return -1;
   }
   std::string model_id_name = argv[1];
   std::string model_dir = argv[2];
-  std::string img_root = argv[3];
-  std::string input_txt_path = argv[4];
+  std::string input_txt_path = argv[3];
+  std::string img_root = argv[4];
   std::string output_txt_path = argv[5];
 
   std::ifstream input_file(input_txt_path);
