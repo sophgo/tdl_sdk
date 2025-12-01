@@ -1,0 +1,489 @@
+{
+  "eval_face_detection": [
+    {
+      "scrfd_det_face_432_768_INT8": {
+        "model_id": "SCRFD_DET_FACE",
+        "file_list": "face_detection/widerface/img_list.txt",
+        "dataset_dir": "face_detection/widerface/face_images",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    }
+  ],
+  "eval_object_detection": [
+    {
+      "yolov8n_det_bicycle_motor_ebicycle_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE",
+        "file_list": "bicycle_motor_ebicycle/image_list.txt",
+        "dataset_dir": "bicycle_motor_ebicycle/images"
+      }
+    },
+    {
+      "yolov8n_det_bicycle_motor_ebicycle_mbv2_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE",
+        "file_list": "bicycle_motor_ebicycle/image_list.txt",
+        "dataset_dir": "bicycle_motor_ebicycle/images"
+      }
+    },
+    {
+      "yolov8n_det_face_head_person_pet_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_FACE_HEAD_PERSON_PET",
+        "file_list": "face_head_person_pet/img_list.txt",
+        "dataset_dir": "face_head_person_pet/images"
+      }
+    },
+    {
+      "yolov8n_det_fire_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_FIRE",
+        "file_list": "fire/fire_detection_list.txt",
+        "dataset_dir": "fire/images"
+      }
+    },
+    {
+      "yolov8n_det_fire_smoke_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_FIRE_SMOKE",
+        "file_list": "fire_smoke/images_list.txt",
+        "dataset_dir": "fire_smoke/images"
+      }
+    },
+    {
+      "yolov8n_det_hand_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_HAND",
+        "file_list": "hand_detection/hand_detection_list.txt",
+        "dataset_dir": "hand_detection/images"
+      }
+    },
+    {
+      "yolov8n_det_hand_mv3_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_HAND",
+        "file_list": "hand_detection/hand_detection_list.txt",
+        "dataset_dir": "hand_detection/images"
+      }
+    },
+    {
+      "yolov8n_det_hand_face_person_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_HAND_FACE_PERSON",
+        "file_list": "hand_face_person/hand_face_person.txt",
+        "dataset_dir": "hand_face_person/images"
+      }
+    },
+    {
+      "yolov8n_det_head_hardhat_576_960_INT8": {
+        "model_id": "YOLOV8N_DET_HEAD_HARDHAT",
+        "file_list": "hardhat_detection/images_list.txt",
+        "dataset_dir": "hardhat_detection/images"
+      }
+    },
+    {
+      "yolov8n_det_head_person_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_HEAD_PERSON",
+        "file_list": "person_head/image_list.txt",
+        "dataset_dir": "person_head/images"
+      }
+    },
+    {
+      "yolov8n_det_head_shoulder_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_HEAD_SHOULDER",
+        "file_list": "head_shoulder/coco/head_shoulders_image_list.txt",
+        "dataset_dir": "head_shoulder/coco/images"
+      }
+    },
+    {
+      "yolov8n_det_head_shoulder_mbv2_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_HEAD_SHOULDER",
+        "file_list": "head_shoulder/coco/head_shoulders_image_list.txt",
+        "dataset_dir": "head_shoulder/coco/images"
+      }
+    },
+    {
+      "yolov8n_det_ir_person_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_MONITOR_PERSON",
+        "file_list": "ir_person/images_list.txt",
+        "dataset_dir": "ir_person/ir_images"
+      }
+    },
+    {
+      "yolov8n_det_ir_person_mbv2_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_MONITOR_PERSON",
+        "file_list": "ir_person/images_list.txt",
+        "dataset_dir": "ir_person/ir_images"
+      }
+    },
+    {
+      "yolov8n_det_license_plate_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_LICENSE_PLATE",
+        "file_list": "platedetection/plate_detection/images_list.txt",
+        "dataset_dir": "platedetection/plate_detection/images"
+      }
+    },
+    {
+      "yolov8n_det_monitor_person_256_448_INT8": {
+        "model_id": "YOLOV8N_DET_MONITOR_PERSON",
+        "file_list": "person_monitor/val.txt",
+        "dataset_dir": "person_monitor/images"
+      }
+    },
+    {
+      "yolov8n_det_overlook_person_256_448_INT8": {
+        "model_id": "YOLOV8N_DET_MONITOR_PERSON",
+        "file_list": "pedestrian_overlook/file_list.txt",
+        "dataset_dir": "pedestrian_overlook/images"
+      }
+    },
+    {
+      "yolov8n_det_person_vehicle_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_PERSON_VEHICLE",
+        "file_list": "people_vehicle/img_list.txt",
+        "dataset_dir": "people_vehicle/images"
+      }
+    },
+    {
+      "yolov8n_det_person_vehicle_mv2_035_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_PERSON_VEHICLE",
+        "file_list": "people_vehicle/img_list.txt",
+        "dataset_dir": "people_vehicle/images"
+      }
+    },
+    {
+      "yolov8n_det_pet_person_035_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_PET_PERSON",
+        "file_list": "pet_person/images_list.txt",
+        "dataset_dir": "pet_person/images"
+      }
+    },
+    {
+      "yolov8n_det_pet_person_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_PET_PERSON",
+        "file_list": "pet_person/images_list.txt",
+        "dataset_dir": "pet_person/images"
+      }
+    },
+    {
+      "yolov8n_det_traffic_light_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_TRAFFIC_LIGHT",
+        "file_list": "signal_light_roi/img_list.txt",
+        "dataset_dir": "signal_light_roi/images"
+      }
+    },
+    {
+      "mbv2_det_person_256_384_INT8": {
+        "model_id": "MBV2_DET_PERSON",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017"
+      }
+    },
+    {
+      "mbv2_det_person_256_448_INT8": {
+        "model_id": "MBV2_DET_PERSON",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017"
+      }
+    },
+    {
+      "mbv2_det_person_512_896_INT8": {
+        "model_id": "MBV2_DET_PERSON",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017"
+      }
+    },
+    {
+      "mbv2_det_person_896_896_INT8": {
+        "model_id": "MBV2_DET_PERSON",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017"
+      }
+    },
+    {
+      "yolov8n_det_coco80_640_640_INT8": {
+        "model_id": "YOLOV8_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017"
+      }
+    },
+    {
+      "yolov8s_det_coco80_640_640_INT8": {
+        "model_id": "YOLOV8_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "yolox_m_det_coco80_640_640_INT8": {
+        "model_id": "YOLOX_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "yolox_s_det_coco80_640_640_INT8": {
+        "model_id": "YOLOX_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "yolov10n_det_coco80_640_640_INT8": {
+        "model_id": "YOLOV10_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "yolov5m_det_coco80_640_640_INT8": {
+        "model_id": "YOLOV5_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "yolov5s_det_coco80_640_640_INT8": {
+        "model_id": "YOLOV5_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "yolov6n_det_coco80_640_640_INT8": {
+        "model_id": "YOLOV6_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "yolov6s_det_coco80_640_640_INT8": {
+        "model_id": "YOLOV6_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "yolov7_tiny_det_coco80_640_640_INT8": {
+        "model_id": "YOLOV7_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "ppyoloe_det_coco80_640_640_INT8": {
+        "model_id": "PPYOLOE_DET_COCO80",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017",
+        "target_chips": ["cv181x", "cv184x", "cv186x", "bm1688"]
+      }
+    }
+  ],
+  "eval_classification": [
+    {
+      "cls_rgbliveness_256_256_INT8": {
+        "model_id": "CLS_RGBLIVENESS",
+        "file_list": "face_anti_spoof/img_list.txt",
+        "dataset_dir": "face_anti_spoof"
+      }
+    },
+    {
+      "cls_hand_gesture_128_128_INT8": {
+        "model_id": "CLS_HAND_GESTURE",
+        "file_list": "hand_cls4_real/img_list.txt",
+        "dataset_dir": "hand_cls4_real"
+      }
+    }
+  ],
+  "eval_bin_audio": [
+    {
+      "cls_sound_babay_cry_188_40_INT8": {
+        "model_id": "CLS_SOUND_BABAY_CRY",
+        "file_list": "baby_cry/file_list.txt",
+        "dataset_dir": "baby_cry"
+      }
+    },
+    {
+      "cls_sound_nihaoshiyun_126_40_INT8": {
+        "model_id": "CLS_SOUND_COMMAND_NIHAOSHIYUN",
+        "file_list": "cmd_classification/nihaoshiyun/file_list.txt",
+        "dataset_dir": "cmd_classification/nihaoshiyun"
+      }
+    },
+    {
+      "cls_sound_xiaoaixiaoai_126_40_INT8": {
+        "model_id": "CLS_SOUND_COMMAND_XIAOAIXIAOAI",
+        "file_list": "cmd_classification/xiaoaixiaoai/file_list.txt",
+        "dataset_dir": "cmd_classification/xiaoaixiaoai"
+      }
+    }
+  ],
+  "eval_clip_pipeline": [
+    {
+      "feature_mobileclip2_B_INT8": {
+        "model_id_img": "FEATURE_MOBILECLIP2_IMG",
+        "model_id_text": "FEATURE_MOBILECLIP2_TEXT",
+        "model_name_img": "feature_mobileclip2_B_img_224_224_INT8",
+        "model_name_text": "feature_mobileclip2_B_text_1_77_INT8",
+        "dataset_dir": "clip/cifar10/image",
+        "file_list": "clip/cifar10/image/img_list.txt",
+        "txt_dir": "clip/cifar10",
+        "target_chips": ["cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "feature_mobileclip2_S2_INT8": {
+        "model_id_img": "FEATURE_MOBILECLIP2_IMG",
+        "model_id_text": "FEATURE_MOBILECLIP2_TEXT",
+        "model_name_img": "feature_mobileclip2_S2_img_224_224_INT8",
+        "model_name_text": "feature_mobileclip2_S2_text_1_77_INT8",
+        "dataset_dir": "clip/cifar10/image",
+        "file_list": "clip/cifar10/image/img_list.txt",
+        "txt_dir": "clip/cifar10",
+        "target_chips": ["cv184x", "cv186x", "bm1688"]
+      }
+    },
+    {
+      "feature_clip_W4BF16": {
+        "model_id_img": "FEATURE_CLIP_IMG",
+        "model_id_text": "FEATURE_CLIP_TEXT",
+        "model_name_img": "feature_clip_image_224_224_W4BF16",
+        "model_name_text": "feature_clip_text_1_77_W4BF16",
+        "dataset_dir": "clip/cifar10/image",
+        "file_list": "clip/cifar10/image/img_list.txt",
+        "txt_dir": "clip/cifar10",
+        "target_chips": ["cv184x", "cv186x", "bm1688"]
+      }
+    }
+  ],
+  "eval_hand_keypoint_cls": [
+    {
+      "cls_keypoint_hand_gesture_1_42_INT8": {
+        "model_id": "CLS_KEYPOINT_HAND_GESTURE",
+        "file_list": "hand_keypoints_cls_txt/file_list.txt",
+        "dataset_dir": "hand_keypoints_cls_txt"
+      }
+    }
+  ],
+  "eval_face_attribute": [
+    {
+      "cls_attribute_gender_age_glass_112_112_INT8": {
+        "model_id": "CLS_ATTRIBUTE_GENDER_AGE_GLASS",
+        "file_list": "face_attr/img_list.txt",
+        "dataset_dir": "face_attr"
+      }
+    },
+    {
+      "cls_attribute_gender_age_glass_emotion_112_112_INT8": {
+        "model_id": "CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION",
+        "file_list": "face_attr_emotion/img_list.txt",
+        "dataset_dir": "face_attr_emotion"
+      }
+    },
+    {
+      "cls_attribute_gender_age_glass_emotion_tiny_112_112_INT8": {
+        "model_id": "CLS_ATTRIBUTE_GENDER_AGE_GLASS_EMOTION",
+        "file_list": "face_attr_emotion/img_list.txt",
+        "dataset_dir": "face_attr_emotion"
+      }
+    },
+    {
+      "cls_attribute_gender_age_glass_mask_112_112_INT8": {
+        "model_id": "CLS_ATTRIBUTE_GENDER_AGE_GLASS_MASK",
+        "file_list": "face_attr/img_list.txt",
+        "dataset_dir": "face_attr"
+      }
+    }
+  ],
+  "eval_keypoint": [
+    {
+      "keypoint_license_plate_64_128_INT8": {
+        "model_id": "KEYPOINT_LICENSE_PLATE",
+        "file_list": "keypoint_license/CRPD_large/img_list.txt",
+        "dataset_dir": "keypoint_license/CRPD_large/test"
+      }
+    },
+    {
+      "keypoint_hand_128_128_INT8": {
+        "model_id": "KEYPOINT_HAND",
+        "file_list": "handkeypoint/handkeypoint.txt",
+        "dataset_dir": "handkeypoint/handkeypoint"
+      }
+    },
+    {
+      "keypoint_simcc_person17_256_192_INT8": {
+        "model_id": "KEYPOINT_SIMCC_PERSON17",
+        "file_list": "simcc_pose/file_list.txt",
+        "dataset_dir": "simcc_pose/images"
+      }
+    },
+    {
+      "keypoint_face_v2_64_64_INT8": {
+        "model_id": "KEYPOINT_FACE_V2",
+        "file_list": "keypoint_face_v2/file_list.txt",
+        "dataset_dir": "keypoint_face_v2/WFLW_test"
+      }
+    }
+  ],
+  "eval_pose_yolov8": [
+    {
+      "keypoint_yolov8pose_person17_384_640_INT8": {
+        "model_id": "KEYPOINT_YOLOV8POSE_PERSON17",
+        "dataset_dir": "keypoint_person/images",
+        "file_list": "keypoint_person/keypoint_person_detection_list.txt"
+      }
+    }
+  ],
+  "eval_lane_detection": [
+    {
+      "lstr_det_lane_360_640_MIX": {
+        "model_id": "LSTR_DET_LANE",
+        "file_list": "lstr_det_lane/valid2000.txt",
+        "dataset_dir": "lstr_det_lane"
+      }
+    }
+  ],
+  "eval_license_plate_recognition": [
+    {
+      "recognition_license_plate_24_96_MIX": {
+        "dataset_dir": "plate_recognition/images",
+        "file_list": "plate_recognition/images.txt"
+      }
+    }
+  ],
+  "eval_audio_asr": [
+    {
+      "recognition_speech_zipformer_s_BF16": {
+        "tokens_file": "asr/tokens.txt",
+        "dataset_dir": "asr/ai_shell_test_bin",
+        "file_list": "asr/file_list_aishell_test.txt",
+        "target_chips": ["cv184x", "cv186x", "bm1688"]
+      }
+    }
+  ],
+  "eval_sot": [
+    {
+      "tracking_feartrack_128_128_256_256_INT8": {
+        "model_id": "tracking_feartrack_128_128_256_256_INT8",
+        "dataset_dir": "sot/UAV123/images",
+        "labels_dir": "sot/UAV123/labels"
+      }
+    }
+  ],
+  "eval_face_feature": [
+    {
+      "feature_cviface_112_112_INT8": {
+        "model_id": "FEATURE_CVIFACE",
+        "labels_file": "face_recognition/bd_align/labels.txt"
+      }
+    },
+    {
+      "feature_bmface_r34_112_112_INT8": {
+        "model_id": "FEATURE_BMFACE_R34",
+        "labels_file": "face_recognition/bd_align/labels.txt",
+        "target_chips": ["cv184x", "cv186x", "bm1688"]
+      }
+    }
+  ]
+}
