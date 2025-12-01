@@ -44,3 +44,4 @@ foreach (fname ${SAMPLE_SRC_FILES})
   install(TARGETS ${name} DESTINATION bin/eval)
 endforeach ()
 
+install(FILES eval_info.json DESTINATION bin/eval)
