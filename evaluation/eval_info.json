@@ -370,8 +370,8 @@
     {
       "cls_attribute_gender_age_glass_112_112_INT8": {
         "model_id": "CLS_ATTRIBUTE_GENDER_AGE_GLASS",
-        "file_list": "face_attr/img_list.txt",
-        "dataset_dir": "face_attr"
+        "file_list": "face_attribute/no_align_test/selected_images_ori.txt",
+        "dataset_dir": "face_attribute/no_align_test"
       }
     },
     {
@@ -482,7 +482,7 @@
       "feature_bmface_r34_112_112_INT8": {
         "model_id": "FEATURE_BMFACE_R34",
         "labels_file": "face_recognition/bd_align/labels.txt",
-        "target_chips": ["cv184x", "cv186x", "bm1688"]
+        "target_chips": ["cv186x", "bm1688"]
       }
     }
   ]
