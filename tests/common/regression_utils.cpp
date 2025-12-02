@@ -123,7 +123,7 @@ std::string gen_model_tool_dir() {
 #elif defined(__CV184X__) || defined(__CV186X__)
   return sdk_dir + "/libsophon/install/libsophon-0.4.9/bin";
 #elif defined(__BM168X__)
-  return sdk_dir + "/dependency/BM1688/libsophon/bin";
+  return tdl_dir + "/dependency/BM1688/libsophon/bin";
 
 #else
   LOGE("Unrecognized platform !\n");
@@ -477,9 +477,17 @@ bool confirm_path(std::string &tpu_usage_path) {
   }
   return false;
 
-#elif defined(__CV184X__)
+#elif defined(__CV184X__) || defined(__CV186X__)
   tpu_usage_path = "/tmp/bmcpu_app_usage";
   return true;
+
+#elif defined(__BM168X__)
+  tpu_usage_path = "bm-smi -noloop --file=tmp.txt";
+  return true;
+
+#else
+  LOGE("Unrecognized platform !");
+  return false;
 
 #endif
 }
@@ -500,6 +508,10 @@ void enable_tpu_usage(const std::string &tpu_usage_path) {
 bool read_tpu_usage(const std::string &tpu_usage_path,
                     std::vector<double> &tpu_samples, std::mutex &tpu_mu) {
   if (tpu_usage_path.empty()) return false;
+  std::string output;
+  std::string value_str;
+
+#if !defined(__BM168X__)
   std::string cmd = "cat " + tpu_usage_path;
   FILE *fp = popen(cmd.c_str(), "r");
   if (!fp) {
@@ -508,7 +520,6 @@ bool read_tpu_usage(const std::string &tpu_usage_path,
     return false;
   }
   char buffer[256] = {0};
-  std::string output;
   while (fgets(buffer, sizeof(buffer), fp) != nullptr) {
     output += buffer;
   }
@@ -519,9 +530,47 @@ bool read_tpu_usage(const std::string &tpu_usage_path,
     std::cerr << "[WARN] No 'usage=' found in output: " << output << std::endl;
     return false;
   }
-  std::string value_str = output.substr(pos + 6);
+  value_str = output.substr(pos + 6);
 #else
-  std::string value_str = output;
+  value_str = output;
+#endif
+
+#else
+
+  system(tpu_usage_path.c_str());  // 使用popen得到的结果会乱码
+  std::ifstream file("tmp.txt");
+  if (file.is_open()) {
+    std::string line;
+    // 查找包含 TPU-Util 数据的行（特征匹配 "BM1688-SOC" 所在行）
+    while (getline(file, line)) {
+      if (line.find("BM1688-SOC") != std::string::npos &&
+          line.find("TPU-Util") == std::string::npos) {
+        // 从行尾查找百分号
+        size_t percentPos = line.find_last_of('%');
+        if (percentPos != std::string::npos) {
+          // 向前提取数字部分
+          size_t start = percentPos - 1;
+          while (start > 0 &&
+                 isdigit(static_cast<unsigned char>(line[start]))) {
+            start--;
+          }
+          // 处理边界情况（确保从数字开始）
+          if (!isdigit(static_cast<unsigned char>(line[start]))) {
+            start++;
+          }
+          value_str = line.substr(start, percentPos - start);
+          break;
+        }
+      }
+    }
+    file.close();
+  }
+
+  //删除文件
+  if (remove("tmp.txt") != 0) {
+    std::cerr << "Error: 无法删除文件 tmp.txt" << std::endl;
+  }
+
 #endif
   value_str.erase(std::remove_if(value_str.begin(), value_str.end(),
                                  [](unsigned char c) {
@@ -883,8 +932,6 @@ void run_performance(const std::string &model_path,
   if (get_model_info(model_path, infer_time_ms) != 0) {
     LOGE("get model info failed");
     return;
-  } else {
-    LOGI("model infer time: %f ms", infer_time_ms);
   }
 
   int tpu_count = (int)(5000.0f / infer_time_ms);  // 5s 对应运行次数

@@ -18,7 +18,7 @@ struct Record {
 void summary(const std::string &log_dir, const std::string &output_md) {
   // \S表示匹配任何非空白字符 \s表示匹配任意空白字符 ...
   std::regex re_model(
-      R"(model_path:\s*.*/([^/\s]+?)_(?:cv\d{3,4}x|bm\d{4}x).(?:bmodel|cvimodel))");
+      R"(model_path:\s*.*/([^/\s]+))");  // 捕获最后一个斜杠后的完整文件名
   std::regex re_timer(
       R"(\[Timer\]\s*preprocess:(\S+),tpu:(\S+),post:(\S+),total:(\S+))");
   std::regex re_cpu(R"(CPU usage:\s*avg=(\S+)%?\s+max=(\S+)%?)");
