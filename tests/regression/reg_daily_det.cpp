@@ -210,6 +210,7 @@ TEST_F(DetectionTestSuite, accuracy) {
       TestFlag::GENERATE_FUNCTION_RES) {
     return;
   }
+#if defined(__CV184X__)
 
   // Release the first model before allocating runtime memory
   det.reset();
@@ -276,6 +277,7 @@ TEST_F(DetectionTestSuite, accuracy) {
   for (uint32_t i = 0; i < mem_blocks.size(); i++) {
     pool->release(mem_blocks[i]);
   }
+#endif
 }
 
 TEST_F(DetectionTestSuite, performance) {

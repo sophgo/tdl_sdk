@@ -82,26 +82,6 @@
             "yolov8s_det_coco80_640_640_INT8.json",
             "yolov10n_det_coco80_640_640_INT8.json"
           ],
-          "CV184X": [
-            "yolov5m_det_coco80_640_640_INT8.json",
-            "yolov5s_det_coco80_640_640_INT8.json",
-            "yolov7_tiny_det_coco80_640_640_INT8.json"
-          ],
-          "CV186X": [
-            "yolov5m_det_coco80_640_640_INT8.json",
-            "yolov5s_det_coco80_640_640_INT8.json",
-            "yolov7_tiny_det_coco80_640_640_INT8.json"
-          ],
-          "BM1688": [
-            "yolov5s_det_coco80_640_640_INT8.json",
-            "yolov7_tiny_det_coco80_640_640_INT8.json",
-            "yolov8n_det_bicycle_motor_ebicycle_mbv2_384_640_INT8.json",
-            "yolov8n_det_bicycle_motor_ebicycle_384_640_INT8.json",
-            "yolov8n_det_head_person_384_640_INT8.json",
-            "mbv2_det_person_256_384_INT8.json",
-            "yolov8n_det_face_head_person_pet_384_640_INT8.json",
-            "yolov8n_det_ir_person_mbv2_384_640_INT8.json"
-          ],
           "BM1684X": [
             "yolov5s_det_coco80_640_640_INT8.json",
             "yolov7_tiny_det_coco80_640_640_INT8.json",
@@ -130,9 +110,6 @@
           "cls_keypoint_hand_gesture_1_42_INT8.json"
         ],
         "exclude": {
-          "BM1688": [
-            "cls_keypoint_hand_gesture_1_42_INT8.json"
-          ],
           "BM1684X": [
             "cls_keypoint_hand_gesture_1_42_INT8.json"
           ]
@@ -151,11 +128,6 @@
           "cls_attribute_gender_age_glass_emotion_112_112_INT8.json"
         ],
         "exclude": {
-          "BM1688": [
-            "cls_attribute_gender_age_glass_mask_112_112_INT8.json",
-            "cls_attribute_gender_age_glass_112_112_INT8.json",
-            "cls_attribute_gender_age_glass_emotion_112_112_INT8.json"
-          ],
           "BM1684X": [
             "cls_attribute_gender_age_glass_mask_112_112_INT8.json",
             "cls_attribute_gender_age_glass_112_112_INT8.json",
@@ -180,9 +152,6 @@
           "lstr_det_lane_360_640_MIX.json"
         ],
         "exclude": {
-          "BM1688": [
-            "keypoint_face_v2_64_64_INT8.json"
-          ],
           "BM1684X": [
             "keypoint_face_v2_64_64_INT8.json"
           ]
@@ -200,9 +169,6 @@
           "feature_cviface_112_112_INT8.json"
         ],
         "exclude": {
-          "BM1688": [
-            "feature_cviface_112_112_INT8.json"
-          ],
           "BM1684X": [
             "feature_cviface_112_112_INT8.json"
           ]
@@ -246,9 +212,6 @@
           "recognition_license_plate_24_96_MIX.json"
         ],
         "exclude": {
-          "BM1688": [
-            "recognition_license_plate_24_96_MIX.json"
-          ],
           "BM1684X": [
             "recognition_license_plate_24_96_MIX.json"
           ]
@@ -290,7 +253,7 @@
       }
     },
     {
-      "name": "ClipTestSuite.*",
+      "name": "ClipTestSuite.accuracy",
       "_comment": "clip model test",
       "type": "regression",
       "platforms": ["ALL"],

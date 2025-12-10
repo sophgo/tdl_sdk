@@ -23,8 +23,7 @@ void summary(const std::string &log_dir, const std::string &output_md) {
       R"(\[Timer\]\s*preprocess:(\S+),tpu:(\S+),post:(\S+),total:(\S+))");
   std::regex re_cpu(R"(CPU usage:\s*avg=(\S+)%?\s+max=(\S+)%?)");
   // 支持两种 TPU 日志格式：带 max 或只有 avg
-  std::regex re_tpu_with_max(R"(TPU usage:\s*avg=(\S+)%?\s+max=(\S+)%?)");
-  std::regex re_tpu_avg_only(R"(TPU usage:\s*avg=(\S+)%?)");
+  std::regex re_tpu(R"(TPU usage:\s*avg=(\S+)%?\s+max=(\S+)%?)");
   std::regex re_memory_required(
       R"(Model memory requirements:\s*([\d\.]+)\s*MB)");
   std::regex re_file_size(R"(file size:\s*([\d\.]+)\s*MB)");
@@ -37,9 +36,10 @@ void summary(const std::string &log_dir, const std::string &output_md) {
   }
 
   for (const auto &entry : fs::directory_iterator(log_dir)) {
-    // 仅统计文件名中包含 ".performance" 的日志，并限定扩展名为 .log
     const auto &p = entry.path();
     const std::string fname = p.filename().string();
+
+    // 仅统计文件名中包含 ".performance" 的日志，并限定扩展名为 .log
     if (fname.find(".performance") == std::string::npos) continue;
     if (!fs::is_regular_file(p) || p.extension() != ".log") continue;
 
@@ -52,42 +52,101 @@ void summary(const std::string &log_dir, const std::string &output_md) {
     std::string content((std::istreambuf_iterator<char>(fin)),
                         std::istreambuf_iterator<char>());
 
-    std::smatch match_model, match_timer, match_cpu, match_tpu, match_memory,
-        match_file_size;
+    // 收集每类信息的所有匹配（保持出现顺序）
+    std::vector<std::string> v_model;
+    std::vector<std::string> v_pre, v_tpu_time, v_post, v_total;
+    std::vector<std::string> v_cpu_avg, v_cpu_max;
+    std::vector<std::string> v_tpu_avg, v_tpu_max;
+    std::vector<std::string> v_memory, v_filesize;
 
-    Record r;
-    if (std::regex_search(content, match_model, re_model)) {
-      r.model = match_model[1].str();
+    auto it_end = std::sregex_iterator();
+
+    // model
+    for (auto it =
+             std::sregex_iterator(content.begin(), content.end(), re_model);
+         it != it_end; ++it) {
+      v_model.push_back((*it)[1].str());
     }
 
-    if (std::regex_search(content, match_timer, re_timer)) {
-      r.preprocess = match_timer[1];
-      r.tpu_time = match_timer[2];
-      r.post = match_timer[3];
-      r.total = match_timer[4];
+    // timer
+    for (auto it =
+             std::sregex_iterator(content.begin(), content.end(), re_timer);
+         it != it_end; ++it) {
+      v_pre.push_back((*it)[1].str());
+      v_tpu_time.push_back((*it)[2].str());
+      v_post.push_back((*it)[3].str());
+      v_total.push_back((*it)[4].str());
     }
 
-    if (std::regex_search(content, match_memory, re_memory_required)) {
-      r.model_memory = match_memory[1].str();
+    // memory
+    for (auto it = std::sregex_iterator(content.begin(), content.end(),
+                                        re_memory_required);
+         it != it_end; ++it) {
+      v_memory.push_back((*it)[1].str());
     }
 
-    if (std::regex_search(content, match_file_size, re_file_size)) {
-      r.file_size = match_file_size[1].str();
+    // file size
+    for (auto it =
+             std::sregex_iterator(content.begin(), content.end(), re_file_size);
+         it != it_end; ++it) {
+      v_filesize.push_back((*it)[1].str());
     }
 
-    if (std::regex_search(content, match_cpu, re_cpu)) {
-      r.cpu_avg = match_cpu[1];
-      r.cpu_max = match_cpu[2];
+    // CPU usage
+    for (auto it = std::sregex_iterator(content.begin(), content.end(), re_cpu);
+         it != it_end; ++it) {
+      v_cpu_avg.push_back((*it)[1].str());
+      v_cpu_max.push_back((*it)[2].str());
     }
 
-    if (std::regex_search(content, match_tpu, re_tpu_with_max)) {
-      r.tpu_avg = match_tpu[1];
-      r.tpu_max = match_tpu[2];
-    } else if (std::regex_search(content, match_tpu, re_tpu_avg_only)) {
-      r.tpu_avg = match_tpu[1];
+    // TPU usage
+    for (auto it = std::sregex_iterator(content.begin(), content.end(), re_tpu);
+         it != it_end; ++it) {
+      v_tpu_avg.push_back((*it)[1].str());
+      v_tpu_max.push_back((*it)[2].str());
     }
 
-    records.push_back(r);
+    // 计算本文件应生成的 Record 数量：
+    auto max_size = [](std::initializer_list<size_t> l) {
+      size_t m = 0;
+      for (size_t s : l) m = std::max(m, s);
+      return m;
+    };
+
+    size_t n = max_size({v_model.size(), v_memory.size(), v_filesize.size(),
+                         v_cpu_avg.size(), v_cpu_max.size(), v_tpu_avg.size(),
+                         v_tpu_max.size(), v_tpu_time.size(), v_post.size(),
+                         v_total.size()});
+
+    // 取值策略：
+    // - 若该字段出现次数 = n：按索引取；否则用 N/A
+    auto pick = [n](const std::vector<std::string> &v,
+                    size_t i) -> std::string {
+      if (v.size() != n) return "N/A";
+      return v[i];
+    };
+
+    if (n == 0) {
+      // 该文件没有任何有效匹配，push 一个默认 Record
+      Record r;
+      records.push_back(r);
+    } else {
+      for (size_t i = 0; i < n; ++i) {
+        Record r;
+        r.model = pick(v_model, i);
+        r.preprocess = pick(v_pre, i);
+        r.tpu_time = pick(v_tpu_time, i);
+        r.post = pick(v_post, i);
+        r.total = pick(v_total, i);
+        r.model_memory = pick(v_memory, i);
+        r.file_size = pick(v_filesize, i);
+        r.cpu_avg = pick(v_cpu_avg, i);
+        r.cpu_max = pick(v_cpu_max, i);
+        r.tpu_avg = pick(v_tpu_avg, i);
+        r.tpu_max = pick(v_tpu_max, i);
+        records.push_back(r);
+      }
+    }
   }
 
   if (records.empty()) {
