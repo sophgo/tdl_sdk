@@ -477,8 +477,13 @@ bool confirm_path(std::string &tpu_usage_path) {
   }
   return false;
 
-#elif defined(__CV184X__) || defined(__CV186X__)
+#elif defined(__CV184X__)
   tpu_usage_path = "/tmp/bmcpu_app_usage";
+  return true;
+
+#elif defined(__CV186X__)
+  std::string tool_path = gen_model_tool_dir();
+  tpu_usage_path = tool_path + "/bm-smi -noloop --file=tmp.txt";
   return true;
 
 #elif defined(__BM168X__)
@@ -511,7 +516,7 @@ bool read_tpu_usage(const std::string &tpu_usage_path,
   std::string output;
   std::string value_str;
 
-#if !defined(__BM168X__)
+#if !defined(__BM168X__) && !defined(__CV186X__)
   std::string cmd = "cat " + tpu_usage_path;
   FILE *fp = popen(cmd.c_str(), "r");
   if (!fp) {
@@ -833,8 +838,8 @@ int get_model_info(const std::string &model_path, float &infer_time_ms) {
   }
 #else
 
-  cmd =
-      "cd " + tool_path + " && " + " model_tool --info " + model_path + " 2>&1";
+  cmd = "cd " + tool_path + " && " + " ./model_tool --info " + model_path +
+        " 2>&1";
 
   re.assign(R"(device\s+mem\s+size:\s*(\d+)\s*\()");
 
@@ -848,7 +853,7 @@ int get_model_info(const std::string &model_path, float &infer_time_ms) {
   }
 
   cmd = "export SHOW_TPU_USAGE=1 && cd " + tool_path + " && " +
-        " bmrt_test --bmodel " + model_path + " 2>&1";
+        " ./bmrt_test --bmodel " + model_path + " 2>&1";
 
   re.assign(R"(INFO:calculate\s+time\(s\):\s+([\d]+\.[\d]+))");
   if (parse_cmd_result(cmd, re, result) != 0) {
@@ -881,8 +886,8 @@ void *run_tdl_thread_tpu(void *args) {
         " --count " + std::to_string(count);
 #else
   cmd = "export SHOW_TPU_USAGE=1 && cd " + tool_path + " && " +
-        " bmrt_test --bmodel " + tpu_args->model_path + " --calculate_times " +
-        std::to_string(count);
+        " ./bmrt_test --bmodel " + tpu_args->model_path +
+        " --calculate_times " + std::to_string(count);
 #endif
 
   int ret = system(cmd.c_str());

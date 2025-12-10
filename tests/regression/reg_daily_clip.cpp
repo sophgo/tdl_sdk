@@ -48,14 +48,14 @@ class ClipTestSuite : public CVI_TDLModelTestSuite {
         m_json_object["text_model_name"].get<std::string>() +
         gen_model_suffix();
 
-    image_model_ = TDLModelFactory::getInstance().getModel(
-        model_id_image,
-        model_path_image);  // One model id may correspond to multiple
-                            // models with different sizes
     text_model_ = TDLModelFactory::getInstance().getModel(
         model_id_text,
         model_path_text);  // One model id may correspond to multiple
                            // models with different sizes
+    image_model_ = TDLModelFactory::getInstance().getModel(
+        model_id_image,
+        model_path_image);  // One model id may correspond to multiple
+                            // models with different sizes
 
     ASSERT_NE(image_model_, nullptr);
     ASSERT_NE(text_model_, nullptr);
@@ -156,6 +156,44 @@ TEST_F(ClipTestSuite, accuracy) {
     EXPECT_EQ(gt_class_id, pred_class_id);
     EXPECT_NEAR(gt_score, pred_score, 0.1);
   }
+}
+
+TEST_F(ClipTestSuite, performance) {
+  std::string model_path_image =
+      m_model_dir.string() + "/" + gen_model_dir() + "/" +
+      m_json_object["image_model_name"].get<std::string>() + gen_model_suffix();
+
+  std::string model_path_text =
+      m_model_dir.string() + "/" + gen_model_dir() + "/" +
+      m_json_object["text_model_name"].get<std::string>() + gen_model_suffix();
+
+  std::vector<std::vector<int32_t>> tokens;
+  BytePairEncoder bpe(encoder_file, bpe_file);
+  int result = bpe.tokenizerBPE(input_file, tokens);
+
+  std::shared_ptr<BaseImage> text = ImageFactory::createImage(
+      77, 1, ImageFormat::GRAY, TDLDataType::INT32, true);
+  uint8_t* txt_buffer = text->getVirtualAddress()[0];
+  memcpy(txt_buffer, tokens[0].data(), 77 * sizeof(int32_t));
+  run_performance(model_path_text, text, text_model_);
+
+  std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
+  std::string platform = get_platform_str();
+  TestFlag test_flag = CVI_TDLTestContext::getInstance().getTestFlag();
+  nlohmann::ordered_json results;
+  LOGIP("test_flag: %d", static_cast<int>(test_flag));
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    LOGIP("checkToGetProcessResult failed");
+    return;
+  }
+
+  auto iter = results.begin();
+  std::string image_path =
+      (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
+
+  std::shared_ptr<BaseImage> frame = loadInputData(image_path);
+
+  run_performance(model_path_image, frame, image_model_);
 }
 
 }  // namespace unitest

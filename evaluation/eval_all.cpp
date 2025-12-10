@@ -52,16 +52,21 @@ bool createDirectory(const std::string& path) {
 }
 
 // 通用解析函数
+// 修改函数参数，增加 model_name
 vector<string> parse_common(const json& j, const string& model_dir,
                             const string& dataset_dir, const string& output_dir,
-                            const string& key) {
+                            const string& key, const string& model_name) {
   vector<string> commands;
 
   for (const auto& item : j) {
-    // Replace structured binding with explicit key/value access
     for (const auto& element : item.items()) {
-      const string& model_name = element.key();
+      const string& current_model_name = element.key();  // 重命名避免变量冲突
       const auto& model_info = element.value();
+
+      // 如果指定了模型名称，只处理匹配的模型
+      if (!model_name.empty() && current_model_name != model_name) {
+        continue;
+      }
 
       string model_id = "";
       string model_path = model_dir;
@@ -84,14 +89,15 @@ vector<string> parse_common(const json& j, const string& model_dir,
             model_dir + "/" + platform + "/" + model_name + model_extension;
       }
 
-      string output = output_dir + "/" + model_name + "/";
-      // 创建output目录（如果不存在）
+      // 构建输出路径时使用 current_model_name
+      string output = output_dir + "/" + current_model_name + "/";
       createDirectory(output);
 
       if (key == "eval_classification" || key == "eval_bin_audio" ||
           key == "eval_hand_keypoint_cls" || key == "eval_face_attribute" ||
           key == "eval_license_plate_recognition") {
-        output = output + "/" + model_name + ".txt";
+        output = output + "/" + current_model_name +
+                 ".txt";  // 使用 current_model_name
       }
 
       string file_list =
@@ -111,17 +117,22 @@ vector<string> parse_common(const json& j, const string& model_dir,
 }
 
 // CLIP pipeline解析函数（特殊结构）
+// 修改函数参数，增加 model_name
 vector<string> parse_clip_pipeline(const json& j, const string& model_dir,
                                    const string& dataset_dir,
-                                   const string& output_dir,
-                                   const string& key) {
+                                   const string& output_dir, const string& key,
+                                   const string& model_name) {
   vector<string> commands;
 
   for (const auto& item : j) {
-    // Replace structured binding with explicit key/value access
     for (const auto& element : item.items()) {
-      const string& model_name = element.key();
+      const string& current_model_name = element.key();  // 重命名避免变量冲突
       const auto& model_info = element.value();
+
+      // 如果指定了模型名称，只处理匹配的模型
+      if (!model_name.empty() && current_model_name != model_name) {
+        continue;
+      }
 
       string model_id_img = model_info["model_id_img"];
       string model_id_text = model_info["model_id_text"];
@@ -153,14 +164,15 @@ vector<string> parse_clip_pipeline(const json& j, const string& model_dir,
       string txt_dir =
           dataset_dir + "/" + model_info["txt_dir"].get<std::string>();
 
-      string output = output_dir + "/" + model_name;
-      // 创建output目录（如果不存在）
+      // 构建输出路径时使用 current_model_name
+      string output = output_dir + "/" + current_model_name;
       createDirectory(output);
 
       string cmd = "./" + key + " " + model_id_img + " " + model_id_text + " " +
                    model_path_img + " " + model_path_text + " " +
                    real_dataset_dir + " " + file_list + " " + txt_dir + " " +
-                   output + "/" + model_name + ".txt";
+                   output + "/" + current_model_name +
+                   ".txt";  // 使用 current_model_name
       commands.push_back(cmd);
     }
   }
@@ -169,16 +181,22 @@ vector<string> parse_clip_pipeline(const json& j, const string& model_dir,
 }
 
 // 音频ASR解析函数
+// 修改函数参数，增加 model_name
 vector<string> parse_audio_asr(const json& j, const string& model_dir,
                                const string& dataset_dir,
-                               const string& output_dir, const string& key) {
+                               const string& output_dir, const string& key,
+                               const string& model_name) {
   vector<string> commands;
 
   for (const auto& item : j) {
-    // Replace structured binding with explicit key/value access
     for (const auto& element : item.items()) {
-      const string& model_name = element.key();
+      const string& current_model_name = element.key();  // 重命名避免变量冲突
       const auto& model_info = element.value();
+
+      // 如果指定了模型名称，只处理匹配的模型
+      if (!model_name.empty() && current_model_name != model_name) {
+        continue;
+      }
 
       // 检查是否需要按target_chips过滤
       if (model_info.contains("target_chips")) {
@@ -199,13 +217,13 @@ vector<string> parse_audio_asr(const json& j, const string& model_dir,
       string file_list =
           dataset_dir + "/" + model_info["file_list"].get<std::string>();
 
-      string output = output_dir + "/" + model_name;
-      // 创建output目录（如果不存在）
+      // 构建输出路径时使用 current_model_name
+      string output = output_dir + "/" + current_model_name;
       createDirectory(output);
 
       string cmd = "./" + key + " " + model_dir + " " + tokens_file + " " +
                    real_dataset_dir + " " + file_list + " " + output + "/" +
-                   model_name + ".txt";
+                   current_model_name + ".txt";  // 使用 current_model_name
       commands.push_back(cmd);
     }
   }
@@ -214,16 +232,21 @@ vector<string> parse_audio_asr(const json& j, const string& model_dir,
 }
 
 // SOT解析函数（新增key参数并更新命令）
+// 修改函数参数，增加 model_name
 vector<string> parse_sot(const json& j, const string& model_dir,
                          const string& dataset_dir, const string& output_dir,
-                         const string& key) {
+                         const string& key, const string& model_name) {
   vector<string> commands;
 
   for (const auto& item : j) {
-    // Replace structured binding with explicit key/value access
     for (const auto& element : item.items()) {
-      const string& model_name = element.key();
+      const string& current_model_name = element.key();  // 重命名避免变量冲突
       const auto& model_info = element.value();
+
+      // 如果指定了模型名称，只处理匹配的模型
+      if (!model_name.empty() && current_model_name != model_name) {
+        continue;
+      }
 
       // 检查是否需要按target_chips过滤
       if (model_info.contains("target_chips")) {
@@ -242,12 +265,10 @@ vector<string> parse_sot(const json& j, const string& model_dir,
       string labels_dir =
           dataset_dir + "/" + model_info["labels_dir"].get<std::string>();
 
-      string output = output_dir + "/" + model_name + "/";
-
-      // 创建output目录（如果不存在）
+      // 构建输出路径时使用 current_model_name
+      string output = output_dir + "/" + current_model_name + "/";
       createDirectory(output);
 
-      // 命令使用key替换硬编码的"eval_sot"
       string cmd = "./" + key + " " + model_dir + " " + real_dataset_dir + " " +
                    labels_dir + " " + output;
       commands.push_back(cmd);
@@ -258,16 +279,22 @@ vector<string> parse_sot(const json& j, const string& model_dir,
 }
 
 // 人脸特征解析函数
+// 修改函数参数，增加 model_name
 vector<string> parse_face_feature(const json& j, const string& model_dir,
                                   const string& dataset_dir,
-                                  const string& output_dir, const string& key) {
+                                  const string& output_dir, const string& key,
+                                  const string& model_name) {
   vector<string> commands;
 
   for (const auto& item : j) {
-    // Replace structured binding with explicit key/value access
     for (const auto& element : item.items()) {
-      const string& model_name = element.key();
+      const string& current_model_name = element.key();  // 重命名避免变量冲突
       const auto& model_info = element.value();
+
+      // 如果指定了模型名称，只处理匹配的模型
+      if (!model_name.empty() && current_model_name != model_name) {
+        continue;
+      }
 
       // 检查是否需要按target_chips过滤
       if (model_info.contains("target_chips")) {
@@ -284,12 +311,13 @@ vector<string> parse_face_feature(const json& j, const string& model_dir,
       string labels_file =
           dataset_dir + "/" + model_info["labels_file"].get<std::string>();
 
-      string output = output_dir + "/" + model_name;
-      // 创建output目录（如果不存在）
+      // 构建输出路径时使用 current_model_name
+      string output = output_dir + "/" + current_model_name;
       createDirectory(output);
 
       string cmd = "./" + key + " " + model_id + " " + model_dir + " " +
-                   labels_file + " " + output + "/" + model_name + ".txt";
+                   labels_file + " " + output + "/" + current_model_name +
+                   ".txt";  // 使用 current_model_name
       commands.push_back(cmd);
     }
   }
@@ -305,10 +333,12 @@ int execute_command(const string& cmd) {
 
 // 主函数
 int main(int argc, char* argv[]) {
-  if (argc != 5) {
-    cerr << "Usage: " << argv[0]
-         << "model_info_json model_dir dataset_dir output_dir\n"
-         << "see also: docs/tutorials/eval_models.md " << endl;
+  // 修改参数检查，支持 5 个（原有）或 6 个（增加 model_name）参数
+  if (argc != 5 && argc != 6) {
+    cerr
+        << "Usage: " << argv[0]
+        << " model_info_json model_dir dataset_dir output_dir [model_name]\n"  // 更新帮助信息
+        << "see also: docs/tutorials/eval_models.md " << endl;
     return 1;
   }
 
@@ -316,6 +346,13 @@ int main(int argc, char* argv[]) {
   string model_dir = argv[2];
   string dataset_dir = argv[3];
   string output_dir = argv[4];
+  string
+      model_name;  // 可选的模型名称参数（不包含如"_cv184x.bmodel"的后缀），传入后只跑该模型
+
+  // 如果提供了第 6 个参数，则解析为模型名称
+  if (argc == 6) {
+    model_name = argv[5];
+  }
 
   getModelExtension(platform, model_extension);
 
@@ -338,9 +375,10 @@ int main(int argc, char* argv[]) {
   vector<string> commands;
 
   // {{ 修改开始 }}
-  // 定义解析函数指针类型（所有解析函数的统一签名）
-  using ParseFunc = vector<string> (*)(
-      const json&, const string&, const string&, const string&, const string&);
+  // 定义解析函数指针类型（增加 model_name 参数）
+  using ParseFunc =
+      vector<string> (*)(const json&, const string&, const string&,
+                         const string&, const string&, const string&);
 
   // 评估任务映射表：JSON键 -> 对应的解析函数
   vector<pair<string, ParseFunc>> eval_handlers = {
@@ -359,17 +397,17 @@ int main(int argc, char* argv[]) {
       {"eval_sot", parse_sot},
       {"eval_face_feature", parse_face_feature}};
 
-  // 循环遍历所有评估任务，替代原有的多个if判断
+  // 循环遍历所有评估任务
   for (const auto& handler : eval_handlers) {
-    const string& key = handler.first;  // JSON键（如"eval_face_detection"）
-    ParseFunc parse_func = handler.second;  // 对应的解析函数
+    const string& key = handler.first;
+    ParseFunc parse_func = handler.second;
     if (j.contains(key)) {
-      // 执行解析函数并收集命令
-      auto cmds = parse_func(j[key], model_dir, dataset_dir, output_dir, key);
+      // 传递 model_name 参数给解析函数
+      auto cmds = parse_func(j[key], model_dir, dataset_dir, output_dir, key,
+                             model_name);
       commands.insert(commands.end(), cmds.begin(), cmds.end());
     } else {
       cout << "No key found: " << key << endl;
-      // getchar();
     }
   }
   // {{ 修改结束 }}
