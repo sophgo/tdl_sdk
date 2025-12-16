@@ -251,6 +251,32 @@
           ]
         }
       }
+    },
+    {
+      "name": "ClipTestSuite.accuracy",
+      "_comment": "clip model test",
+      "type": "regression",
+      "platforms": ["ALL"],
+      "files": {
+        "common": [
+          "feature_clip_224_224_W4BF16.json",
+          "feature_mobileclip2_B_224_224_INT8.json",
+          "feature_mobileclip2_S2_224_224_INT8.json"
+        ],
+        "exclude": {
+          "BM1688": [
+            "feature_clip_224_224_W4BF16.json"
+          ],
+          "CV186X": [
+            "feature_clip_224_224_W4BF16.json"
+          ],
+          "CV181X": [
+            "feature_clip_224_224_W4BF16.json",
+            "feature_mobileclip2_B_224_224_INT8.json",
+            "feature_mobileclip2_S2_224_224_INT8.json"
+          ]
+        }
+      }
     }
   ]
 }
