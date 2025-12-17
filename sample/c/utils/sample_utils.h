@@ -52,6 +52,9 @@ typedef struct {
   int rear;
   int count;
   pthread_mutex_t mutex;
+  pthread_cond_t cond_full;
+  pthread_cond_t cond_empty;
+  int to_exit;
 } ImageQueue;
 
 /**
@@ -67,6 +70,13 @@ void InitQueue(ImageQueue *q);
  * @param q 图像队列
  */
 void DestroyQueue(ImageQueue *q);
+
+/**
+ * @brief 退出图像队列，唤醒所有等待线程
+ *
+ * @param q 图像队列
+ */
+void ExitQueue(ImageQueue *q);
 
 /**
  * @brief 从图像队列中获取图像
