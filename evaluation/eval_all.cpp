@@ -85,8 +85,8 @@ vector<string> parse_common(const json& j, const string& model_dir,
       if (model_info.contains("model_id")) {
         model_id = model_info["model_id"];
 
-        model_path =
-            model_dir + "/" + platform + "/" + model_name + model_extension;
+        model_path = model_dir + "/" + platform + "/" + current_model_name +
+                     model_extension;
       }
 
       // 构建输出路径时使用 current_model_name

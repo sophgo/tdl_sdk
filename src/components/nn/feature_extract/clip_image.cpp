@@ -13,6 +13,8 @@ Clip_Image::Clip_Image() {
   // net_param_.model_config.mean = {122.7709383, 116.7460125, 104.09373615};
   net_param_.model_config.std = {1.0, 1.0, 1.0};
   net_param_.model_config.mean = {0.0, 0.0, 0.0};
+  net_param_.model_config.rgb_order = "rgb";
+  keep_aspect_ratio_ = true;
 }
 
 Clip_Image::~Clip_Image() {}

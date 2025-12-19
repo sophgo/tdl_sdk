@@ -118,8 +118,7 @@ std::string gen_model_tool_dir() {
   std::string sdk_dir = CommonUtils::getParentDir(tdl_dir);
 
 #if defined(__CV180X__) || defined(__CV181X__)
-  return "/mnt/data/yzx/sdk_sync/v410/cviruntime/build_sdk/build_cviruntime/"
-         "tool";
+  return sdk_dir + "/cviruntime/build_sdk/build_cviruntime/tool";
 #elif defined(__CV184X__) || defined(__CV186X__)
   return sdk_dir + "/libsophon/install/libsophon-0.4.9/bin";
 #elif defined(__BM168X__)
