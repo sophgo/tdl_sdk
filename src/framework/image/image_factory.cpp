@@ -450,34 +450,37 @@ std::shared_ptr<BaseImage> ImageFactory::convertFromMat(cv::Mat& mat,
          mat.type());
     return nullptr;
   }
+
+#if defined(__BM168X__) || defined(__CMODEL_CV181X__) || \
+    defined(__CMODEL_CV184X__)
+  return std::make_shared<OpenCVImage>(mat, image_format);
+#else
   std::shared_ptr<BaseImage> image = ImageFactory::createImage(
       mat.cols, mat.rows, image_format, TDLDataType::UINT8, false);
   if (image == nullptr) {
     LOGE("Failed to create image");
     return nullptr;
   }
-  if (image->getImageType() == ImageType::OPENCV_FRAME) {
-    image = std::make_shared<OpenCVImage>(mat, image_format);
-  } else {
-    int32_t ret = image->allocateMemory();
-    if (ret != 0) {
-      LOGE("Failed to allocate memory");
-      return nullptr;
-    }
-    std::vector<uint8_t*> virtual_addresses = image->getVirtualAddress();
-    uint8_t* ptr_dst = virtual_addresses[0];
-    uint8_t* ptr_src = mat.data;
-    for (int r = 0; r < mat.rows; r++) {
-      uint8_t* dst = ptr_dst + r * image->getStrides()[0];
-      memcpy(dst, ptr_src + r * mat.step[0], mat.cols * 3);
-    }
-    ret = image->flushCache();
-    if (ret != 0) {
-      LOGE("Failed to flush cache");
-      return nullptr;
-    }
+
+  int32_t ret = image->allocateMemory();
+  if (ret != 0) {
+    LOGE("Failed to allocate memory");
+    return nullptr;
+  }
+  std::vector<uint8_t*> virtual_addresses = image->getVirtualAddress();
+  uint8_t* ptr_dst = virtual_addresses[0];
+  uint8_t* ptr_src = mat.data;
+  for (int r = 0; r < mat.rows; r++) {
+    uint8_t* dst = ptr_dst + r * image->getStrides()[0];
+    memcpy(dst, ptr_src + r * mat.step[0], mat.cols * 3);
+  }
+  ret = image->flushCache();
+  if (ret != 0) {
+    LOGE("Failed to flush cache");
+    return nullptr;
   }
   return image;
+#endif
 }
 
 int32_t ImageFactory::convertToMat(std::shared_ptr<BaseImage>& image,
