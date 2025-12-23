@@ -83,7 +83,8 @@
           "cls_sound_babay_cry_188_40_INT8.json",
           "cls_sound_nihaoshiyun_126_40_INT8.json",
           "cls_sound_xiaoaixiaoai_126_40_INT8.json",
-          "cls_keypoint_hand_gesture_1_42_INT8.json"
+          "cls_keypoint_hand_gesture_1_42_INT8.json",
+          "vad_fsmn_100_400_BF16.json"
         ],
         "exclude": {
           "BM1684X": [

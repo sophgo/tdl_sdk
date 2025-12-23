@@ -108,6 +108,9 @@
   /* speech recognition */                                                    \
   X(RECOGNITION_SPEECH_ZIPFORMER_ENCODER, "zipformer encoder")                \
   X(RECOGNITION_SPEECH_ZIPFORMER_DECODER, "zipformer decoder")                \
-  X(RECOGNITION_SPEECH_ZIPFORMER_JOINER, "zipformer joiner")
+  X(RECOGNITION_SPEECH_ZIPFORMER_JOINER, "zipformer joiner")                  \
+                                                                              \
+  /* voice activity detection */                                              \
+  X(VAD_FSMN, "fsmn voice activity detection")
 
 #endif

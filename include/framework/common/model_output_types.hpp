@@ -16,6 +16,7 @@ enum class ModelOutputType {
   SEGMENTATION,
   OCR_INFO,
   ASR_INFO,
+  VAD_INFO,
   UNKOWN
 };
 
@@ -232,4 +233,13 @@ class ModelASRInfo : public ModelOutputInfo {
   bool input_finished = false;
 };
 
+class ModelVADInfo : public ModelOutputInfo {
+ public:
+  ~ModelVADInfo() = default;
+  ModelOutputType getType() const override { return ModelOutputType::VAD_INFO; }
+  std::vector<std::vector<std::vector<int>>> segments;
+  bool has_segments = false;
+  bool start_event = false;
+  bool end_event = false;
+};
 #endif

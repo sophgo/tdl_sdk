@@ -337,7 +337,10 @@
     },
     "RECOGNITION_SPEECH_ZIPFORMER_JOINER":{
       "file_name":"recognition_speech_zipformer_joiner-s_1_512_1_512_BF16"
+    },
+    "VAD_FSMN":{
+      "_comment":"voice activity detection",
+      "file_name":"vad_fsmn_100_400_BF16"
     }
-    
   }
 }

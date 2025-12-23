@@ -202,6 +202,31 @@ typedef struct {
   char *text_info;
 } TDLText;
 
+/**
+ * @brief VAD 段信息（毫秒）
+ * start_ms: 段起始时间（ms）
+ * end_ms: 段结束时间（ms），若为 -1 表示仍在进行中
+ */
+typedef struct {
+  int32_t start_ms;
+  int32_t end_ms;
+} TDLVadSegment;
+
+/**
+ * @brief VAD 输出元数据
+ * segments: 人声语音段段数组
+ * has_speech: 输出是否检测到人声段
+ * start_event: 是否存在流式检测语音段开始帧
+ * end_event: 是否存在流式检测语音段结束帧
+ */
+typedef struct {
+  uint32_t size;
+  TDLVadSegment *segments;
+  bool has_speech;
+  bool start_event;
+  bool end_event;
+} TDLVAD;
+
 typedef struct {
   float quality;
   uint64_t snapshot_frame_id;

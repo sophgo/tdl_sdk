@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include "audio_classification/audio_classification.hpp"
+#include "audio_classification/fsmn_vad.hpp"
 #include "face_attribute/face_attribute_cls.hpp"
 #include "face_detection/scrfd.hpp"
 #include "face_landmark/face_landmark_det2.hpp"
@@ -79,6 +80,9 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModelInstance(
     // 10. 语音识别模型
   } else if (isSpeechRecognitionModel(model_type)) {
     model = createSpeechRecognitionModel(model_type);
+    // 11. 人声检测模型
+  } else if (isVoiceActivityDetectionModel(model_type)) {
+    model = createVoiceActivityDetectionModel(model_type);
   } else {
     LOGE("model type %s not supported", modelTypeToString(model_type).c_str());
     return nullptr;
@@ -183,6 +187,10 @@ bool TDLModelFactory::isSpeechRecognitionModel(const ModelType model_type) {
           model_type == ModelType::RECOGNITION_SPEECH_ZIPFORMER_JOINER);
 }
 
+bool TDLModelFactory::isVoiceActivityDetectionModel(
+    const ModelType model_type) {
+  return (model_type == ModelType::VAD_FSMN);
+}
 // 创建函数实现
 std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     const ModelType model_type) {
@@ -502,5 +510,17 @@ std::shared_ptr<BaseModel> TDLModelFactory::createSpeechRecognitionModel(
     model = std::make_shared<ZipformerJoiner>();
   }
 #endif
+  return model;
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::createVoiceActivityDetectionModel(
+    const ModelType model_type) {
+  std::shared_ptr<BaseModel> model = nullptr;
+#ifndef DISABLE_VOICE_ACTIVITY_DETECTION
+  if (model_type == ModelType::VAD_FSMN) {
+    model = std::make_shared<FsmnVad>();
+  }
+#endif
+
   return model;
 }

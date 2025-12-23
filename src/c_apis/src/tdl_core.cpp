@@ -1064,6 +1064,56 @@ int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
   return 0;
 }
 
+int32_t TDL_VoiceActivityDetection(TDLHandle handle, const TDLModel model_id,
+                                   TDLImage image_handle, int is_final,
+                                   TDLVAD *vad_meta) {
+  if (vad_meta == nullptr) return -1;
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+  if (image_context == nullptr || image_context->image == nullptr) {
+    return -1;
+  }
+
+  std::shared_ptr<ModelOutputInfo> output_info;
+  std::map<std::string, float> params;
+  params["is_final"] = (is_final != 0) ? 1.0f : 0.0f;
+  int32_t ret = model->inference(image_context->image, output_info, params);
+  if (ret != 0) return ret;
+  if (!output_info || output_info->getType() != ModelOutputType::VAD_INFO) {
+    LOGE("Unsupported model output type: %d",
+         output_info ? static_cast<int>(output_info->getType()) : -1);
+    return -1;
+  }
+
+  std::shared_ptr<ModelVADInfo> vad_out =
+      std::static_pointer_cast<ModelVADInfo>(output_info);
+
+  // 展平 segments：按 batch->segments 遍历
+  std::vector<TDLVadSegment> segs;
+  for (const auto &batch_segments : vad_out->segments) {
+    for (const auto &seg : batch_segments) {
+      if (seg.size() < 2) continue;
+      TDLVadSegment s;
+      s.start_ms = seg[0];
+      s.end_ms = seg[1];
+      segs.push_back(s);
+    }
+  }
+
+  TDL_InitVADMeta(vad_meta, (int)segs.size());
+  vad_meta->has_speech = !segs.empty();
+  vad_meta->start_event = vad_out->start_event;
+  vad_meta->end_event = vad_out->end_event;
+  for (size_t i = 0; i < segs.size(); ++i) {
+    vad_meta->segments[i] = segs[i];
+  }
+
+  return 0;
+}
+
 #ifndef DISABLE_SPEECH_RECOGNITION
 int32_t TDL_SpeechRecognition_Init(TDLHandle handle,
                                    const TDLModel model_id_encoder,
