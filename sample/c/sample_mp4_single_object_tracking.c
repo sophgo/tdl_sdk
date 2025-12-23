@@ -179,7 +179,8 @@ int main(int argc, char *argv[]) {
         char outpath[128];
         snprintf(outpath, 128, "%s/%07d.jpg", save_dir, g_frame_id);
 
-        if (VisualizeRectangle(boxes, 1, image, outpath) != 0) {
+        int colors[3] = {255, 0, 0};  // 蓝色
+        if (VisualizeRectangle(boxes, 1, image, outpath, colors) != 0) {
           printf("VisualizeRectangle failed with %#x!\n", ret);
           return -1;
         }

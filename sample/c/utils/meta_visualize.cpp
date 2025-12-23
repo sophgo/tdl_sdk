@@ -32,7 +32,7 @@ int32_t VisualizeRectangleFromFile(box_t *box, int32_t num, char *input_path,
 }
 
 int32_t VisualizeRectangle(box_t *box, int32_t num, TDLImage image_handle,
-                           char *output_path) {
+                           char *output_path, int *colors) {
   cv::Mat mat;
   bool is_rgb;
 
@@ -48,11 +48,14 @@ int32_t VisualizeRectangle(box_t *box, int32_t num, TDLImage image_handle,
   }
 
   for (int32_t i = 0; i < num; i++) {
+    int b = colors[i * 3];
+    int g = colors[i * 3 + 1];
+    int r = colors[i * 3 + 2];
     cv::rectangle(mat,
                   cv::Rect(int32_t(box[i].x1), int32_t(box[i].y1),
                            int32_t(box[i].x2 - box[i].x1),
                            int32_t(box[i].y2 - box[i].y1)),
-                  cv::Scalar(0, 0, 255), 2);
+                  cv::Scalar(b, g, r), 2);  // 使用自定义颜色
   }
 
   cv::imwrite(output_path, mat);

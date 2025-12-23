@@ -2986,22 +2986,61 @@ Execute face capture task.
      - capture_info
      - Capture results
 
-TDL_APP_ConsumerCounting
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+TDL_APP_ObjectCounting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 【Syntax】
 
 .. code-block:: c
 
-  int32_t TDL_APP_ConsumerCounting(TDLHandle handle,
+  int32_t TDL_APP_ObjectCounting(TDLHandle handle,
                                    const char *channel_name,
-                                   TDLObject *object_meta,
-                                   uint32_t *enter_num,
-                                   uint32_t *miss_num);
+                                   TDLObjectCountingInfo *object_counting_info);
 
 【Description】
 
-Execute consumer counting task.
+Execute passenger counting(TDL_APP_Init task is consumer_counting) or cross detection(TDL_APP_Init task is cross_detection) task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
+
+   * - Output
+     - TDLObjectCountingInfo*
+     - object_counting_info
+     - Counting/detection results
+
+TDL_APP_ObjectCountingSetLine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_ObjectCountingSetLine(TDLHandle handle,
+                                          const char *channel_name, int x1,
+                                          int y1, int x2, int y2, int mode);
+
+【Description】
+
+Set line position for passenger counting or cross detection running process.
 
 【Parameters】
 
@@ -3025,20 +3064,71 @@ Execute consumer counting task.
      - Current channel name
 
    * - Input
-     - TDLObject*
-     - object_meta
+     - int
+     - x1
+     - X-coordinate of endpoint 1
+
+   * - Input
+     - int
+     - y1
+     - Y-coordinate of endpoint 1
+
+   * - Input
+     - int
+     - x2
+     - X-coordinate of endpoint 2
+
+   * - Input
+     - int
+     - y2
+     - Y-coordinate of endpoint 2
+
+   * - Input
+     - int
+     - mode
+     - For passenger counting: mode is 0 when the line is vertical, and from left to right is entering. For non-vertical line, from top to bottom is entering. mode is 1 when the opposite direction. For cross detection: mode is 0 when the line is vertical, and from left to right is crossing. For non-vertical line, from top to bottom is crossing. mode is 1 when the opposite direction. mode is 2 for bidirectional detection
+
+TDL_APP_FallDetection
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_FallDetection(TDLHandle handle,
+                          const char *channel_name,
+                          TDLCaptureInfo *capture_info);
+
+【Description】
+
+Execute fall detection task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
+
+   * - Output
+     - TDLCaptureInfo*
+     - capture_info
      - Detection results
-
-   * - Output
-     - uint32_t*
-     - enter_num
-     - Number of people entering
-
-   * - Output
-     - uint32_t*
-     - miss_num
-     - Number of people leaving
-
+   
 TDL_WrapImage
 ~~~~~~~~~~~~~~~~~~~~~
 

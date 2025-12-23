@@ -545,6 +545,17 @@ int32_t TDL_APP_ObjectCountingSetLine(TDLHandle handle,
                                       const char *channel_name, int x1, int y1,
                                       int x2, int y2, int mode);
 
+/**
+ * @brief 执行跌倒检测任务
+ *
+ * @param handle TDLHandle 对象
+ * @param channel_name 当前channel的名称
+ * @param capture_info 检测结果
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_APP_FallDetection(TDLHandle handle, const char *channel_name,
+                              TDLCaptureInfo *capture_info);
+
 #ifdef __cplusplus
 }
 #endif
