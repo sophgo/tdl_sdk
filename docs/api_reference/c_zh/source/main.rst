@@ -248,6 +248,18 @@
        _ZIPFORMER_JOINER
      - zipformer语音识别joiner模型
 
+人声检测类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - 模型名称
+     - 注释
+
+   * - TDL_MODEL_VAD_FSMN 
+     - Fsmn人声检测模型
+
 分割类模型列表
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1142,6 +1154,78 @@ TDLText
   
    * - text_info
      - 文本识别的信息
+
+TDLVadSegment
+~~~~~~~~~~~~~~~
+
+【说明】
+
+人声检测语音段
+
+【定义】
+
+.. code-block:: c
+
+  typedef struct {
+    int32_t start_ms;
+    int32_t end_ms;
+  } TDLVadSegment;
+
+【成员】
+
+.. list-table::
+   :widths: 1 1
+
+   * - 数据类型枚举类
+     - 注释
+
+   * - start_ms
+     - 段起始时间（ms）
+  
+   * - end_ms
+     - 段结束时间（ms），若为 -1 表示仍在进行中
+TDLVad
+~~~~~~~~~~~~~~
+
+【说明】
+
+人声检测语音输出
+
+【定义】
+
+.. code-block:: c
+
+  typedef struct {
+    uint32_t size;
+    TDLVadSegment *segments;
+    bool has_speech;
+    bool start_event;
+    bool end_event;
+  } TDLVAD;
+
+【成员】
+
+.. list-table::
+   :widths: 1 1
+
+   * - 数据类型枚举类
+     - 注释
+
+   * - size
+     - 输入语音的个数
+  
+   * - segments
+     - 人声语音段段数组
+
+   * - has_speech
+     - 输出是否检测到人声段
+
+   * - start_event
+     - 是否存在流式检测语音段开始帧
+
+   * - end_event
+     - 是否存在流式检测语音段结束帧
+
 
 API参考
 ================
@@ -2853,6 +2937,60 @@ TDL_MotionDetection
    * - 输出
      - TDLObject*
      - obj_meta
+     - 输出参数，存储检测结果
+
+TDL_VoiceActivityDetection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_VoiceActivityDetection(TDLHandle handle,
+                                     const TDLModel model_id,
+                                     TDLImage image_handle, 
+                                     int is_final,
+                                     TDLVAD *vad_meta);
+ 
+【描述】
+
+执行流式人声检测任务。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id
+     - 指定人声检测模型类型枚举值
+
+   * - 输入
+     - TDLImage
+     - image_handle
+     - TDLImageHandle 对象
+
+   * - 输入
+     - int
+     - is_final
+     - 0：流式输入未结束；1：输入结束
+
+
+   * - 输出
+     - TDLVAD*
+     - vad_meta
      - 输出参数，存储检测结果
 
 TDL_APP_Init

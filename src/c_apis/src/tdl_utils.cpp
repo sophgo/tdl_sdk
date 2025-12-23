@@ -283,6 +283,38 @@ int32_t TDL_ReleaseCharacterMeta(TDLText *text_meta) {
   return 0;
 };
 
+int32_t TDL_InitVADMeta(TDLVAD *vad_meta, int num_segments) {
+  if (vad_meta == NULL) return -1;
+  if (vad_meta->segments != NULL) {
+    free(vad_meta->segments);
+    vad_meta->segments = NULL;
+  }
+  vad_meta->size = 0;
+  vad_meta->has_speech = false;
+  vad_meta->start_event = false;
+  vad_meta->end_event = false;
+
+  if (num_segments <= 0) return 0;
+
+  vad_meta->segments =
+      (TDLVadSegment *)malloc(num_segments * sizeof(TDLVadSegment));
+  if (!vad_meta->segments) return -1;
+  memset(vad_meta->segments, 0, num_segments * sizeof(TDLVadSegment));
+  vad_meta->size = (uint32_t)num_segments;
+  return 0;
+}
+
+int32_t TDL_ReleaseVADMeta(TDLVAD *vad_meta) {
+  if (vad_meta == NULL) return -1;
+  if (vad_meta->segments != NULL) {
+    free(vad_meta->segments);
+    vad_meta->segments = NULL;
+  }
+  vad_meta->size = 0;
+  vad_meta->has_speech = false;
+  return 0;
+}
+
 int32_t TDL_InitFeatureMeta(TDLFeature *feature_meta) {
   if (feature_meta->ptr != NULL) return 0;
   feature_meta->ptr = (int8_t *)malloc(sizeof(int8_t));

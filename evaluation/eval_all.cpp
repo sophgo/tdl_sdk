@@ -95,7 +95,7 @@ vector<string> parse_common(const json& j, const string& model_dir,
 
       if (key == "eval_classification" || key == "eval_bin_audio" ||
           key == "eval_hand_keypoint_cls" || key == "eval_face_attribute" ||
-          key == "eval_license_plate_recognition") {
+          key == "eval_license_plate_recognition" || key == "eval_audio_vad") {
         output = output + "/" + current_model_name +
                  ".txt";  // 使用 current_model_name
       }
@@ -392,6 +392,7 @@ int main(int argc, char* argv[]) {
       {"eval_keypoint", parse_common},
       {"eval_pose_yolov8", parse_common},
       {"eval_lane_detection", parse_common},
+      {"eval_audio_vad", parse_common},
       {"eval_clip_pipeline", parse_clip_pipeline},
       {"eval_audio_asr", parse_audio_asr},
       {"eval_sot", parse_sot},

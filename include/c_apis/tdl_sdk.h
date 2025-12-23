@@ -347,6 +347,20 @@ int32_t TDL_LaneDetection(TDLHandle handle, const TDLModel model_id,
  */
 int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
                                  TDLImage image_handle, TDLText *text_meta);
+
+/**
+ * @brief 执行 VAD（语音活动检测）
+ *
+ * @param handle TDLHandle 对象
+ * @param model_id VAD 模型枚举值（通常为 TDL_MODEL_VAD_FSMN）
+ * @param image_handle 音频数据（TDL_ReadAudioFrame 生成，16k/16bit PCM
+ * @param is_final 0：流式输入未结束；1：输入结束（用于 flush / reset）
+ * @param vad_meta 输出参数，存储 VAD 段信息（用户需调用 TDL_ReleaseVADMeta
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_VoiceActivityDetection(TDLHandle handle, const TDLModel model_id,
+                                   TDLImage image_handle, int is_final,
+                                   TDLVAD *vad_meta);
 /**
  * @brief 语音识别初始化
  *

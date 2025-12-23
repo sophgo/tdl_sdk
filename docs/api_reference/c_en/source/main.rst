@@ -246,6 +246,18 @@ Speech Recognition Model List
        _ZIPFORMER_JOINER
      - zipformer speech recognition joiner model
 
+Voice Activity Detection Model List
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Description
+
+   * - TDL_MODEL_VAD_FSMN 
+     - FSMN-based voice activity detection model
+  
 Segmentation model list 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1124,6 +1136,78 @@ Text recognition data
   
    * - text_info
      - Text recognition information
+
+TDLVadSegment
+~~~~~~~~~~~~~~~
+
+【Description】
+
+Voice activity detection (VAD) speech segments.
+
+【Definition】
+
+.. code-block:: c
+
+  typedef struct {
+    int32_t start_ms;
+    int32_t end_ms;
+  } TDLVadSegment;
+
+【Members】
+
+.. list-table::
+   :widths: 1 1
+
+   * - Data Type
+     - Description
+
+   * - start_ms
+     - Start time of the segment in milliseconds.
+  
+   * - end_ms
+     - End time of the segment in milliseconds. A value of `-1` indicates the segment is still ongoing.
+
+TDLVad
+~~~~~~~~~~~~~~
+
+【Definition】
+
+Output structure for voice activity detection (VAD).
+
+【Definition】
+
+.. code-block:: c
+
+  typedef struct {
+    uint32_t size;
+    TDLVadSegment *segments;
+    bool has_speech;
+    bool start_event;
+    bool end_event;
+  } TDLVAD;
+
+【Members】
+
+.. list-table::
+   :widths: 1 1
+
+   * - Data Type
+     - Description
+
+   * - size
+     - Start time of the segment in milliseconds.
+  
+   * - segments
+     - Array of detected speech segments (`TDLVadSegment`).
+
+   * - has_speech
+     - Indicates whether any speech segment was detected (`true` if speech is present, `false` otherwise)
+
+   * - start_event
+     - Indicates whether there is a frame marking the start of a speech segment in streaming detection.
+
+   * - end_event
+     - Indicates whether there is a frame marking the end of a speech segment in streaming detection.
 
 API Reference
 ================
@@ -2838,6 +2922,60 @@ Execute motion detection task.
      - TDLObject*
      - obj_meta
      - Output detection results
+
+TDL_VoiceActivityDetection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_VoiceActivityDetection(TDLHandle handle,
+                                     const TDLModel model_id,
+                                     TDLImage image_handle, 
+                                     int is_final,
+                                     TDLVAD *vad_meta);
+
+【Description】
+
+Performs streaming voice activity detection (VAD).
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - The TDLHandle object.
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Enum value specifying the voice activity detection model type.
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - The TDLImage handle object (used to pass audio features or input buffers).
+
+   * - Input
+     - int
+     - is_final
+     - 0 : streaming input not yet finished,
+       1 : final input chunk.
+
+   * - Output
+     - TDLVAD*
+     - vad_meta
+     - Output parameter that stores the VAD result.
 
 TDL_APP_Init
 ~~~~~~~~~~~~~~~~~~~~~

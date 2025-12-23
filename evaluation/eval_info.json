@@ -485,5 +485,14 @@
         "target_chips": ["cv186x", "bm1688"]
       }
     }
+  ],
+  "eval_audio_vad": [
+    {
+      "vad_fsmn_100_400_BF16": {
+        "model_id": "VAD_FSMN",
+        "file_list": "vad_cls/file_list.txt",
+        "dataset_dir": "vad_cls"
+      }
+    }
   ]
 }

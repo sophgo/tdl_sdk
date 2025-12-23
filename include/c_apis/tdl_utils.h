@@ -50,6 +50,10 @@ int32_t TDL_InitCharacterMeta(TDLText *text_meta, int length);
 
 int32_t TDL_ReleaseCharacterMeta(TDLText *text_meta);
 
+int32_t TDL_InitVADMeta(TDLVAD *vad_meta, int num_segments);
+
+int32_t TDL_ReleaseVADMeta(TDLVAD *vad_meta);
+
 int32_t TDL_InitTrackMeta(TDLTracker *track_meta, int num_track);
 
 int32_t TDL_ReleaseTrackMeta(TDLTracker *track_meta);
