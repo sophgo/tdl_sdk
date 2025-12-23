@@ -3104,6 +3104,47 @@ TDL_APP_ObjectCountingSetLine
      - mode
      - 对于客流统计: mode为0时, 对于竖直线, 从左到右为进入, 对于非竖直线,从上到下为进入, mode为1相反。对于越界检测: mode为0时, 对于竖直线, 从左到右为越过, 对于非竖直线,从上到下为越过, mode为1相反, mode为2双向检测
 
+TDL_APP_FallDetection
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_APP_FallDetection(TDLHandle handle,
+                          const char *channel_name,
+                          TDLCaptureInfo *capture_info);
+
+【描述】
+
+执行跌倒检测任务。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const char*
+     - channel_name
+     - 当前channel的名称
+
+   * - 输出
+     - TDLCaptureInfo*
+     - capture_info
+     - 检测结果
+
 TDL_WrapImage
 ~~~~~~~~~~~~~~~~~~~~~
 

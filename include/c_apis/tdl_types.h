@@ -72,6 +72,7 @@ typedef struct {
   char name[128];
   TDLBox box;
   bool is_cross;
+  bool falling;
   float score;
   int class_id;
   uint64_t track_id;

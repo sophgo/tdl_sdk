@@ -1841,4 +1841,78 @@ int32_t TDL_APP_ObjectCountingSetLine(TDLHandle handle,
   }
 }
 
+int32_t TDL_APP_FallDetection(TDLHandle handle, const char *channel_name,
+                              TDLCaptureInfo *capture_info) {
+  TDLContext *context = (TDLContext *)handle;
+  int ret = 0;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->app_task == nullptr) {
+    LOGE("app_task is not init\n");
+    return -1;
+  }
+
+  int processing_channel_num = context->app_task->getProcessingChannelNum();
+  if (processing_channel_num == 0) {
+    printf("no processing channel\n");
+    return 2;
+  }
+  if ((context->app_task->getChannelNodeName(std::string(channel_name), 0) ==
+       "video_node") ==
+      context->app_task->isExternalFrameChannel(std::string(channel_name))) {
+    LOGE("only one of TDLImage and video_node should be set!");
+    return -1;
+  }
+
+  Packet result;
+  ret = context->app_task->getResult(std::string(channel_name), result);
+  if (ret != 0) {
+    printf("get result failed\n");
+    context->app_task->removeChannel(std::string(channel_name));
+    return 1;
+  }
+
+  std::shared_ptr<FallDetectionResult> det_info =
+      result.get<std::shared_ptr<FallDetectionResult>>();
+  if (det_info == nullptr) {
+    printf("det_info is nullptr\n");
+    return 1;
+  }
+
+  capture_info->frame_id = det_info->frame_id;
+  capture_info->frame_width = det_info->frame_width;
+  capture_info->frame_height = det_info->frame_height;
+
+  if (det_info->image) {
+    TDLImageContext *image_context = new TDLImageContext();
+    image_context->image = det_info->image;
+    capture_info->image = (TDLImage)image_context;
+  }
+
+  TDL_InitObjectMeta(&capture_info->person_meta,
+                     det_info->person_boxes_keypoints.size(), 0);
+  for (int i = 0; i < det_info->person_boxes_keypoints.size(); i++) {
+    capture_info->person_meta.info[i].box.x1 =
+        det_info->person_boxes_keypoints[i].x1;
+    capture_info->person_meta.info[i].box.y1 =
+        det_info->person_boxes_keypoints[i].y1;
+    capture_info->person_meta.info[i].box.x2 =
+        det_info->person_boxes_keypoints[i].x2;
+    capture_info->person_meta.info[i].box.y2 =
+        det_info->person_boxes_keypoints[i].y2;
+    capture_info->person_meta.info[i].class_id =
+        det_info->person_boxes_keypoints[i].class_id;
+    capture_info->person_meta.info[i].score =
+        det_info->person_boxes_keypoints[i].score;
+  }
+
+  for (auto &t : det_info->track_results) {
+    if (t.obj_idx_ != -1) {
+      capture_info->person_meta.info[t.obj_idx_].falling =
+          bool(det_info->det_results.at(t.track_id_));
+    }
+  }
+  return 0;
+}
 #endif

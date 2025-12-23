@@ -33,17 +33,12 @@ else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--end-group")
 endif()
 
-set(app_samples sample_vi_consumer_counting sample_vi_cross_detection sample_vi_face_pet_cap)
+set(app_samples sample_vi_consumer_counting sample_vi_cross_detection sample_vi_face_pet_cap sample_vi_fall_detection)
 
 foreach(fname ${CAMERA_SRC_FILES})
     get_filename_component(name ${fname} NAME_WE)
 
-    string(FIND "${name}" "_cap" pos)
-    if(pos GREATER_EQUAL 0 AND DEFINED ENABLE_APP_PIPELINE AND NOT ENABLE_APP_PIPELINE)
-      continue()
-    endif()
-
-    if("${name}" IN_LIST app_samples)
+    if("${name}" IN_LIST app_samples AND DEFINED ENABLE_APP_PIPELINE AND NOT ENABLE_APP_PIPELINE)
       continue()
     endif()
 
