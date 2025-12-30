@@ -356,6 +356,12 @@ int32_t TDL_ReleaseCaptureInfo(TDLCaptureInfo *capture_info) {
   for (uint32_t i = 0; i < capture_info->snapshot_size; i++) {
     if (capture_info->snapshot_info[i].object_image) {
       TDL_DestroyImage(capture_info->snapshot_info[i].object_image);
+
+      if (!capture_info->snapshot_info[i].encoded_full_image) {
+        free(capture_info->snapshot_info[i].encoded_full_image);
+        capture_info->snapshot_info[i].encoded_full_image = NULL;
+        capture_info->snapshot_info[i].full_length = 0;
+      }
     }
     TDL_ReleaseFeatureMeta(&capture_info->features[i]);
   }
@@ -525,8 +531,7 @@ int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image, const char *img_path,
 
   TDLImageContext *image_context = (TDLImageContext *)image;
 
-  bool ret =
-      context->encoder->encodeFrame(image_context->image, encoded_data, vechn);
+  bool ret = context->encoder->encodeFrame(image_context->image, encoded_data);
 
   if (!ret) {
     std::cerr << "Image encoding failed.\n";

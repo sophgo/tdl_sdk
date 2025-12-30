@@ -75,7 +75,7 @@ typedef struct {
   bool falling;
   float score;
   int class_id;
-  uint64_t track_id;
+  uint64_t track_id;  // track_id为0表示box得分小于跟踪阈值，尚未进行跟踪
   uint32_t landmark_size;
   TDLLandmarkInfo *landmark_properity;
   TDLObjectTypeE obj_type;
@@ -236,6 +236,9 @@ typedef struct {
   uint8_t age;
   uint8_t emotion;
   TDLImage object_image;
+  TDLBox ori_box;  // 相对于原图的坐标
+  uint8_t *encoded_full_image;
+  uint32_t full_length;
 } TDLSnapshotInfo;
 
 typedef struct {

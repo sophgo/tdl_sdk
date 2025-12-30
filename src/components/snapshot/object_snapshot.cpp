@@ -1,13 +1,19 @@
 #include "components/snapshot/object_snapshot.hpp"
 #include <cstdio>
 #include "framework/utils/tdl_log.hpp"
-ObjectSnapshot::ObjectSnapshot() {
+ObjectSnapshot::ObjectSnapshot(int vechn, int encoder_mode) {
   preprocessor_ =
       PreprocessorFactory::createPreprocessor(InferencePlatform::AUTOMATIC);
   if (preprocessor_ == nullptr) {
     LOGE("ObjectSnapshot preprocessor is nullptr");
     assert(false);
   }
+
+  if (vechn >= 0 && encoder_mode >= 0) {
+    image_encoder_ = std::make_shared<ImageEncoder>(vechn);
+    image_encoder_->setEncoderMode(encoder_mode);
+  }
+
   config_.update_quality_gap = 0.05f;
   config_.snapshot_quality_threshold = 0.f;
   config_.crop_square = false;
@@ -17,6 +23,7 @@ ObjectSnapshot::ObjectSnapshot() {
   config_.crop_size_min = 0;
   config_.crop_size_max = 0;
   config_.min_snapshot_size = 0;
+  config_.jpg_quality = 60;
 }
 
 int32_t ObjectSnapshot::updateConfig(const nlohmann::json& config) {
@@ -43,7 +50,9 @@ int32_t ObjectSnapshot::updateConfig(const nlohmann::json& config) {
   if (config.contains("max_miss_counter")) {
     config_.max_miss_counter = config.at("max_miss_counter");
   }
-
+  if (config.contains("jpg_quality")) {
+    config_.jpg_quality = config.at("jpg_quality");
+  }
   return 0;
 }
 int32_t ObjectSnapshot::updateSnapshot(
@@ -107,6 +116,13 @@ int32_t ObjectSnapshot::updateSnapshot(
       snapshot_info.track_id = track.track_id_;
       snapshot_info.snapshot_frame_id = frame_id;
       snapshot_info.quality = quality_score;
+
+      if (image_encoder_ != nullptr &&
+          image_encoder_->getEncoderMode() == 1) {  // 更新全景图
+        snapshot_info.encoded_full_image.clear();
+        image_encoder_->encodeFrame(image, snapshot_info.encoded_full_image,
+                                    config_.jpg_quality);
+      }
 
       if (crop_face_imgs.count(track.track_id_)) {
         snapshot_info.object_image = crop_face_imgs.at(track.track_id_);

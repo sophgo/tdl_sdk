@@ -24,8 +24,8 @@ ImageEncoder::ImageEncoder(int VeChn) {
 
   memset(&stAttr, 0, sizeof(VENC_CHN_ATTR_S));
   stAttr.stVencAttr.enType = PT_JPEG;        // payload类型
-  stAttr.stVencAttr.u32MaxPicWidth = 1920;   // 影像最大编码宽度
-  stAttr.stVencAttr.u32MaxPicHeight = 1080;  // 影像最大编码高度
+  stAttr.stVencAttr.u32MaxPicWidth = 2560;   // 影像最大编码宽度
+  stAttr.stVencAttr.u32MaxPicHeight = 1440;  // 影像最大编码高度
   stAttr.stVencAttr.u32PicHeight = 64;
   // src_frame->stVFrame.u32Height;  // 编码影像宽度
   stAttr.stVencAttr.u32PicWidth = 64;        // 编码影像高度
@@ -63,8 +63,8 @@ ImageEncoder::~ImageEncoder() {
 }
 
 bool ImageEncoder::encodeFrame(const std::shared_ptr<BaseImage>& image,
-                               std::vector<uint8_t>& encode_img, int VeChn,
-                               int jpeg_quality) {
+                               std::vector<uint8_t>& encode_img,
+                               int jpg_quality) {
   if (!image) {
     std::cerr << "[ImageEncoder] Error: input image is nullptr.\n";
     return false;
@@ -90,26 +90,25 @@ bool ImageEncoder::encodeFrame(const std::shared_ptr<BaseImage>& image,
   VENC_STREAM_S stStream;
   VENC_PACK_S* pstPack;
   VENC_CHN_ATTR_S stAttr;
-  VeChn_ = VeChn;
 
   // 获取并设置编码属性（宽高、缓冲等）
   CVI_VENC_GetChnAttr(VeChn_, &stAttr);
   stAttr.stVencAttr.u32PicHeight = src_frame->stVFrame.u32Height;
   stAttr.stVencAttr.u32PicWidth = src_frame->stVFrame.u32Width;
 
-  if (src_frame->stVFrame.u32Height >= 1080) {
-    stAttr.stVencAttr.u32BufSize = 1024 * 512;
-  } else {
-    VENC_JPEG_PARAM_S stJpegParam, *pstJpegParam = &stJpegParam;
-    CVI_S32 s32Ret = CVI_VENC_GetJpegParam(VeChn_, pstJpegParam);
-    if (s32Ret != CVI_SUCCESS) {
-      return false;
-    }
-    pstJpegParam->u32Qfactor = jpeg_quality;  // 使用传入质量
-    s32Ret = CVI_VENC_SetJpegParam(VeChn_, pstJpegParam);
-    if (s32Ret != CVI_SUCCESS) {
-      return false;
-    }
+  if (src_frame->stVFrame.u32Height >= 540) {
+    stAttr.stVencAttr.u32BufSize =
+        src_frame->stVFrame.u32Height * src_frame->stVFrame.u32Width / 4;
+  }
+  VENC_JPEG_PARAM_S stJpegParam, *pstJpegParam = &stJpegParam;
+  CVI_S32 s32Ret = CVI_VENC_GetJpegParam(VeChn_, pstJpegParam);
+  if (s32Ret != CVI_SUCCESS) {
+    return false;
+  }
+  pstJpegParam->u32Qfactor = jpg_quality;  // 使用传入质量
+  s32Ret = CVI_VENC_SetJpegParam(VeChn_, pstJpegParam);
+  if (s32Ret != CVI_SUCCESS) {
+    return false;
   }
 
   // 如需区分 NV12/NV21，可在创建编码通道时设置 stAttr.stVencAttr.enPixelFormat
@@ -169,7 +168,7 @@ bool ImageEncoder::encodeFrame(const std::shared_ptr<BaseImage>& image,
   auto fmt = image->getImageFormat();
   if (fmt == ImageFormat::BGR_PACKED || fmt == ImageFormat::RGB_PACKED) {
     cv::Mat src = *(cv::Mat*)image->getInternalData();
-    std::vector<int> param{cv::IMWRITE_JPEG_QUALITY, jpeg_quality};
+    std::vector<int> param{cv::IMWRITE_JPEG_QUALITY, jpg_quality};
     if (!cv::imencode(".jpg", src, encode_img, param)) {
       std::cerr << "[ImageEncoder] Error: cv::imencode failed.\n";
       return false;
@@ -228,7 +227,7 @@ bool ImageEncoder::encodeFrame(const std::shared_ptr<BaseImage>& image,
   cv::Mat bgr_img;
   cv::cvtColor(nv_img, bgr_img, cvt_code);
 
-  std::vector<int> param{cv::IMWRITE_JPEG_QUALITY, jpeg_quality};
+  std::vector<int> param{cv::IMWRITE_JPEG_QUALITY, jpg_quality};
   bool ok = cv::imencode(".jpg", bgr_img, encode_img, param);
 
   free(nv_data);

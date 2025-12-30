@@ -143,6 +143,14 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
   return 0;
 }
 
+std::shared_ptr<ImageEncoder> FacePetCaptureApp::getImageEncoder(
+    const std::string &pipeline_name) {
+  return pipeline_channels_[pipeline_name]
+      ->getNode("snapshot_node")
+      ->getWorker()
+      ->get<std::shared_ptr<ObjectSnapshot>>()
+      ->getImageEncoder();
+}
 int32_t FacePetCaptureApp::release() {
   for (auto &channel : pipeline_channels_) {
     channel.second->stop();
@@ -504,7 +512,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
 
 std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
     const nlohmann::json &node_config) {
-  std::shared_ptr<ObjectSnapshot> snapshot = std::make_shared<ObjectSnapshot>();
+  std::shared_ptr<ObjectSnapshot> snapshot = std::make_shared<ObjectSnapshot>(
+      node_config["vechn"], node_config["encoder_mode"]);
   snapshot->updateConfig(node_config);
   std::shared_ptr<PipelineNode> snapshot_node =
       std::make_shared<PipelineNode>(Packet::make(snapshot));
