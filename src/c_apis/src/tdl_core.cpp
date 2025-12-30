@@ -5,6 +5,7 @@
 #include "app/app_data_types.hpp"
 #include "common/common_types.hpp"
 #include "consumer_counting/consumer_counting_app.hpp"
+#include "face_pet_capture/face_pet_capture_app.hpp"
 #include "tdl_type_internal.hpp"
 #include "tdl_utils.h"
 #include "tracker/tracker_types.hpp"
@@ -1600,6 +1601,17 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
     return -1;
   }
 
+  if (context->encoder == nullptr) {
+    context->encoder =
+        (std::dynamic_pointer_cast<FacePetCaptureApp>(context->app_task))
+            ->getImageEncoder(std::string(channel_name));
+
+    if (context->encoder == nullptr) {
+      LOGE("Failed to get image encoder\n");
+      return -1;
+    }
+  }
+
   Packet result;
   ret = context->app_task->getResult(std::string(channel_name), result);
   if (ret != 0) {
@@ -1722,6 +1734,29 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
             ori_capture_info->face_snapshots[i].object_image;
         capture_info->snapshot_info[i].object_image =
             (TDLImage)object_image_context;
+
+        ObjectBoxLandmarkInfo ori_face_meta =
+            ori_capture_info->face_snapshots[i]
+                .other_info.at("ori_face_meta")
+                .get<ObjectBoxLandmarkInfo>();
+        capture_info->snapshot_info[i].ori_box.x1 = ori_face_meta.x1;
+        capture_info->snapshot_info[i].ori_box.y1 = ori_face_meta.y1;
+        capture_info->snapshot_info[i].ori_box.x2 = ori_face_meta.x2;
+        capture_info->snapshot_info[i].ori_box.y2 = ori_face_meta.y2;
+
+        if (ori_capture_info->face_snapshots[i].encoded_full_image.size()) {
+          if (!capture_info->snapshot_info[i].encoded_full_image) {
+            capture_info->snapshot_info[i].encoded_full_image =
+                (uint8_t *)malloc(ori_capture_info->face_snapshots[i]
+                                      .encoded_full_image.size() *
+                                  sizeof(uint8_t));
+          }
+          memcpy(capture_info->snapshot_info[i].encoded_full_image,
+                 ori_capture_info->face_snapshots[i].encoded_full_image.data(),
+                 ori_capture_info->face_snapshots[i].encoded_full_image.size());
+          capture_info->snapshot_info[i].full_length =
+              ori_capture_info->face_snapshots[i].encoded_full_image.size();
+        }
       }
 
       auto face_attribute = ori_capture_info->face_attributes[i];
@@ -1833,6 +1868,8 @@ int32_t TDL_APP_ObjectCounting(TDLHandle handle, const char *channel_name,
           consumer_counting_result->object_boxes[i].y2;
       object_counting_info->object_meta.info[i].score =
           consumer_counting_result->object_boxes[i].score;
+      object_counting_info->object_meta.info[i].class_id =
+          consumer_counting_result->object_boxes[i].class_id;
       object_counting_info->object_meta.info[i].is_cross = false;
     }
   }

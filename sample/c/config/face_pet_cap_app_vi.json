@@ -18,7 +18,14 @@
           "crop_size_min": 128,
           "crop_size_max": 256,
           "snapshot_quality_threshold": 0,
-          "crop_square": true
+          "crop_square": true,
+
+          "encoder_mode": 1,
+          "_comment_encoder_mode": "encoder_mode: 0为只存人脸图, 1为同时存人脸图及其背景大图",
+          "vechn": 1,
+          "_comment_vechn": "vechn: 图像编码的通道",
+          "jpg_quality": 30,
+          "_comment_jpg_quality": "背景图编码质量，取值范围 0-99，但不能为50"
         }
       }
     }
