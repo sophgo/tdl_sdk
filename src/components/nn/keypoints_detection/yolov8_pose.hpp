@@ -26,8 +26,10 @@ class YoloV8Pose final : public BaseModel {
   std::map<int, std::string> bbox_out_names;
   std::map<int, std::string> class_out_names;
   std::map<int, std::string> keypoints_out_names;
-  int num_box_channel_ = 0;
+  int num_box_channel_ = 64;
   int num_kpts_channel_ = 0;
+  int keypoint_dimension_ = 3;  // 2 or 3
+  int num_kpts_;
   int num_cls_ = 0;
   float nms_threshold_ = 0.5;
 };
