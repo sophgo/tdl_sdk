@@ -136,6 +136,7 @@ bool TDLModelFactory::isKeypointDetectionModel(const ModelType model_type) {
           model_type == ModelType::KEYPOINT_HAND ||
           model_type == ModelType::KEYPOINT_LICENSE_PLATE ||
           model_type == ModelType::KEYPOINT_YOLOV8POSE_PERSON17 ||
+          model_type == ModelType::KEYPOINT_YOLOV8POSE ||
           model_type == ModelType::KEYPOINT_FACE_V2);
 }
 
@@ -418,6 +419,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createKeypointDetectionModel(
     model = std::make_shared<HandKeypoint>();
   } else if (model_type == ModelType::KEYPOINT_YOLOV8POSE_PERSON17) {
     model = std::make_shared<YoloV8Pose>(std::make_tuple(64, 17, 1));
+  } else if (model_type == ModelType::KEYPOINT_YOLOV8POSE) {
+    model = std::make_shared<YoloV8Pose>();
   } else if (model_type == ModelType::KEYPOINT_LICENSE_PLATE) {
     model = std::make_shared<LicensePlateKeypoint>();
   }

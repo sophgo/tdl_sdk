@@ -75,6 +75,7 @@
   X(KEYPOINT_LICENSE_PLATE, "output 4 license plate keypoints")               \
   X(KEYPOINT_HAND, "output 21 hand keypoints")                                \
   X(KEYPOINT_YOLOV8POSE_PERSON17, "output 17 person keypoints and box")       \
+  X(KEYPOINT_YOLOV8POSE, "output object keypoints and box")                   \
   X(KEYPOINT_SIMCC_PERSON17, "output 17 person keypoints from cropped image") \
                                                                               \
   /* lane detection */                                                        \

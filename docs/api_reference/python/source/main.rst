@@ -273,7 +273,10 @@ TDLDataType
 
    * - KEYPOINT_YOLOV8POSE_PERSON17
      - 人体17个关键点检测模型
-
+     
+   * - KEYPOINT_YOLOV8POSE
+     - 通用关键点检测模型
+     
    * - KEYPOINT_SIMCC_PERSON17
      - SIMCC 17个关键点检测模型
 

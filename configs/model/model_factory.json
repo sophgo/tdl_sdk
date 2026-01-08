@@ -239,7 +239,13 @@
       "file_name":"keypoint_yolov8pose_person17_384_640_INT8",
       "rgb_order":"rgb"
     },
-    
+    "KEYPOINT_YOLOV8POSE":{
+      "_comment":"output object keypoints and box",
+      "file_name":"",
+      "rgb_order":"rgb",
+      "num_kpt":0,
+      "num_cls":0
+    },  
     "KEYPOINT_SIMCC_PERSON17":{
       "_comment":"output 17 person keypoints from cropped image",
       "file_name":"keypoint_simcc_person17_256_192_INT8",
