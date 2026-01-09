@@ -1,11 +1,20 @@
 {
   "model_dir": "./models",
-  "model_config": "./configs/model/model_factory.json",
   "frame_buffer_size": 0,
+
+  "enable_smooth": 1,
+  "smooth_frames": 5,
+  "smooth_type": 1,
+
   "pipelines": [
     {
-      "name": "camera",
+      "name": "human_pose_smooth",
       "nodes": {
+        "video_node": {
+          "video_type": "image_folder",
+          "video_path": "./images",
+          "is_loop": false
+        },
         "keypoint_detection_node": {
           "config_thresh": 0.5
         },

@@ -3227,7 +3227,7 @@ Set line position for passenger counting or cross detection running process.
      - For passenger counting: mode is 0 when the line is vertical, and from left to right is entering. For non-vertical line, from top to bottom is entering. mode is 1 when the opposite direction. For cross detection: mode is 0 when the line is vertical, and from left to right is crossing. For non-vertical line, from top to bottom is crossing. mode is 1 when the opposite direction. mode is 2 for bidirectional detection
 
 TDL_APP_FallDetection
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 【Syntax】
 
@@ -3266,7 +3266,48 @@ Execute fall detection task.
      - TDLCaptureInfo*
      - capture_info
      - Detection results
-   
+
+TDL_APP_HumanPoseSmooth
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_HumanPoseSmooth(TDLHandle handle,
+                          const char *channel_name,
+                          TDLCaptureInfo *capture_info);
+
+【Description】
+
+Execute human pose smooth task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
+
+   * - Output
+     - TDLCaptureInfo*
+     - capture_info
+     - Human pose results
+
 TDL_WrapImage
 ~~~~~~~~~~~~~~~~~~~~~
 

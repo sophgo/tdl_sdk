@@ -217,8 +217,8 @@ int main(int argc, char *argv[]) {
                     (int)round((0.25 * obj_meta.height) / 2);
         CropImage(cropX, cropY, obj_meta.width, obj_meta.height, output_image1,
                   crop_image);
-        VisualizePoint(point, obj_meta.info[i].landmark_size, crop_image,
-                       crop_image);
+        VisualizePointFromFile(point, obj_meta.info[i].landmark_size,
+                               crop_image, crop_image);
       }
     }
   }

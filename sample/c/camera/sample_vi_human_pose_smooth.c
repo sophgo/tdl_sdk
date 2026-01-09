@@ -149,8 +149,8 @@ void *run_tdl_thread(void *args) {
             (int)counter, infer_time, fps);
       }
 
-      int ret = TDL_APP_FallDetection(pstArgs->tdl_handle,
-                                      pstArgs->channel_names[i], &capture_info);
+      int ret = TDL_APP_HumanPoseSmooth(
+          pstArgs->tdl_handle, pstArgs->channel_names[i], &capture_info);
 
       if (ret == 1) {
         continue;
@@ -158,7 +158,7 @@ void *run_tdl_thread(void *args) {
         to_exit = true;
         break;
       } else if (ret != 0) {
-        printf("TDL_APP_FallDetection failed with %#x!\n", ret);
+        printf("TDL_APP_HumanPoseSmooth failed with %#x!\n", ret);
         goto exit0;
       }
 
@@ -170,6 +170,11 @@ void *run_tdl_thread(void *args) {
       TDLImage image = capture_info.image;
       TDL_WrapImage(image, &frame);
 
+      TDLObject kps_meta = {
+          0};  // Temporary solution, use boxes to draw key points.
+      memset(&kps_meta, 0, sizeof(TDLObject));
+      TDL_InitObjectMeta(&kps_meta, 17, 0);
+
       for (int j = 0; j < capture_info.person_meta.size; j++) {
         TDLBrush brush = {0};
         brush.size = 2;
@@ -177,32 +182,41 @@ void *run_tdl_thread(void *args) {
         brush.color.g = 255;
         brush.color.b = 0;
         TDLObjectInfo *obj_info = &capture_info.person_meta.info[j];
-        snprintf(obj_info->name, sizeof(obj_info->name), "falling:%d",
-                 (int)obj_info->falling);
-        if (obj_info->falling) {
-          printf("person is falling\n");
+        snprintf(obj_info->name, sizeof(obj_info->name), "id:%d",
+                 obj_info->track_id);
+        DrawObjRect(&capture_info.person_meta, frame, true, brush);  // box
+
+        brush.color.g = 0;
+        brush.color.b = 255;
+
+        for (int k = 0; k < 17; k++) {
+          if (capture_info.person_meta.info[j].landmark_properity[k].score <
+              0.5) {  // skip
+            kps_meta.info[k].box.x1 = 0;
+            kps_meta.info[k].box.y1 = 0;
+            kps_meta.info[k].box.x2 = 0;
+            kps_meta.info[k].box.y2 = 0;
+            continue;
+          };
+          float x = capture_info.person_meta.info[j]
+                        .landmark_properity[k]
+                        .x;  // keypoint x
+          float y = capture_info.person_meta.info[j]
+                        .landmark_properity[k]
+                        .y;  // keypoint y
+
+          float deta = 10.0f * (float)capture_info.frame_width / 1920.0f;
+          kps_meta.info[k].box.x1 = x - deta > 0 ? x - deta : 0;
+          kps_meta.info[k].box.y1 = y - deta > 0 ? y - deta : 0;
+          kps_meta.info[k].box.x2 = x + deta < capture_info.frame_width - 1
+                                        ? x + deta
+                                        : capture_info.frame_width - 1;
+          kps_meta.info[k].box.y2 = y + deta < capture_info.frame_height - 1
+                                        ? y + deta
+                                        : capture_info.frame_height - 1;
         }
 
-        if (obj_info->falling) {
-          brush.color.r = 0;
-          brush.color.g = 0;
-          brush.color.b = 255;
-        }
-        DrawObjRect(&capture_info.person_meta, frame, true, brush);
-
-        // keypoints info
-        // for (int k = 0; k < 17; k++) {
-
-        //   if (capture_info.person_meta.info[j].landmark_properity[k].score <
-        //   0.5){ // skip
-        //     continue;
-        //   };
-        //   float x = capture_info.person_meta.info[j].landmark_properity[k].x;
-        //   //keypoint x float y =
-        //   capture_info.person_meta.info[j].landmark_properity[k].y;
-        //   //keypoint y printf("keypoint %d: x: %.2f, y: %.2f\n", k, x, y);
-
-        // }
+        DrawObjRect(&kps_meta, frame, true, brush);
       }
 
       ret = SendFrameRTSP(frame, &rtsp_context);
@@ -210,6 +224,8 @@ void *run_tdl_thread(void *args) {
         printf("SendFrameRTSP failed with %#x!\n", ret);
         continue;
       }
+      TDL_ReleaseObjectMeta(&kps_meta);
+
 #endif
 
       TDL_ReleaseCaptureInfo(&capture_info);
@@ -233,7 +249,7 @@ exit0:
 }
 
 int main(int argc, char *argv[]) {
-  char *config_file = NULL;  // sample/config/fall_detection_app_vi.json
+  char *config_file = NULL;  // sample/config/human_pose_smooth_app_vi.json
   char *vi_chn = NULL;
   int chn = 0;
 
@@ -275,8 +291,7 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Running with:\n");
-  printf("  config_file:    %s\n",
-         config_file);  // sample/config/fall_detection_app_vi.json
+  printf("  config_file:    %s\n", config_file);
   printf("  vi_chn:        %d\n", chn);
 
   InitQueue(&image_queue);
@@ -293,8 +308,8 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  ret = TDL_APP_Init(tdl_handle, "fall_detection", config_file, &channel_names,
-                     &channel_size);
+  ret = TDL_APP_Init(tdl_handle, "human_pose_smooth", config_file,
+                     &channel_names, &channel_size);
   if (ret != 0) {
     printf("TDL_APP_Init failed with %#x!\n", ret);
     goto exit1;

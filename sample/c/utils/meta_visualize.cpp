@@ -63,8 +63,8 @@ int32_t VisualizeRectangle(box_t *box, int32_t num, TDLImage image_handle,
   return 0;
 }
 
-int32_t VisualizePoint(point_t *point, int32_t num, char *input_path,
-                       char *output_path) {
+int32_t VisualizePointFromFile(point_t *point, int32_t num, char *input_path,
+                               char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     LOGE("input path is empty\n");
@@ -77,6 +77,32 @@ int32_t VisualizePoint(point_t *point, int32_t num, char *input_path,
   }
 
   cv::imwrite(output_path, image);
+
+  return 0;
+}
+
+int32_t VisualizePoint(point_t *point, int32_t num, TDLImage image_handle,
+                       char *output_path) {
+  cv::Mat mat;
+  bool is_rgb;
+
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+
+  int32_t ret = ImageFactory::convertToMat(image_context->image, mat, is_rgb);
+  if (ret != 0) {
+    std::cout << "Failed to convert to mat" << std::endl;
+    return -1;
+  }
+  if (is_rgb) {
+    cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+  }
+
+  for (int32_t i = 0; i < num; i++) {
+    cv::circle(mat, cv::Point(int32_t(point[i].x), int32_t(point[i].y)), 7,
+               cv::Scalar(0, 0, 255), -1);
+  }
+
+  cv::imwrite(output_path, mat);
 
   return 0;
 }
