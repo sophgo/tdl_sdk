@@ -38,7 +38,10 @@ int32_t VisualizeRectangleFromFile(box_t *box, int32_t num, char *input_path,
 int32_t VisualizeRectangle(box_t *box, int32_t num, TDLImage image_handle,
                            char *output_path, int *colors);
 
-int32_t VisualizePoint(point_t *point, int32_t num, char *input_path,
+int32_t VisualizePointFromFile(point_t *point, int32_t num, char *input_path,
+                               char *output_path);
+
+int32_t VisualizePoint(point_t *point, int32_t num, TDLImage image_handle,
                        char *output_path);
 
 int32_t VisualizeLine(box_t *box, int32_t num, char *input_path,

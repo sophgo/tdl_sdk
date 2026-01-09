@@ -1,4 +1,4 @@
-#include "fall_detection_app.hpp"
+#include "human_pose_smooth_app.hpp"
 #include <json.hpp>
 #include "app/app_data_types.hpp"
 #include "components/tracker/tracker_types.hpp"
@@ -14,11 +14,11 @@ T getNodeData(const std::string &node_name, PtrFrameInfo &frame_info) {
   return frame_info->node_data_[node_name].get<T>();
 }
 
-FallDetectionApp::FallDetectionApp(const std::string &task_name,
-                                   const std::string &json_config)
+HumanPoseSmoothApp::HumanPoseSmoothApp(const std::string &task_name,
+                                       const std::string &json_config)
     : AppTask(task_name, json_config) {}
 
-int32_t FallDetectionApp::init() {
+int32_t HumanPoseSmoothApp::init() {
   std::string model_dir = json_config_.at("model_dir").get<std::string>();
   int32_t frame_buffer_size =
       json_config_.at("frame_buffer_size").get<int32_t>();
@@ -31,6 +31,26 @@ int32_t FallDetectionApp::init() {
   }
   TDLModelFactory::getInstance().setModelDir(model_dir);
 
+  if (json_config_.contains("smooth_frames")) {
+    smooth_param_.smooth_frames = json_config_.at("smooth_frames");
+  }
+  if (json_config_.contains("smooth_type")) {
+    smooth_param_.smooth_type = json_config_.at("smooth_type");
+  }
+  if (json_config_.contains("thres_mult")) {
+    smooth_param_.thres_mult = json_config_.at("thres_mult");
+  }
+  if (json_config_.contains("fc_min")) {
+    smooth_param_.fc_min = json_config_.at("fc_min");
+  }
+  if (json_config_.contains("beta")) {
+    smooth_param_.beta = json_config_.at("beta");
+  }
+  if (json_config_.contains("enable_smooth") &&
+      json_config_.at("enable_smooth") == 0) {
+    enable_smooth_ = false;
+  }
+
   for (const auto &pl : json_config_.at("pipelines")) {
     std::string pipeline_name = pl.at("name").get<std::string>();
     std::cout << "pipeline: " << pipeline_name << "\n";
@@ -40,14 +60,9 @@ int32_t FallDetectionApp::init() {
   return 0;
 }
 
-int32_t FallDetectionApp::set_fps(float fps) {
-  FPS = fps;
-  return 0;
-}
-
-int32_t FallDetectionApp::addPipeline(const std::string &pipeline_name,
-                                      int32_t frame_buffer_size,
-                                      const nlohmann::json &nodes_cfg) {
+int32_t HumanPoseSmoothApp::addPipeline(const std::string &pipeline_name,
+                                        int32_t frame_buffer_size,
+                                        const nlohmann::json &nodes_cfg) {
   std::shared_ptr<PipelineChannel> fall_detection_channel =
       std::make_shared<PipelineChannel>(pipeline_name, frame_buffer_size);
   auto get_config = [](const std::string &key, const nlohmann::json &node_cfg) {
@@ -89,7 +104,7 @@ int32_t FallDetectionApp::addPipeline(const std::string &pipeline_name,
   return 0;
 }
 
-int32_t FallDetectionApp::release() {
+int32_t HumanPoseSmoothApp::release() {
   for (auto &channel : pipeline_channels_) {
     channel.second->stop();
   }
@@ -98,12 +113,11 @@ int32_t FallDetectionApp::release() {
 }
 
 #ifdef VIDEO_ENABLE
-std::shared_ptr<PipelineNode> FallDetectionApp::getVideoNode(
+std::shared_ptr<PipelineNode> HumanPoseSmoothApp::getVideoNode(
     const nlohmann::json &node_config) {
   std::string video_type = node_config.at("video_type");
   std::string video_path = node_config.at("video_path");
-  float fps = (float)node_config.at("fps");
-  set_fps(fps);
+
   VideoDecoderType decoder_type = VideoDecoderType::UNKNOWN;
   if (video_type == "image_folder") {
     decoder_type = VideoDecoderType::IMAGE_FOLDER;
@@ -146,7 +160,7 @@ std::shared_ptr<PipelineNode> FallDetectionApp::getVideoNode(
 }
 #endif
 
-std::shared_ptr<PipelineNode> FallDetectionApp::getKeypointDetectionNode(
+std::shared_ptr<PipelineNode> HumanPoseSmoothApp::getKeypointDetectionNode(
     const nlohmann::json &node_config) {
   std::shared_ptr<BaseModel> keypoint_detection_model = nullptr;
   if (model_map_.count("keypoint_detection")) {
@@ -191,7 +205,7 @@ std::shared_ptr<PipelineNode> FallDetectionApp::getKeypointDetectionNode(
   return keypoint_detection_node;
 }
 
-std::shared_ptr<PipelineNode> FallDetectionApp::getTrackNode(
+std::shared_ptr<PipelineNode> HumanPoseSmoothApp::getTrackNode(
     const nlohmann::json &node_config) {
   std::shared_ptr<Tracker> tracker =
       TrackerFactory::createTracker(TrackerType::TDL_MOT_SORT);
@@ -231,11 +245,9 @@ std::shared_ptr<PipelineNode> FallDetectionApp::getTrackNode(
   return track_node;
 }
 
-int32_t FallDetectionApp::detect(
+int32_t HumanPoseSmoothApp::smooth(
     std::vector<ObjectBoxLandmarkInfo> &person_infos,
-    std::vector<TrackerInfo> &track_results,
-    std::map<uint64_t, int> &det_results) {
-  det_results.clear();
+    std::vector<TrackerInfo> &track_results) {
   std::map<uint64_t, int> track_index;
   std::vector<int> new_index;
 
@@ -253,41 +265,38 @@ int32_t FallDetectionApp::detect(
     }
   }
 
-  for (auto it = muti_person.begin(); it != muti_person.end();) {
+  for (auto it = muti_keypoints.begin(); it != muti_keypoints.end();) {
     if (track_index.count(it->uid) == 0) {
       it->unmatched_times += 1;
 
       if (it->unmatched_times == it->MAX_UNMATCHED_TIME) {
-        it = muti_person.erase(it);
+        it = muti_keypoints.erase(it);
       } else {
-        it->update_queue(it->valid_list, 0);
         it++;
       }
 
     } else {
-      det_results[it->uid] =
-          it->detect(person_infos[track_index[it->uid]], FPS);
+      it->smooth_keypoints(&person_infos[track_index[it->uid]]);
       it->unmatched_times = 0;
       it++;
     }
   }
 
   for (uint32_t i = 0; i < new_index.size(); i++) {
-    FallDet person(track_results[new_index[i]].track_id_);
+    HumanKeypoints hk(track_results[new_index[i]].track_id_, smooth_param_);
 
-    det_results[person.uid] =
-        person.detect(person_infos[track_results[new_index[i]].obj_idx_], FPS);
+    hk.smooth_keypoints(&person_infos[new_index[i]]);
 
-    muti_person.push_back(person);
+    muti_keypoints.push_back(hk);
   }
 
   return 0;
 }
 
-int32_t FallDetectionApp::getResult(const std::string &pipeline_name,
-                                    Packet &result) {
-  std::shared_ptr<FallDetectionResult> fall_detection_result =
-      std::make_shared<FallDetectionResult>();
+int32_t HumanPoseSmoothApp::getResult(const std::string &pipeline_name,
+                                      Packet &result) {
+  std::shared_ptr<HumanPoseResult> fall_detection_result =
+      std::make_shared<HumanPoseResult>();
   PtrFrameInfo frame_info =
       pipeline_channels_[pipeline_name]->getProcessedFrame(0);
 
@@ -307,9 +316,16 @@ int32_t FallDetectionApp::getResult(const std::string &pipeline_name,
   fall_detection_result->track_results =
       getNodeData<std::vector<TrackerInfo>>("track_results", frame_info);
 
-  detect(fall_detection_result->person_boxes_keypoints,
-         fall_detection_result->track_results,
-         fall_detection_result->det_results);
+  if (smooth_param_.image_width != image->getWidth() ||
+      smooth_param_.image_height != image->getHeight()) {
+    smooth_param_.image_width = image->getWidth();
+    smooth_param_.image_height = image->getHeight();
+  }
+
+  if (enable_smooth_) {
+    smooth(fall_detection_result->person_boxes_keypoints,
+           fall_detection_result->track_results);
+  }
 
   if (getChannelNodeName(pipeline_name, 0) == "video_node") {
     pipeline_channels_[pipeline_name]->addFreeFrame(std::move(frame_info));

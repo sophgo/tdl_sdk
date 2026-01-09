@@ -570,6 +570,17 @@ int32_t TDL_APP_ObjectCountingSetLine(TDLHandle handle,
 int32_t TDL_APP_FallDetection(TDLHandle handle, const char *channel_name,
                               TDLCaptureInfo *capture_info);
 
+/**
+ * @brief 执行人体关键点平滑任务
+ *
+ * @param handle TDLHandle 对象
+ * @param channel_name 当前channel的名称
+ * @param capture_info 平滑结果
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_APP_HumanPoseSmooth(TDLHandle handle, const char *channel_name,
+                                TDLCaptureInfo *capture_info);
+
 #ifdef __cplusplus
 }
 #endif
