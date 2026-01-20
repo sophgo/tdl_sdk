@@ -375,3 +375,34 @@ float ObjectQualityHelper::getFaceQuality(
     return pose_score;
   }
 }
+
+float ObjectQualityHelper::getPersonQuality(
+    const ObjectBoxInfo& box, const int img_width, const int img_height,
+    const std::map<std::string, float>& other_info) {
+  float ideal_aspect_ratio = 0.35f;
+
+  float ideal_area = ideal_aspect_ratio * img_height * img_height;
+
+  float box_area = (box.x2 - box.x1) * (box.y2 - box.y1);
+
+  float area_score = std::min(1.0f, box_area / ideal_area);  // 防止超过1
+
+  float width = box.x2 - box.x1;
+  float height = box.y2 - box.y1;
+  // 避免除零错误
+  if (height < 1e-5) {
+    height = 1e-5;
+  }
+
+  float aspect_ratio = width / height;
+  // 使用高斯函数计算相似度 (峰值在ideal_aspect_ratio)
+  float aspect_score = std::exp(-10 * (aspect_ratio - ideal_aspect_ratio) *
+                                (aspect_ratio - ideal_aspect_ratio));
+
+  float score = 0.5 * area_score + 0.5 * aspect_score;
+
+  LOGI("score: %f, aspect_score: %f, area_score: %f", score, aspect_score,
+       area_score);
+
+  return score;
+}

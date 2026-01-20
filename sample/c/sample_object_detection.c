@@ -146,10 +146,7 @@ int main(int argc, char *argv[]) {
   }
 
   TDLObject obj_meta = {0};
-  for (int i = 0; i < 10; i++) {
-    ret = TDL_Detection(tdl_handle, model_id, image, &obj_meta);
-    TDL_ReleaseObjectMeta(&obj_meta);
-  }
+  ret = TDL_Detection(tdl_handle, model_id, image, &obj_meta);
   if (ret != 0) {
     printf("TDL_Detection failed with %#x!\n", ret);
   } else {
