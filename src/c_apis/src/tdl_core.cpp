@@ -1717,6 +1717,8 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
            capture_info->snapshot_size * sizeof(TDLSnapshotInfo));
     capture_info->features =
         (TDLFeature *)malloc(capture_info->snapshot_size * sizeof(TDLFeature));
+    memset(capture_info->features, 0,
+           capture_info->snapshot_size * sizeof(TDLFeature));
 
     for (int i = 0; i < capture_info->snapshot_size; i++) {
       capture_info->snapshot_info[i].quality =
@@ -1725,8 +1727,8 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
           ori_capture_info->face_snapshots[i].snapshot_frame_id;
       capture_info->snapshot_info[i].track_id =
           ori_capture_info->face_snapshots[i].track_id;
-      std::vector<float> feature = ori_capture_info->face_features.at(
-          ori_capture_info->face_snapshots[i].track_id);
+      capture_info->snapshot_info[i].pair_track_id =
+          ori_capture_info->face_snapshots[i].pair_track_id;
 
       if (ori_capture_info->face_snapshots[i].object_image) {
         TDLImageContext *object_image_context = new TDLImageContext();
@@ -1735,14 +1737,14 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
         capture_info->snapshot_info[i].object_image =
             (TDLImage)object_image_context;
 
-        ObjectBoxLandmarkInfo ori_face_meta =
-            ori_capture_info->face_snapshots[i]
-                .other_info.at("ori_face_meta")
-                .get<ObjectBoxLandmarkInfo>();
-        capture_info->snapshot_info[i].ori_box.x1 = ori_face_meta.x1;
-        capture_info->snapshot_info[i].ori_box.y1 = ori_face_meta.y1;
-        capture_info->snapshot_info[i].ori_box.x2 = ori_face_meta.x2;
-        capture_info->snapshot_info[i].ori_box.y2 = ori_face_meta.y2;
+        capture_info->snapshot_info[i].ori_box.x1 =
+            ori_capture_info->face_snapshots[i].object_box_info.x1;
+        capture_info->snapshot_info[i].ori_box.y1 =
+            ori_capture_info->face_snapshots[i].object_box_info.y1;
+        capture_info->snapshot_info[i].ori_box.x2 =
+            ori_capture_info->face_snapshots[i].object_box_info.x2;
+        capture_info->snapshot_info[i].ori_box.y2 =
+            ori_capture_info->face_snapshots[i].object_box_info.y2;
 
         if (ori_capture_info->face_snapshots[i].encoded_full_image.size()) {
           if (!capture_info->snapshot_info[i].encoded_full_image) {
@@ -1757,39 +1759,75 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
           capture_info->snapshot_info[i].full_length =
               ori_capture_info->face_snapshots[i].encoded_full_image.size();
         }
-      }
 
-      auto face_attribute = ori_capture_info->face_attributes[i];
-      capture_info->snapshot_info[i].male =
-          face_attribute
-                      [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER] >
-                  0.5
-              ? 1
-              : 0;
-      capture_info->snapshot_info[i].glass =
-          face_attribute
-                      [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES] >
-                  0.5
-              ? 1
-              : 0;
-      capture_info->snapshot_info[i].age =
-          (int)(face_attribute
-                    [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
-                100);
-      capture_info->snapshot_info[i].emotion = (int)face_attribute
-          [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION];
+        if (ori_capture_info->face_snapshots[i].object_box_info.object_type !=
+            TDLObjectType::OBJECT_TYPE_FACE) {
+          capture_info->snapshot_info[i].object_type =
+              TDLObjectTypeE::TDL_OBJECT_TYPE_PERSON;
 
-      if (feature.size() == 0) {
-        LOGE("face feature size = 0!\n");
-        return -1;
-      }
+          if (ori_capture_info->features.count(
+                  ori_capture_info->face_snapshots[i].track_id) != 0) {
+            std::vector<float> feature = ori_capture_info->features.at(
+                ori_capture_info->face_snapshots[i].track_id);
 
-      capture_info->features[i].size = feature.size();
-      capture_info->features[i].type = TDL_TYPE_INT8;
-      capture_info->features[i].ptr =
-          (int8_t *)malloc(feature.size() * sizeof(int8_t));
-      for (int j = 0; j < feature.size(); j++) {
-        capture_info->features[i].ptr[j] = (int)feature[j];
+            if (feature.size() == 0) {
+              LOGE("person image feature size = 0!\n");
+              return -1;
+            }
+            capture_info->features[i].size = feature.size();
+            capture_info->features[i].type = TDL_TYPE_FP32;
+            // 将 float* 转换改为 int8_t*，匹配 ptr 的类型声明
+            capture_info->features[i].ptr =
+                (int8_t *)malloc(feature.size() * sizeof(float));
+            memcpy(capture_info->features[i].ptr, feature.data(),
+                   feature.size() * sizeof(float));
+          }
+          continue;
+        } else {
+          capture_info->snapshot_info[i].object_type =
+              TDLObjectTypeE::TDL_OBJECT_TYPE_FACE;
+        }
+
+        if (ori_capture_info->features.count(
+                ori_capture_info->face_snapshots[i].track_id) == 0) {
+          LOGE("face feature not found!\n");
+          return -1;
+        }
+
+        std::vector<float> feature = ori_capture_info->features.at(
+            ori_capture_info->face_snapshots[i].track_id);
+
+        if (feature.size() == 0) {
+          LOGE("face feature size = 0!\n");
+          return -1;
+        }
+
+        capture_info->features[i].size = feature.size();
+        capture_info->features[i].type = TDL_TYPE_INT8;
+        capture_info->features[i].ptr =
+            (int8_t *)malloc(feature.size() * sizeof(int8_t));
+        for (int j = 0; j < feature.size(); j++) {
+          capture_info->features[i].ptr[j] = (int)feature[j];
+        }
+
+        auto face_attribute = ori_capture_info->face_attributes.at(
+            ori_capture_info->face_snapshots[i].track_id);
+        capture_info->snapshot_info[i].male =
+            face_attribute[TDLObjectAttributeType::
+                               OBJECT_ATTRIBUTE_HUMAN_GENDER] > 0.5
+                ? 1
+                : 0;
+        capture_info->snapshot_info[i].glass =
+            face_attribute[TDLObjectAttributeType::
+                               OBJECT_ATTRIBUTE_HUMAN_GLASSES] > 0.5
+                ? 1
+                : 0;
+        capture_info->snapshot_info[i].age =
+            (int)(face_attribute
+                      [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
+                  100);
+        capture_info->snapshot_info[i].emotion = (int)face_attribute
+            [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION];
       }
     }
   }

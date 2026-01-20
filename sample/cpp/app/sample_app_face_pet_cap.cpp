@@ -300,11 +300,10 @@ int main(int argc, char **argv) {
                           cap_result->face_snapshots);
       std::cout << "export face snapshots done" << std::endl;
 
-      const std::map<uint64_t, std::vector<float>> &face_features =
-          cap_result->face_features;
+      const std::map<uint64_t, std::vector<float>> &features =
+          cap_result->features;
 
-      for (auto iter = face_features.begin(); iter != face_features.end();
-           ++iter) {
+      for (auto iter = features.begin(); iter != features.end(); ++iter) {
         std::vector<float> tmp_fea = iter->second;
 
         uint8_t top_index;

@@ -5,6 +5,7 @@
 #include "components/video_decoder/video_decoder_type.hpp"
 #include "encoder/image_encoder/image_encoder.hpp"
 #include "nn/tdl_model_factory.hpp"
+#include "utils/common_utils.hpp"
 
 class FacePetCaptureApp : public AppTask {
  public:
@@ -32,6 +33,8 @@ class FacePetCaptureApp : public AppTask {
   std::shared_ptr<PipelineNode> getSnapshotNode(
       const nlohmann::json &node_config);
   std::shared_ptr<PipelineNode> getFeatureExtractionNode(
+      const nlohmann::json &node_config);
+  std::shared_ptr<PipelineNode> getClipImageFeatureNode(
       const nlohmann::json &node_config);
   std::shared_ptr<PipelineNode> getFaceAttributeNode(
       const nlohmann::json &node_config);
