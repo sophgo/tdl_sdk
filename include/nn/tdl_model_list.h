@@ -37,6 +37,7 @@
   X(YOLOV11N_DET_MONITOR_PERSON, "0:person")                                  \
   X(YOLOV11N_DET_BICYCLE_MOTOR_EBICYCLE, "0:bicycle,1:motorcycle,2:ebicycle") \
   X(YOLOV10, "custom model, specify num_cls")                                 \
+  X(YOLO26, "custom model, specify num_cls")                                  \
   X(PPYOLOE, "custom model, specify num_cls")                                 \
   X(YOLOX, "custom model, specify num_cls")                                   \
                                                                               \
