@@ -119,6 +119,10 @@
       "_comment":"custom model, specify num_cls or branch string",
       "file_name":""
     },
+    "YOLO26":{
+      "_comment":"custom model, specify num_cls or branch string",
+      "file_name":""
+    },
     "PPYOLOE":{
       "_comment":"custom model, specify num_cls or branch string",
       "file_name":""

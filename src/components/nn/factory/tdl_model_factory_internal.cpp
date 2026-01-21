@@ -20,6 +20,7 @@
 #include "license_plate_recognition/license_plate_recognition.hpp"
 #include "object_detection/mobiledet.hpp"
 #include "object_detection/ppyoloe.hpp"
+#include "object_detection/yolo26.hpp"
 #include "object_detection/yolov10.hpp"
 #include "object_detection/yolov5.hpp"
 #include "object_detection/yolov6.hpp"
@@ -124,7 +125,7 @@ bool TDLModelFactory::isObjectDetectionModel(const ModelType model_type) {
           model_type == ModelType::YOLOV8 || model_type == ModelType::YOLOV10 ||
           model_type == ModelType::YOLOV6 || model_type == ModelType::PPYOLOE ||
           model_type == ModelType::YOLOV5 || model_type == ModelType::YOLOX ||
-          model_type == ModelType::YOLOV7 ||
+          model_type == ModelType::YOLOV7 || model_type == ModelType::YOLO26 ||
           model_type == ModelType::MBV2_DET_PERSON);
 }
 
@@ -317,6 +318,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model_category = 1;  // YOLOV10
   } else if (model_type == ModelType::YOLOV6) {
     model_category = 2;  // YOLOV6
+  } else if (model_type == ModelType::YOLO26) {
+    model_category = 3;  // YOLO26
   } else if (model_type == ModelType::PPYOLOE) {
     model_category = 7;  // PPYOLOE
   } else if (model_type == ModelType::YOLOX) {
@@ -334,6 +337,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model = std::make_shared<YoloV10Detection>(std::make_pair(64, num_classes));
   } else if (model_category == 2) {
     model = std::make_shared<YoloV6Detection>(std::make_pair(4, num_classes));
+  } else if (model_category == 3) {
+    model = std::make_shared<Yolo26Detection>(std::make_pair(4, num_classes));
   } else if (model_category == 4) {
     model = std::make_shared<YoloV5Detection>(std::make_pair(4, num_classes));
   } else if (model_category == 6) {
