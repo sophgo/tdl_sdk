@@ -45,6 +45,7 @@ int32_t BaseImage::initImageInfo() {
     strides_ = {width_ * pix_size};
     plane_num_ = 1;
     img_bytes_ = width_ * height_ * pix_size;
+    plane_sizes_ = {img_bytes_};
 
   } else if (image_format_ == ImageFormat::RGB_PLANAR ||
              image_format_ == ImageFormat::BGR_PLANAR) {
@@ -54,7 +55,9 @@ int32_t BaseImage::initImageInfo() {
     }
     strides_ = {stride, stride, stride};
     plane_num_ = 3;
-    img_bytes_ = height_ * stride * 3;
+    uint32_t plane_size = height_ * stride;
+    plane_sizes_ = {plane_size, plane_size, plane_size};
+    img_bytes_ = plane_size * 3;
 
   } else if (image_format_ == ImageFormat::RGB_PACKED ||
              image_format_ == ImageFormat::BGR_PACKED) {
@@ -65,17 +68,21 @@ int32_t BaseImage::initImageInfo() {
     strides_ = {stride};
     plane_num_ = 1;
     img_bytes_ = height_ * stride;
+    plane_sizes_ = {img_bytes_};
 
   } else if (image_format_ == ImageFormat::YUV420SP_UV ||
              image_format_ == ImageFormat::YUV420SP_VU) {
     uint32_t stride0 = width_ * pix_size;
-
     if (align_size_ > 1) {
       stride0 = ALIGN(stride0, align_size_);
     }
     strides_ = {stride0, stride0};
     plane_num_ = 2;
-    img_bytes_ = height_ * stride0 * 2;
+    uint32_t y_size = height_ * stride0;
+    uint32_t uv_size = height_ / 2 * stride0;
+    plane_sizes_ = {y_size, uv_size};
+    img_bytes_ = y_size + uv_size;
+
   } else if (image_format_ == ImageFormat::YUV420P_UV ||
              image_format_ == ImageFormat::YUV420P_VU) {
     uint32_t stride0 = width_ * pix_size;
@@ -86,7 +93,12 @@ int32_t BaseImage::initImageInfo() {
     }
     strides_ = {stride0, stride12, stride12};
     plane_num_ = 3;
-    img_bytes_ = height_ * stride0 + height_ * stride12 / 2;
+    uint32_t y_size = height_ * stride0;
+    uint32_t u_size = height_ / 2 * stride12;
+    uint32_t v_size = height_ / 2 * stride12;
+    plane_sizes_ = {y_size, u_size, v_size};
+    img_bytes_ = y_size + u_size + v_size;
+
   } else if (image_format_ == ImageFormat::YUV422SP_UV ||
              image_format_ == ImageFormat::YUV422SP_VU) {
     uint32_t stride0 = width_ * pix_size;
@@ -95,7 +107,11 @@ int32_t BaseImage::initImageInfo() {
     }
     strides_ = {stride0, stride0};
     plane_num_ = 2;
-    img_bytes_ = height_ * stride0 * 2;
+    uint32_t y_size = height_ * stride0;
+    uint32_t uv_size = height_ * stride0;
+    plane_sizes_ = {y_size, uv_size};
+    img_bytes_ = y_size + uv_size;
+
   } else if (image_format_ == ImageFormat::YUV422P_UV ||
              image_format_ == ImageFormat::YUV422P_VU) {
     uint32_t stride0 = width_ * pix_size;
@@ -104,7 +120,12 @@ int32_t BaseImage::initImageInfo() {
     }
     strides_ = {stride0, stride0, stride0};
     plane_num_ = 3;
-    img_bytes_ = height_ * stride0 * 2;
+    uint32_t y_size = height_ * stride0;
+    uint32_t u_size = height_ * stride0 / 2;
+    uint32_t v_size = height_ * stride0 / 2;
+    plane_sizes_ = {y_size, u_size, v_size};
+    img_bytes_ = y_size + u_size + v_size;
+
   } else if (image_format_ == ImageFormat::GRAY) {
     uint32_t stride0 = width_ * pix_size;
     if (align_size_ > 1) {
@@ -113,6 +134,8 @@ int32_t BaseImage::initImageInfo() {
     strides_ = {stride0};
     plane_num_ = 1;
     img_bytes_ = height_ * stride0;
+    plane_sizes_ = {img_bytes_};
+
   } else {
     LOGE("Unsupported image format: %d", static_cast<int>(image_format_));
     return -1;
@@ -234,6 +257,17 @@ std::vector<uint64_t> BaseImage::getPhysicalAddress() const {
   if (image_type_ == ImageType::RAW_FRAME) {
     return {memory_block_->physicalAddress};
   }
+  if (image_type_ == ImageType::TENSOR_FRAME) {
+    std::vector<uint64_t> addresses;
+    uint64_t offset = 0;
+    for (uint32_t i = 0; i < plane_num_; i++) {
+      addresses.push_back(memory_block_->physicalAddress + offset);
+      if (i < plane_sizes_.size()) {
+        offset += plane_sizes_[i];
+      }
+    }
+    return addresses;
+  }
   LOGE("get physical address failed");
   return {};
 }
@@ -241,6 +275,18 @@ std::vector<uint64_t> BaseImage::getPhysicalAddress() const {
 std::vector<uint8_t*> BaseImage::getVirtualAddress() const {
   if (image_type_ == ImageType::RAW_FRAME) {
     return {(uint8_t*)memory_block_->virtualAddress};
+  }
+  if (image_type_ == ImageType::TENSOR_FRAME) {
+    std::vector<uint8_t*> addresses;
+    uint8_t* base_addr = (uint8_t*)memory_block_->virtualAddress;
+    uint32_t offset = 0;
+    for (uint32_t i = 0; i < plane_num_; i++) {
+      addresses.push_back(base_addr + offset);
+      if (i < plane_sizes_.size()) {
+        offset += plane_sizes_[i];
+      }
+    }
+    return addresses;
   }
   LOGE("get virtual address failed");
   return {};

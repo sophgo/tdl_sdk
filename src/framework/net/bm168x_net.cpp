@@ -315,8 +315,12 @@ int32_t BM168xNet::addInput(const std::string &name) {
   input_tensor_hash_[name] =
       std::make_shared<BaseTensor>(element_bytes, memory_pool_);
   auto &shape = input_output_tensor_infos_[name].shape;
+
+  // If skip_input_alloc is true, do not allocate memory for input tensor.
+  // The memory will be set later via setInputTensorFromImage().
+  bool alloc_memory = !use_runtime_memory_ && !net_param_.skip_input_alloc;
   input_tensor_hash_[name]->reshape(shape[0], shape[1], shape[2], shape[3],
-                                    !use_runtime_memory_);
+                                    alloc_memory);
   MemoryBlock *memory_block = input_tensor_hash_[name]->getMemoryBlock();
   if (memory_block != nullptr) {
     TensorInfo &tensor_info = input_output_tensor_infos_[name];
@@ -327,11 +331,12 @@ int32_t BM168xNet::addInput(const std::string &name) {
   LOGI(
       "finish add "
       "input:%s,element_bytes:%d,shape:%d,%d,%d,%d,qscale:%f,zero_point:%d,"
-      "dtype:%d",
+      "dtype:%d,alloc_memory:%d",
       name.c_str(), element_bytes, shape[0], shape[1], shape[2], shape[3],
       input_output_tensor_infos_[name].qscale,
       input_output_tensor_infos_[name].zero_point,
-      static_cast<int>(input_output_tensor_infos_[name].data_type));
+      static_cast<int>(input_output_tensor_infos_[name].data_type),
+      alloc_memory);
 
   return 0;
 }

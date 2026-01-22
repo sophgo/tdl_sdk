@@ -32,15 +32,16 @@ int32_t TDL_DestroyHandle(TDLHandle handle);
  *
  * @param frame 需要包装的帧图像信息，类型为VIDEO_FRAME_INFO_S
  * @param own_memory 是否拥有内存所有权
+ * @param is_preprocessed 是否已经预处理
  * @return  返回包装的 TDLImageHandle 对象, 如果失败返回 NULL
  */
-TDLImage TDL_WrapFrame(void *frame, bool own_memory);
+TDLImage TDL_WrapFrame(void *frame, bool own_memory, bool is_preprocessed);
 
 /**
- * @brief 将TDLImage包装为VIDEO_FRAME_INFO_S
+ * @brief 提取TDLImage内部数据到frame指针
  *
  * @param image TDLImageHandle 对象
- * @param frame 输出参数，存储包装后的帧信息，类型为VIDEO_FRAME_INFO_S
+ * @param frame 输出参数，接收指向内部数据的指针
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_WrapImage(TDLImage image, void *frame);
@@ -61,7 +62,6 @@ TDLImage TDL_ReadImage(const char *path);
  * @return  返回读取的 TDLImageHandle 对象, 如果失败返回 NULL
  */
 TDLImage TDL_ReadBin(const char *path, TDLDataTypeE data_type);
-
 /**
  * @brief 读取音频帧为 TDLImageHandle 对象
  *
@@ -153,10 +153,17 @@ int32_t TDL_CloseModel(TDLHandle handle, const TDLModel model_id);
  */
 int32_t TDL_SetModelThreshold(TDLHandle handle, const TDLModel model_id,
                               float threshold);
-
 /**
- * @brief 执行通用目标检测
+ * @brief 获取模型预处理参数
  *
+ * @param handle 已初始化的 TDLHandle 对象
+ * @param model_id 要获取预处理参数的模型类型枚举值
+ * @param pre_param 输出参数，存储获取到的预处理参数
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_GetPreprocessParameters(TDLHandle handle, const TDLModel model_id,
+                                    TDLPreprocessParams *pre_param);
+/**
  * @param handle 已加载模型的 TDLHandle 对象
  * @param model_id 使用的检测模型类型枚举值
  * @param image_handle TDLImageHandle 对象
@@ -498,11 +505,13 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
  * @param config_file APP的json配置文件路径
  * @param channel_names 每一路视频流的名称信息
  * @param channel_size 视频流的路数
+ * @param skip_input_alloc 是否跳过输入tensor内存分配（默认false，分配内存）
+ *                         当设置为true时，addInput不会分配内存，适用于TENSOR_FRAME场景
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_APP_Init(TDLHandle handle, const char *task,
                      const char *config_file, char ***channel_names,
-                     uint8_t *channel_size);
+                     uint8_t *channel_size, bool skip_input_alloc);
 
 /**
  * @brief 往APP送帧

@@ -15,8 +15,9 @@ T getNodeData(const std::string &node_name, PtrFrameInfo &frame_info) {
 }
 
 HumanPoseSmoothApp::HumanPoseSmoothApp(const std::string &task_name,
-                                       const std::string &json_config)
-    : AppTask(task_name, json_config) {}
+                                       const std::string &json_config,
+                                       bool skip_input_alloc)
+    : AppTask(task_name, json_config, skip_input_alloc) {}
 
 int32_t HumanPoseSmoothApp::init() {
   std::string model_dir = json_config_.at("model_dir").get<std::string>();

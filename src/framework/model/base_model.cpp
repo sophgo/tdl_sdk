@@ -7,6 +7,7 @@
 #include "preprocess/base_preprocessor.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
+
 void print_netparam(const NetParam& net_param) {
   std::stringstream ss;
   ss << "mean:[";
@@ -235,20 +236,26 @@ int32_t BaseModel::inference(
       net_->getInputTensor(input_layer_name);
   while (process_idx < batch_size) {
     int fit_batch_size = getFitBatchSize(batch_size - process_idx);
-    setInputBatchSize(input_layer_name, fit_batch_size);
     std::vector<std::shared_ptr<BaseImage>> batch_images;
     batch_rescale_params_[input_layer_name].clear();
-
     for (int i = 0; i < fit_batch_size; i++) {
       batch_images.push_back(images[process_idx + i]);
       if (images[process_idx + i]->getImageType() == ImageType::TENSOR_FRAME) {
-        if (images[process_idx + i]->getVirtualAddress()[0] !=
-            input_tensor->getBatchPtr<uint8_t>(i)) {
-          LOGE(
-              "image memory address is not equal to input tensor memory "
-              "address");
-          assert(false);
+        if (net_->skipInputAlloc()) {
+          if (i == 0) {
+            int32_t ret = net_->setInputTensorFromImage(
+                input_layer_name, images[process_idx + i]);
+            if (ret != 0) {
+              LOGE("Failed to set input tensor from image");
+              return -1;
+            }
+            input_tensor = net_->getInputTensor(input_layer_name);
+          }
+        } else {
+          input_tensor->copyFromImage(images[process_idx + i], i);
         }
+        batch_rescale_params_[input_layer_name].push_back(
+            std::vector<float>({1.0f, 1.0f, 0.0f, 0.0f}));
       } else {
         preprocessor_->preprocessToTensor(
             images[process_idx + i], preprocess_params, i,

@@ -10,6 +10,8 @@
 #include "common/common_types.hpp"
 #include "tensor/base_tensor.hpp"
 
+class BaseImage;  // Forward declaration
+
 class BaseNet {
  public:
   explicit BaseNet(const NetParam& net_param);
@@ -46,6 +48,15 @@ class BaseNet {
     return -1;
   }
   bool useRuntimeMemory() { return use_runtime_memory_; }
+
+  // Set input tensor memory from external image (for TENSOR_FRAME usage).
+  // This allows reusing image memory as input tensor memory to avoid duplicate
+  // memory allocation.
+  virtual int32_t setInputTensorFromImage(
+      const std::string& name, const std::shared_ptr<BaseImage>& image);
+
+  // Check if skip_input_alloc is enabled
+  bool skipInputAlloc() const { return net_param_.skip_input_alloc; }
 
  protected:
   NetParam net_param_;

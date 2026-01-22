@@ -39,6 +39,9 @@ class DetectionHelper {
                           const std::vector<float> &scale_params);
   static void rescaleBbox(ObjectBoxLandmarkInfo &bbox,
                           const std::vector<float> &scale_params);
+  static std::vector<float> getRescaleConfig(const PreprocessParams &params,
+                                             const int image_width,
+                                             const int image_height);
   //   static void convertDetStruct(std::map<int, std::vector<tdl_bbox_t>>
   //   &dets,
   //                                TDLObject *obj, int im_height,

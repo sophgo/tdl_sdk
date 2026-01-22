@@ -24,28 +24,6 @@ typedef struct {
 } RtspContext;
 #endif
 
-typedef enum {
-  IMAGE_GRAY = 0,
-  IMAGE_RGB_PLANAR,
-  IMAGE_RGB_PACKED,
-  IMAGE_BGR_PLANAR,
-  IMAGE_BGR_PACKED,
-  IMAGE_YUV420SP_UV,  // NV12,semi-planar,one Y plane,one interleaved UV
-                      // plane,size = width * height * 1.5
-  IMAGE_YUV420SP_VU,  // NV21,semi-planar,one Y plane,one interleaved VU
-                      // plane,size = width * height * 1.5
-  IMAGE_YUV420P_UV,   // I420,planar,one Y plane(w*h),one U
-                      // plane(w/2*h/2),one V plane(w/2*h/2),size = width *
-                      // height * 1.5
-  IMAGE_YUV420P_VU,   // YV12,size = width * height * 1.5
-  IMAGE_YUV422P_UV,   // I422_16,size = width * height * 2
-  IMAGE_YUV422P_VU,   // YV12_16,size = width * height * 2
-  IMAGE_YUV422SP_UV,  // NV16,size = width * height * 2
-  IMAGE_YUV422SP_VU,  // NV61,size = width * height * 2
-
-  TDL_IMAGE_UNKOWN
-} ImageFormatE;
-
 typedef struct {
   TDLImage queue[QUEUE_SIZE];
   int front;

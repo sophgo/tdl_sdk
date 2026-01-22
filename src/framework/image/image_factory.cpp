@@ -14,7 +14,8 @@
 #endif
 std::shared_ptr<BaseImage> ImageFactory::createImage(
     uint32_t width, uint32_t height, ImageFormat imageFormat,
-    TDLDataType pixDataType, bool alloc_memory, InferencePlatform platform) {
+    TDLDataType pixDataType, bool alloc_memory, InferencePlatform platform,
+    ImageType imageType) {
   if (platform == InferencePlatform::UNKOWN ||
       platform == InferencePlatform::AUTOMATIC) {
     platform = CommonUtils::getPlatform();
@@ -50,7 +51,8 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
     not defined(__CMODEL_CV184X__)
       LOGI("create VPSSImage");
       return std::make_shared<VPSSImage>(width, height, imageFormat,
-                                         pixDataType, alloc_memory);
+                                         pixDataType, alloc_memory, nullptr,
+                                         imageType);
 #else
       return nullptr;
 #endif
@@ -412,7 +414,8 @@ std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
 }
 
 std::shared_ptr<BaseImage> ImageFactory::wrapVPSSFrame(void* vpss_frame,
-                                                       bool own_memory) {
+                                                       bool own_memory,
+                                                       bool is_preprocessed) {
 #if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
     not defined(__CMODEL_CV184X__)
   LOGI("create VPSSImage");
@@ -422,7 +425,7 @@ std::shared_ptr<BaseImage> ImageFactory::wrapVPSSFrame(void* vpss_frame,
   }
   (void)own_memory;
   VIDEO_FRAME_INFO_S* vpss_frame_info = (VIDEO_FRAME_INFO_S*)vpss_frame;
-  return std::make_shared<VPSSImage>(*vpss_frame_info);
+  return std::make_shared<VPSSImage>(*vpss_frame_info, is_preprocessed);
 #else
   LOGI("not support wrapImage on BM168X");
   return nullptr;

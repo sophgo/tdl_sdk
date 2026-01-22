@@ -83,6 +83,16 @@ class TDLModelFactory {
       const std::vector<uint64_t> &mem_addrs = {},
       const std::vector<uint32_t> &mem_sizes = {}, const int device_id = 0);
   ModelConfig getModelConfig(const ModelType model_type);
+
+  /*
+   * Get model instance without opening it. This allows configuring NetParam
+   * (e.g., skip_input_alloc) before calling modelOpen().
+   * @param model_type
+   * @return model instance (not opened yet, need to call modelOpen())
+   */
+  std::shared_ptr<BaseModel> getModelWithoutOpen(const ModelType model_type);
+  std::shared_ptr<BaseModel> getModelWithoutOpen(const std::string &model_type);
+
   /*
    * load model config from model_config_file
    * @param model_config_file, if empty, would load from

@@ -50,14 +50,15 @@ int32_t TDL_DestroyHandle(TDLHandle handle) {
   return 0;
 }
 
-TDLImage TDL_WrapFrame(void *frame, bool own_memory) {
+TDLImage TDL_WrapFrame(void *frame, bool own_memory, bool is_preprocessed) {
   if (frame == nullptr) {
     return nullptr;
   }
 
   // TODO(fuquan.ke): use own_memory to create VPSSFrame
   TDLImageContext *image_context = new TDLImageContext();
-  image_context->image = ImageFactory::wrapVPSSFrame(frame, own_memory);
+  image_context->image =
+      ImageFactory::wrapVPSSFrame(frame, own_memory, is_preprocessed);
   return (TDLImage)image_context;
 }
 
@@ -166,6 +167,53 @@ int32_t TDL_SetModelThreshold(TDLHandle handle, const TDLModel model_id,
   model->setModelThreshold(threshold);
   return 0;
 }
+
+int32_t TDL_GetPreprocessParameters(TDLHandle handle, const TDLModel model_id,
+                                    TDLPreprocessParams *pre_param) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+
+  if (pre_param == nullptr) {
+    LOGE("pre_param is null");
+    return -1;
+  }
+
+  // Get the C++ PreprocessParams
+  PreprocessParams cpp_pre_param;
+  int32_t ret = model->getPreprocessParameters(cpp_pre_param);
+  if (ret != 0) {
+    LOGE("Failed to get preprocess parameters");
+    return ret;
+  }
+
+  pre_param->dst_image_format =
+      convertImageFormat(cpp_pre_param.dst_image_format);
+  pre_param->dst_pixdata_type = convertDataType(cpp_pre_param.dst_pixdata_type);
+
+  pre_param->dst_width = cpp_pre_param.dst_width;
+  pre_param->dst_height = cpp_pre_param.dst_height;
+  pre_param->crop_x = cpp_pre_param.crop_x;
+  pre_param->crop_y = cpp_pre_param.crop_y;
+  pre_param->crop_width = cpp_pre_param.crop_width;
+  pre_param->crop_height = cpp_pre_param.crop_height;
+  pre_param->keep_aspect_ratio = cpp_pre_param.keep_aspect_ratio;
+
+  // Copy arrays
+  for (int i = 0; i < 3; i++) {
+    pre_param->mean[i] = cpp_pre_param.mean[i];
+    pre_param->scale[i] = cpp_pre_param.scale[i];
+  }
+
+  return 0;
+}
+
 int32_t TDL_LoadModelConfig(TDLHandle handle, const char *model_config_json) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
@@ -1486,7 +1534,7 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
 
 int32_t TDL_APP_Init(TDLHandle handle, const char *task,
                      const char *config_file, char ***channel_names,
-                     uint8_t *channel_size) {
+                     uint8_t *channel_size, bool skip_input_alloc) {
   TDLContext *context = (TDLContext *)handle;
   int ret = 0;
   if (context == nullptr) {
@@ -1494,7 +1542,8 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
   }
 
   if (context->app_task == nullptr) {
-    context->app_task = AppFactory::createAppTask(task, config_file);
+    context->app_task =
+        AppFactory::createAppTask(task, config_file, skip_input_alloc);
     if (context->app_task == nullptr) {
       LOGE("Failed to create app_task\n");
       return -1;

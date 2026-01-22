@@ -3,6 +3,7 @@
 #include <cvi_buffer.h>
 
 #include "cvi_vb.h"
+#include "memory/cpu_memory_pool.hpp"
 #include "opencv2/core.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
@@ -11,7 +12,8 @@
 #define SCALAR_4096_ALIGN_BUG 0x1000
 VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
                      TDLDataType dataType, bool alloc_memory,
-                     std::shared_ptr<BaseMemoryPool> memory_pool) {
+                     std::shared_ptr<BaseMemoryPool> memory_pool,
+                     ImageType imageType) {
   int32_t ret = initFrameInfo(width, height, imageFormat, dataType, &frame_);
   if (ret != 0) {
     throw std::runtime_error("initFrameInfo failed");
@@ -20,6 +22,7 @@ VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
   // VIDEO_FRAME_S* vFrame = &frame_.stVFrame;
   // CVI_U32 u32MapSize =
   //     vFrame->u32Length[0] + vFrame->u32Length[1] + vFrame->u32Length[2];
+
   if (memory_pool == nullptr) {
     memory_pool_ = MemoryPoolFactory::createMemoryPool();
   } else {
@@ -31,7 +34,11 @@ VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
   }
   image_format_ = imageFormat;
   pix_data_type_ = dataType;
-  image_type_ = ImageType::VPSS_FRAME;
+  if (imageType == ImageType::UNKOWN) {
+    image_type_ = ImageType::VPSS_FRAME;
+  } else {
+    image_type_ = imageType;
+  }
 
   if (alloc_memory) {
     int32_t ret = allocateMemory();
@@ -43,18 +50,18 @@ VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
   LOGI(
       "VPSSImage constructor "
       "done,width:%d,height:%d,imageFormat:%d,dataType:%d,stride:%d,%d,%d,pix_"
-      "format:%d",
+      "format:%d,imageType:%d",
       width, height, imageFormat, dataType, frame_.stVFrame.u32Stride[0],
       frame_.stVFrame.u32Stride[1], frame_.stVFrame.u32Stride[2],
-      frame_.stVFrame.enPixelFormat);
+      frame_.stVFrame.enPixelFormat, imageType);
 }
 
-VPSSImage::VPSSImage(const VIDEO_FRAME_INFO_S& frame) {
+VPSSImage::VPSSImage(const VIDEO_FRAME_INFO_S& frame, bool is_preprocessed) {
   frame_ = frame;
 
   memory_pool_ = MemoryPoolFactory::createMemoryPool();
 
-  int32_t ret = extractImageInfo(frame);
+  int32_t ret = extractImageInfo(frame, is_preprocessed);
   if (ret != 0) {
     LOGE("extractImageInfo failed, ret: %d", ret);
     throw std::runtime_error("extractImageInfo failed");
@@ -206,13 +213,13 @@ PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
     pixel_format = PIXEL_FORMAT_MAX;
   }
 
-  if (pix_data_type == TDLDataType::UINT8 &&
-      (img_format == ImageFormat::RGB_PLANAR ||
-       img_format == ImageFormat::BGR_PLANAR)) {
-    LOGW("special case, imageFormat: %d,pix_data_type: %d", (int)img_format,
-         (int)pix_data_type);
-    pixel_format = PIXEL_FORMAT_UINT8_C3_PLANAR;
-  }
+  // if (pix_data_type == TDLDataType::UINT8 &&
+  //     (img_format == ImageFormat::RGB_PLANAR ||
+  //      img_format == ImageFormat::BGR_PLANAR)) {
+  //   LOGW("special case, imageFormat: %d,pix_data_type: %d", (int)img_format,
+  //        (int)pix_data_type);
+  //   pixel_format = PIXEL_FORMAT_UINT8_C3_PLANAR;
+  // }
 
   if (pix_data_type != TDLDataType::INT8 &&
       pix_data_type != TDLDataType::UINT8) {
@@ -309,12 +316,17 @@ uint32_t VPSSImage::getVbPoolId() const {
   return memory_block_->id;
 }
 
-int32_t VPSSImage::extractImageInfo(const VIDEO_FRAME_INFO_S& frame) {
+int32_t VPSSImage::extractImageInfo(const VIDEO_FRAME_INFO_S& frame,
+                                    bool is_preprocessed) {
   PIXEL_FORMAT_E pixel_format = frame.stVFrame.enPixelFormat;
+
   // uint32_t width = frame.stVFrame.u32Width;
   // uint32_t height = frame.stVFrame.u32Height;
-
-  image_type_ = ImageType::VPSS_FRAME;
+  if (is_preprocessed) {
+    image_type_ = ImageType::TENSOR_FRAME;
+  } else {
+    image_type_ = ImageType::VPSS_FRAME;
+  }
 
   if (pixel_format == PIXEL_FORMAT_YUV_400) {
     image_format_ = ImageFormat::GRAY;
