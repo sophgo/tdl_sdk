@@ -27,6 +27,35 @@ typedef enum {
 } TDLDataTypeE;
 
 typedef enum {
+  IMAGE_GRAY = 0,
+  IMAGE_RGB_PLANAR,
+  IMAGE_RGB_PACKED,
+  IMAGE_BGR_PLANAR,
+  IMAGE_BGR_PACKED,
+  IMAGE_YUV420SP_UV,  // NV12,semi-planar,one Y plane,one interleaved UV
+                      // plane,size = width * height * 1.5
+  IMAGE_YUV420SP_VU,  // NV21,semi-planar,one Y plane,one interleaved VU
+                      // plane,size = width * height * 1.5
+  IMAGE_YUV420P_UV,   // I420,planar,one Y plane(w*h),one U
+                      // plane(w/2*h/2),one V plane(w/2*h/2),size = width *
+                      // height * 1.5
+  IMAGE_YUV420P_VU,   // YV12,size = width * height * 1.5
+  IMAGE_YUV422P_UV,   // I422_16,size = width * height * 2
+  IMAGE_YUV422P_VU,   // YV12_16,size = width * height * 2
+  IMAGE_YUV422SP_UV,  // NV16,size = width * height * 2
+  IMAGE_YUV422SP_VU,  // NV61,size = width * height * 2
+
+  IMAGE_UNKOWN
+} ImageFormatE;
+
+typedef struct {
+  float scale_x;
+  float scale_y;
+  float offset_x;
+  float offset_y;
+} TDLRescaleConfig;
+
+typedef enum {
   TDL_REJECT = 0,
   TDL_GRABCUT = 1,
   TDL_COLOR = 2
@@ -285,6 +314,19 @@ typedef struct {
   uint32_t size;
 } TDLBrush;
 
+typedef struct {
+  ImageFormatE dst_image_format;
+  TDLDataTypeE dst_pixdata_type;
+  int dst_width;
+  int dst_height;
+  int crop_x;
+  int crop_y;
+  int crop_width;
+  int crop_height;
+  float mean[3];
+  float scale[3];  // Y=X*scale-mean
+  bool keep_aspect_ratio;
+} TDLPreprocessParams;
 #ifdef __cplusplus
 }
 #endif

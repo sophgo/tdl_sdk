@@ -138,6 +138,12 @@ struct NetParam {
                                             // size of runtime_mem_addrs
 
   ModelConfig model_config;
+
+  // If true, skip memory allocation for input tensors in addInput().
+  // This is useful when using TENSOR_FRAME images that already have memory
+  // allocated, and the input tensor memory will be set via
+  // setInputTensorFromImage().
+  bool skip_input_alloc = false;
 };
 
 struct TensorInfo {

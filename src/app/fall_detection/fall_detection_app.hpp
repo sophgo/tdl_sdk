@@ -9,8 +9,8 @@
 
 class FallDetectionApp : public AppTask {
  public:
-  FallDetectionApp(const std::string &task_name,
-                   const std::string &json_config);
+  FallDetectionApp(const std::string &task_name, const std::string &json_config,
+                   bool skip_input_alloc = false);
   ~FallDetectionApp() {}
 
   int32_t addPipeline(const std::string &pipeline_name,

@@ -6,19 +6,26 @@
 #include "human_pose_smooth/human_pose_smooth_app.hpp"
 
 std::shared_ptr<AppTask> AppFactory::createAppTask(
-    const std::string &task_name, const std::string &json_config_file) {
+    const std::string &task_name, const std::string &json_config_file,
+    bool skip_input_alloc) {
   if (task_name == "face_capture") {
-    return std::make_shared<FaceCaptureApp>(task_name, json_config_file);
+    return std::make_shared<FaceCaptureApp>(task_name, json_config_file,
+                                            skip_input_alloc);
   } else if (task_name == "face_pet_capture") {
-    return std::make_shared<FacePetCaptureApp>(task_name, json_config_file);
+    return std::make_shared<FacePetCaptureApp>(task_name, json_config_file,
+                                               skip_input_alloc);
   } else if (task_name == "fall_detection") {
-    return std::make_shared<FallDetectionApp>(task_name, json_config_file);
+    return std::make_shared<FallDetectionApp>(task_name, json_config_file,
+                                              skip_input_alloc);
   } else if (task_name == "consumer_counting") {
-    return std::make_shared<ConsumerCountingAPP>(task_name, json_config_file);
+    return std::make_shared<ConsumerCountingAPP>(task_name, json_config_file,
+                                                 skip_input_alloc);
   } else if (task_name == "cross_detection") {
-    return std::make_shared<ConsumerCountingAPP>(task_name, json_config_file);
+    return std::make_shared<ConsumerCountingAPP>(task_name, json_config_file,
+                                                 skip_input_alloc);
   } else if (task_name == "human_pose_smooth") {
-    return std::make_shared<HumanPoseSmoothApp>(task_name, json_config_file);
+    return std::make_shared<HumanPoseSmoothApp>(task_name, json_config_file,
+                                                skip_input_alloc);
   }
   return nullptr;
 }

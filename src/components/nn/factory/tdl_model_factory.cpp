@@ -427,3 +427,62 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModelImpl(
   }
   return model;
 }
+
+std::shared_ptr<BaseModel> TDLModelFactory::getModelWithoutOpen(
+    const ModelType model_type) {
+  if (model_type == ModelType::INVALID) {
+    LOGE("model type not found for model type: %d",
+         static_cast<int>(model_type));
+    return nullptr;
+  }
+  std::string model_name = modelTypeToString(model_type);
+  if (model_config_map_.find(model_name) == model_config_map_.end()) {
+    LOGE("model config not found for model type: %s", model_name.c_str());
+    return nullptr;
+  }
+
+  std::string model_path = getModelPath(model_type);
+  if (model_path.empty()) {
+    LOGE("model path not found for model type: %s", model_name.c_str());
+    return nullptr;
+  }
+
+  ModelConfig model_config = parseModelConfig(model_config_map_[model_name]);
+
+  std::shared_ptr<BaseModel> model = getModelInstance(model_type);
+  if (model == nullptr) {
+    LOGE("model instance not found for model type: %d",
+         static_cast<int>(model_type));
+    return nullptr;
+  }
+
+  model->setModelType(model_type);
+  NetParam net_param_default = model->getNetParam();
+  net_param_default.model_file_path = model_path;
+
+  // Merge model_config into net_param_default
+  ModelConfig model_config_merged = model_config;
+  if (model_config_merged.rgb_order.empty()) {
+    model_config_merged.rgb_order = net_param_default.model_config.rgb_order;
+  }
+  if (model_config_merged.mean.empty()) {
+    model_config_merged.mean = net_param_default.model_config.mean;
+  }
+  if (model_config_merged.std.empty()) {
+    model_config_merged.std = net_param_default.model_config.std;
+  }
+  net_param_default.model_config = model_config_merged;
+
+  model->setNetParam(net_param_default);
+
+  // Return model without calling modelOpen()
+  // User should configure NetParam (e.g., skip_input_alloc) and call
+  // modelOpen()
+  return model;
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::getModelWithoutOpen(
+    const std::string &model_type) {
+  ModelType model_type_enum = modelTypeFromString(model_type);
+  return getModelWithoutOpen(model_type_enum);
+}

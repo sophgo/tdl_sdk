@@ -10,7 +10,8 @@
 class FacePetCaptureApp : public AppTask {
  public:
   FacePetCaptureApp(const std::string &task_name,
-                    const std::string &json_config);
+                    const std::string &json_config,
+                    bool skip_input_alloc = false);
   ~FacePetCaptureApp() {}
 
   int32_t addPipeline(const std::string &pipeline_name,

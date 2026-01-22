@@ -98,6 +98,14 @@ class BaseModel {
     return net_->setIOTensorMemory(phy_addr, sys_mem, size);
   }
 
+  // Set input tensor memory from external image (for TENSOR_FRAME usage).
+  // This allows reusing image memory as input tensor memory to avoid duplicate
+  // memory allocation. The tensor's original memory will be released.
+  int32_t setInputTensorFromImage(const std::string& name,
+                                  const std::shared_ptr<BaseImage>& image) {
+    return net_->setInputTensorFromImage(name, image);
+  }
+
  private:
   int getFitBatchSize(int left_size) const;
   void setInputBatchSize(const std::string& layer_name, int batch_size);

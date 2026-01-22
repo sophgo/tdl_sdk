@@ -645,3 +645,56 @@ int32_t TDL_ClipPostprocess(float *text_features, int text_rows,
   }
   return 0;  // 成功
 }
+int32_t TDL_GetRescaleConfig(const TDLPreprocessParams *params, int image_width,
+                             int image_height, TDLRescaleConfig *out_config) {
+  if (!params || !out_config || image_width <= 0 || image_height <= 0) {
+    return -1;  // 输入非法
+  }
+
+  // 1) 确定裁剪区域（若未指定裁剪，则使用整图）
+  int cx = params->crop_x;
+  int cy = params->crop_y;
+  int cw = (params->crop_width > 0) ? params->crop_width : image_width;
+  int ch = (params->crop_height > 0) ? params->crop_height : image_height;
+
+  // 边界裁剪：确保不越界
+  cx = (cx < 0) ? 0 : ((cx >= image_width) ? image_width - 1 : cx);
+  cy = (cy < 0) ? 0 : ((cy >= image_height) ? image_height - 1 : cy);
+  cw = (cw < 1) ? 1 : ((cx + cw > image_width) ? image_width - cx : cw);
+  ch = (ch < 1) ? 1 : ((cy + ch > image_height) ? image_height - cy : ch);
+
+  // 2) 计算正向缩放比例（裁剪区域 → 目标尺寸）
+  float sx = (float)params->dst_width / (float)cw;
+  float sy = (float)params->dst_height / (float)ch;
+
+  float fwd_sx, fwd_sy, pad_x = 0.0f, pad_y = 0.0f;
+  if (params->keep_aspect_ratio) {
+    float s = (sx < sy) ? sx : sy;  // min(sx, sy)
+    fwd_sx = fwd_sy = s;
+    pad_x = (params->dst_width - cw * s) * 0.5f;
+    pad_y = (params->dst_height - ch * s) * 0.5f;
+  } else {
+    fwd_sx = sx;
+    fwd_sy = sy;
+  }
+
+  // 防止除零
+  if (fwd_sx == 0.0f || fwd_sy == 0.0f) {
+    return -2;  // 无效缩放
+  }
+
+  // 3) 计算逆变换参数：original = infer * inv_scale + inv_offset
+  float inv_sx = 1.0f / fwd_sx;
+  float inv_sy = 1.0f / fwd_sy;
+
+  float off_x = cx - pad_x * inv_sx;
+  float off_y = cy - pad_y * inv_sy;
+
+  // 写入输出结构体
+  out_config->scale_x = inv_sx;
+  out_config->scale_y = inv_sy;
+  out_config->offset_x = off_x;
+  out_config->offset_y = off_y;
+
+  return 0;  // 成功
+}
