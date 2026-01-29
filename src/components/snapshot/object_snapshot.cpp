@@ -1,9 +1,6 @@
 #include "components/snapshot/object_snapshot.hpp"
 #include <cstdio>
 #include "framework/utils/tdl_log.hpp"
-
-// #define LOGI printf
-
 ObjectSnapshot::ObjectSnapshot(int vechn, int encoder_mode) {
   preprocessor_ =
       PreprocessorFactory::createPreprocessor(InferencePlatform::AUTOMATIC);

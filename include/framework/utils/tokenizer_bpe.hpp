@@ -20,14 +20,24 @@ struct pair_hash {
 class BytePairEncoder {
  public:
   BytePairEncoder(const std::string& encoderFile, const std::string& bpeFile)
-      : encoderFile(encoderFile), bpeFile(bpeFile) {}
+      : encoderFile(encoderFile), bpeFile(bpeFile) {
+    readVocab();
+    buildPairsMap();
+  }
 
   int tokenizerBPE(const std::string& textFile,
                    std::vector<std::vector<int32_t>>& tokens) {
-    readVocab();
-    buildPairsMap();
+    std::vector<std::string> text;
 
-    std::vector<std::string> text = readTextFile(textFile);
+    // 判断文件扩展名，如果是.txt文件则读取文件内容
+    if (textFile.size() >= 4 &&
+        textFile.substr(textFile.size() - 4) == ".txt") {
+      text = readTextFile(textFile);
+    } else {
+      // 如果不是.txt文件，直接将输入字符串作为单行文本处理
+      text.push_back(textFile);
+    }
+
     if (text.empty()) {
       return 1;
     }

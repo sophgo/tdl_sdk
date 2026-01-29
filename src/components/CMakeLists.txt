@@ -16,6 +16,7 @@ if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR
 endif()
 if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
   add_subdirectory(network)
+  add_subdirectory(media_analysis)
 endif()
 
 if ("${CVI_PLATFORM}" STREQUAL "CV180X" OR

@@ -69,7 +69,6 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
   updateTrackers(boxes, features);
   std::map<uint64_t, int> exported_tracks;
   std::map<uint64_t, int> track_id_to_idx;
-  std::map<uint64_t, uint64_t> pair_track_ids = getPairTrackIds();
 
   for (size_t i = 0; i < trackers_.size(); i++) {
     track_id_to_idx[trackers_[i]->id_] = i;
@@ -87,7 +86,8 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
     tinfo.velocity_x_ = trackers_[track_id_to_idx[track_id]]->velocity_x_;
     tinfo.velocity_y_ = trackers_[track_id_to_idx[track_id]]->velocity_y_;
     tinfo.obj_idx_ = i;
-    tinfo.pair_track_idx_ = pair_track_ids[track_id];
+    tinfo.pair_track_idx_ =
+        trackers_[track_id_to_idx[track_id]]->getPairTrackID();
     exported_tracks[track_id] = 1;
     tracker_infos.push_back(tinfo);
   }
@@ -101,7 +101,7 @@ int32_t MOT::track(std::vector<ObjectBoxInfo> &boxes, uint64_t frame_id,
       tinfo.velocity_x_ = t->velocity_x_;
       tinfo.velocity_y_ = t->velocity_y_;
       tinfo.obj_idx_ = -1;
-      tinfo.pair_track_idx_ = pair_track_ids[t->id_];
+      tinfo.pair_track_idx_ = t->getPairTrackID();
       tracker_infos.push_back(tinfo);
     }
   }
@@ -149,14 +149,14 @@ void MOT::trackAlone(std::vector<ObjectBoxInfo> &boxes,
   LOGI("unmatched_tracker:%d,unmatched_bbox_high:%d,unmatched_bbox_low:%d",
        unmatched_tracker_idxes.size(), unmatched_bbox_idxes_high.size(),
        unmatched_bbox_idxes_low.size());
-  MatchResult match_high = match(
+  MOTMatchResult match_high = match(
       boxes, features, unmatched_tracker_idxes, unmatched_bbox_idxes_high,
       TrackCostType::BBOX_IOU, tracker_config_.high_score_iou_dist_thresh_);
   LOGI("match_high,matched_pairs:%d,unmatched_tracker:%d,unmatched_bbox:%d",
        match_high.matched_pairs.size(),
        match_high.unmatched_tracker_idxes.size(),
        match_high.unmatched_bbox_idxes.size());
-  MatchResult match_low =
+  MOTMatchResult match_low =
       match(boxes, features, match_high.unmatched_tracker_idxes,
             unmatched_bbox_idxes_low, TrackCostType::BBOX_IOU,
             tracker_config_.low_score_iou_dist_thresh_);
@@ -325,12 +325,12 @@ void MOT::updatePairInfo(std::vector<ObjectBoxInfo> &boxes,
   }
 }
 
-MatchResult MOT::match(const std::vector<ObjectBoxInfo> &dets,
-                       const std::vector<ModelFeatureInfo> &features,
-                       const std::vector<int> &tracker_idxes,
-                       const std::vector<int> &det_idxes,
-                       TrackCostType cost_method, float max_distance) {
-  MatchResult match_result;
+MOTMatchResult MOT::match(const std::vector<ObjectBoxInfo> &dets,
+                          const std::vector<ModelFeatureInfo> &features,
+                          const std::vector<int> &tracker_idxes,
+                          const std::vector<int> &det_idxes,
+                          TrackCostType cost_method, float max_distance) {
+  MOTMatchResult match_result;
   if (det_idxes.empty() || tracker_idxes.empty()) {
     match_result.unmatched_bbox_idxes = det_idxes;
     match_result.unmatched_tracker_idxes = tracker_idxes;

@@ -12,7 +12,9 @@ set(SAMPLE_INCLUDES
     ${REPO_DIR}/include/components
     ${REPO_DIR}/include/nn
     ${REPO_DIR}/include/
+    ${REPO_DIR}/src/components/media_analysis
     ${REPO_DIR}/src/components/nn
+    ${REPO_DIR}/src/app
 )
 
 if(BUILD_SHARED)
@@ -81,6 +83,7 @@ if ("${CVI_PLATFORM}" STREQUAL "SOPHON" OR
     "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" OR
     "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_api_client.cpp)
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/app/sample_app_media_analysis.cpp)
 endif()
 
 
@@ -114,7 +117,7 @@ foreach (fname ${SAMPLE_SRC_FILES})
   add_executable(${name} ${fname})
 
   set(SAMPLE_LIBS ${CORE_LIBS} dl rt stdc++fs)
-  if(name STREQUAL "sample_api_client")
+  if(name MATCHES "api_client" OR name MATCHES "media_analysis")
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt stdc++fs)
   elseif(name STREQUAL "sample_vi_md")
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS})
@@ -139,4 +142,3 @@ foreach (fname ${SAMPLE_SRC_FILES})
   install(TARGETS ${name} DESTINATION bin/cpp)
 endforeach ()
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/config DESTINATION .)

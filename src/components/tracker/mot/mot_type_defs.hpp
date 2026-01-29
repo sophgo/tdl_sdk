@@ -54,7 +54,7 @@ typedef struct _stCorrelateInfo {
   int time_since_correlated;
 } stCorrelateInfo;
 
-struct MatchResult {
+struct MOTMatchResult {
   std::vector<std::pair<int, int>> matched_pairs;
   std::vector<int> unmatched_bbox_idxes;
   std::vector<int> unmatched_tracker_idxes;

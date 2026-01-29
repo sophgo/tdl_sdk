@@ -96,7 +96,7 @@ foreach (fname ${SAMPLE_SRC_FILES})
   set(SAMPLE_LIBS ${CORE_LIBS} dl rt atomic m)
   
   # 只有需要网络功能的应用才链接网络相关库
-  if(name STREQUAL "sample_llm_api")
+  if(name MATCHES "llm_api" OR name MATCHES "media_analysis")
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt atomic m)
     message(STATUS "SAMPLE_LIBS:${SAMPLE_LIBS} for ${name}")
   endif()
