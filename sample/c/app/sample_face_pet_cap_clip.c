@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <errno.h>
@@ -30,6 +31,53 @@ void print_usage(const char *prog_name) {
       "  -g, --gallery_dir : the face feature directory contains feature files "
       "named 0.bin, 1.bin, 2.bin...(no more than 100)\n"
       "  -o, --output_dir : output dir to save snapshot\n");
+}
+
+bool make_dir(const char *path, mode_t mode) {
+  if (mkdir(path, mode) == 0) {
+    return true;  // 创建成功
+  }
+  if (errno == EEXIST) {
+    return true;  // 已经存在
+  }
+  // 其他错误
+  fprintf(stderr, "mkdir failed: %s,dir:%s\n", strerror(errno), path);
+  return false;
+}
+
+// 创建文件夹的函数
+bool create_id_folder(const char *dir_path, uint64_t id1, uint64_t id2,
+                      char *dst_dir, size_t dst_dir_size) {
+  char temp_dir[512];
+  char old_dir[512];
+
+  if (id2 <= 0) {
+    // id2为0，创建id1_-1文件夹
+    snprintf(temp_dir, sizeof(temp_dir), "%s/%" PRIu64 "_-1", dir_path, id1);
+    make_dir(temp_dir, 0755);
+    strncpy(dst_dir, temp_dir, dst_dir_size);
+    return true;
+  } else {
+    // id2大于0，先检查id1_-1文件夹是否存在
+    snprintf(old_dir, sizeof(old_dir), "%s/%" PRIu64 "_-1", dir_path, id1);
+    snprintf(temp_dir, sizeof(temp_dir), "%s/%" PRIu64 "_%" PRIu64, dir_path,
+             id1, id2);
+
+    struct stat st;
+    if (stat(old_dir, &st) == 0 && S_ISDIR(st.st_mode)) {
+      // id1_-1文件夹存在，重命名为id1_id2
+      if (rename(old_dir, temp_dir) != 0) {
+        fprintf(stderr, "Failed to rename directory from %s to %s: %s\n",
+                old_dir, temp_dir, strerror(errno));
+        return false;
+      }
+    } else {
+      // id1_-1文件夹不存在，直接创建id1_id2文件夹
+      make_dir(temp_dir, 0755);
+    }
+    strncpy(dst_dir, temp_dir, dst_dir_size);
+    return true;
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -80,6 +128,16 @@ int main(int argc, char *argv[]) {
   printf("  gallery_dir:   %s\n", gallery_dir);
   printf("  output_dir:  %s\n", output_dir);
 
+  // 创建output_dir/face文件夹
+  char face_dir[512], person_dir[512], image_feature_dir[512];
+  snprintf(face_dir, sizeof(face_dir), "%s/face", output_dir);
+  make_dir(face_dir, 0755);
+  snprintf(person_dir, sizeof(person_dir), "%s/person", output_dir);
+  make_dir(person_dir, 0755);
+  snprintf(image_feature_dir, sizeof(image_feature_dir), "%s/image_feature",
+           output_dir);
+  make_dir(image_feature_dir, 0755);
+
   TDLFeatureInfo gallery_feature = {0};
   int ret = TDL_GetGalleryFeature(gallery_dir, &gallery_feature, FEATURE_SIZE);
   if (ret != 0) {
@@ -99,6 +157,11 @@ int main(int argc, char *argv[]) {
   }
 
   bool to_exit = false;
+
+  time_t rawtime;
+  struct tm *timeinfo;
+  char timestamp_str[20];
+
   while (true) {
     for (size_t i = 0; i < channel_size; i++) {
       TDLCaptureInfo capture_info = {0};
@@ -116,24 +179,40 @@ int main(int argc, char *argv[]) {
       printf("detect person size: %d, pet size: %d\n",
              capture_info.person_meta.size, capture_info.pet_meta.size);
 
+      char dst_dir[512];
+      char filename[512];
+
+      time(&rawtime);
+      timeinfo = localtime(&rawtime);
+      strftime(timestamp_str, sizeof(timestamp_str), "%Y%m%d_%H%M%S", timeinfo);
+
       for (uint32_t j = 0; j < capture_info.snapshot_size; j++) {
         if (capture_info.snapshot_info[j].object_image) {  // save snapshot
-          char filename[512];
-
           if (capture_info.snapshot_info[j].object_type ==
               TDL_OBJECT_TYPE_PERSON) {
+            create_id_folder(person_dir, capture_info.snapshot_info[j].track_id,
+                             capture_info.snapshot_info[j].pair_track_id,
+                             dst_dir, sizeof(dst_dir));
+
             sprintf(filename,
-                    "%s/%" PRIu64 "_person_ID_%" PRIu64 "_pairID_%" PRIu64
-                    "_qua_%.3f.jpg",
-                    output_dir, capture_info.snapshot_info[j].snapshot_frame_id,
+                    "%s/%s_frameID_%" PRIu64 "_personID_%" PRIu64
+                    "_pairID_%" PRIu64 "_qua_%.3f.jpg",
+                    dst_dir, timestamp_str,
+                    capture_info.snapshot_info[j].snapshot_frame_id,
                     capture_info.snapshot_info[j].track_id,
                     capture_info.snapshot_info[j].pair_track_id,
                     capture_info.snapshot_info[j].quality);
           } else {
+            create_id_folder(face_dir, capture_info.snapshot_info[j].track_id,
+                             capture_info.snapshot_info[j].pair_track_id,
+                             dst_dir, sizeof(dst_dir));
+
             sprintf(filename,
-                    "%s/%" PRIu64 "_face_ID_%" PRIu64 "_pairID_%" PRIu64
+                    "%s/%s_frameID_%" PRIu64 "_faceID_%" PRIu64
+                    "_pairID_%" PRIu64
                     "_qua_%.3f_male[%d]_glass[%d]_age[%d]_emotion[%s].jpg",
-                    output_dir, capture_info.snapshot_info[j].snapshot_frame_id,
+                    dst_dir, timestamp_str,
+                    capture_info.snapshot_info[j].snapshot_frame_id,
                     capture_info.snapshot_info[j].track_id,
                     capture_info.snapshot_info[j].pair_track_id,
                     capture_info.snapshot_info[j].quality,
@@ -142,6 +221,7 @@ int main(int argc, char *argv[]) {
                     capture_info.snapshot_info[j].age,
                     emotionStr[capture_info.snapshot_info[j].emotion]);
           }
+          printf("!!![1]filename: %s\n", filename);
 
           ret = TDL_EncodeFrame(tdl_handle,
                                 capture_info.snapshot_info[j].object_image,
@@ -178,22 +258,34 @@ int main(int argc, char *argv[]) {
         if (capture_info.snapshot_info[j].object_type ==
                 TDL_OBJECT_TYPE_PERSON &&
             capture_info.features[j].size > 0) {
-          char feature_filename[512];
-          sprintf(feature_filename,
-                  "%s/%" PRIu64 "_person_ID_%" PRIu64 "_feature.bin",
-                  output_dir, capture_info.snapshot_info[j].snapshot_frame_id,
-                  capture_info.snapshot_info[j].track_id);
+          create_id_folder(image_feature_dir,
+                           capture_info.snapshot_info[j].track_id,
+                           capture_info.snapshot_info[j].pair_track_id, dst_dir,
+                           sizeof(dst_dir));
 
-          FILE *f = fopen(feature_filename, "wb");
+          sprintf(filename,
+                  "%s/%s_frameID_%" PRIu64 "_personID_%" PRIu64
+                  "_pairID_%" PRIu64 "_qua_%.3f.bin",
+                  dst_dir, timestamp_str,
+                  capture_info.snapshot_info[j].snapshot_frame_id,
+                  capture_info.snapshot_info[j].track_id,
+                  capture_info.snapshot_info[j].pair_track_id,
+                  capture_info.snapshot_info[j].quality);
+          printf("!!![2]filename: %s\n", filename);
+
+          // sprintf(filename, "%s/%s_image_feature.bin", dst_dir,
+          // timestamp_str);
+
+          FILE *f = fopen(filename, "wb");
           if (f) {
             // 将int8_t*指针转换为float*以正确访问数据
             float *feature_data = (float *)capture_info.features[j].ptr;
             size_t data_size = capture_info.features[j].size * sizeof(float);
             fwrite(feature_data, 1, data_size, f);
             fclose(f);
-            printf("Saved person feature to %s\n", feature_filename);
+            printf("Saved person feature to %s\n", filename);
           } else {
-            printf("Failed to open feature file: %s\n", feature_filename);
+            printf("Failed to open feature file: %s\n", filename);
           }
         }
       }

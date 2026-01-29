@@ -11,6 +11,8 @@
 
 #if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
 
+#include "media_analysis/media_analysis_server.hpp"
+
 TDLHandleEx TDL_CreateHandleEx(const int32_t tpu_device_id) {
   TDLContextEx *context = new TDLContextEx();
   return (TDLHandleEx)context;
@@ -74,6 +76,34 @@ int32_t TDL_DestroyHandleEx(TDLHandleEx handle) {
 #endif
   delete context;
   context = nullptr;
+  return 0;
+}
+
+int32_t TDL_MediaAnalysisServer_Init(const char *config_path) {
+  if (config_path == nullptr) {
+    LOGE("config_path is null");
+    return -1;
+  }
+  MediaAnalysisServer::GetInstance()->parse_config(config_path);
+  MediaAnalysisServer::GetInstance()->init();
+  return 0;
+}
+
+int32_t TDL_MediaAnalysisServer_Stop() {
+  MediaAnalysisServer::GetInstance()->stop();
+  return 0;
+}
+
+int32_t TDL_MediaAnalysisServer_SendImage(const uint8_t *image_data,
+                                          size_t size, uint64_t timestamp,
+                                          int channel_id, uint64_t frame_id) {
+  if (image_data == nullptr || size == 0) {
+    LOGE("Invalid image data");
+    return -1;
+  }
+  std::vector<uint8_t> data(image_data, image_data + size);
+  MediaAnalysisServer::GetInstance()->send_image_to_web_client(
+      data, timestamp, channel_id, frame_id);
   return 0;
 }
 #endif

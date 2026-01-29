@@ -88,6 +88,12 @@ int32_t FacePetCaptureApp::addPipeline(const std::string &pipeline_name,
   face_capture_channel->addNode(
       getFaceAttributeNode(get_config("face_attribute_node", nodes_cfg)));
 
+  // 添加图像缩放节点
+  if (nodes_cfg.contains("resize_image_node")) {
+    face_capture_channel->addNode(
+        getResizeImageNode(get_config("resize_image_node", nodes_cfg)));
+  }
+
   face_capture_channel->start();
   pipeline_channels_[pipeline_name] = face_capture_channel;
 
@@ -195,7 +201,10 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getVideoNode(
   }
   std::shared_ptr<VideoDecoder> video_decoder =
       VideoDecoderFactory::createVideoDecoder(decoder_type);
-  int32_t ret = video_decoder->init(video_path);
+
+  std::map<std::string, int> video_decoder_config = {
+      {"is_loop", static_cast<int>(node_config.at("is_loop"))}};
+  int32_t ret = video_decoder->init(video_path, video_decoder_config);
   if (ret != 0) {
     LOGE("video_decoder init failed\n");
     assert(false);
@@ -925,4 +934,64 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getClipImageFeatureNode(
   }
 
   return image_feature_node;
+}
+
+std::shared_ptr<PipelineNode> FacePetCaptureApp::getResizeImageNode(
+    const nlohmann::json &node_config) {
+  std::shared_ptr<BasePreprocessor> preprocessor =
+      PreprocessorFactory::createPreprocessor(InferencePlatform::AUTOMATIC);
+  if (preprocessor == nullptr) {
+    LOGE("preprocessor is nullptr");
+    assert(false);
+  }
+
+  std::shared_ptr<PipelineNode> resize_node =
+      std::make_shared<PipelineNode>(Packet::make(preprocessor));
+  resize_node->setName("resize_image_node");
+
+  if (!node_config.contains("resize_width") ||
+      !node_config.contains("resize_height")) {
+    LOGE("resize_image_node resize_width or resize_height is not found");
+    assert(false);
+  }
+
+  int resize_width = node_config.at("resize_width").get<int>();
+  int resize_height = node_config.at("resize_height").get<int>();
+
+  auto lambda_func = [resize_width, resize_height](PtrFrameInfo &frame_info,
+                                                   Packet &packet) -> int32_t {
+    auto image =
+        frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
+    if (image == nullptr) {
+      std::cout << "image is nullptr" << std::endl;
+      return -1;
+    }
+
+    // 获取预处理对象
+    std::shared_ptr<BasePreprocessor> preprocessor =
+        packet.get<std::shared_ptr<BasePreprocessor>>();
+
+    // 不裁剪，直接缩放整个图像
+    std::shared_ptr<BaseImage> resized_image =
+        preprocessor->cropResize(image, 0, 0,              // 从(0,0)开始
+                                 image->getWidth(),        // 原始宽度
+                                 image->getHeight(),       // 原始高度
+                                 resize_width,             // 目标宽度
+                                 resize_height,            // 目标高度
+                                 ImageFormat::YUV420SP_UV  // 保持原格式
+        );
+
+    // 更新frame_info中的图像
+    frame_info->node_data_["image"] = Packet::make(resized_image);
+    frame_info->frame_width = resize_width;
+    frame_info->frame_height = resize_height;
+
+    LOGI("Resized image from %dx%d to %dx%d\n", image->getWidth(),
+         image->getHeight(), resize_width, resize_height);
+
+    return 0;
+  };
+
+  resize_node->setProcessFunc(lambda_func);
+  return resize_node;
 }

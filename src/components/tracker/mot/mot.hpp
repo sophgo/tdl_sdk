@@ -29,12 +29,12 @@ class MOT : public Tracker {
                       TDLObjectType priority_type, TDLObjectType secondary_type,
                       float corre_thresh);
 
-  MatchResult match(const std::vector<ObjectBoxInfo> &dets,
-                    const std::vector<ModelFeatureInfo> &features,
-                    const std::vector<int> &tracker_idxes,
-                    const std::vector<int> &det_idxes,
-                    TrackCostType cost_method = TrackCostType::BBOX_IOU,
-                    float max_distance = __FLT_MAX__);
+  MOTMatchResult match(const std::vector<ObjectBoxInfo> &dets,
+                       const std::vector<ModelFeatureInfo> &features,
+                       const std::vector<int> &tracker_idxes,
+                       const std::vector<int> &det_idxes,
+                       TrackCostType cost_method = TrackCostType::BBOX_IOU,
+                       float max_distance = __FLT_MAX__);
 
   void updateTrackers(const std::vector<ObjectBoxInfo> &boxes,
                       const std::vector<ModelFeatureInfo> &features);

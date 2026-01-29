@@ -39,6 +39,36 @@ int32_t TDL_LLMApiCall(TDLHandleEx handle, const char *client_type,
  * @param handle 需要销毁的 TDLHandleEx 对象
  */
 int32_t TDL_DestroyHandleEx(TDLHandleEx handle);
+
+/**
+ * @brief 初始化MediaAnalysisServer
+ *
+ * @param config_path 配置文件路径
+ * @return 0成功，非0失败
+ */
+int32_t TDL_MediaAnalysisServer_Init(const char *config_path);
+
+/**
+ * @brief 停止MediaAnalysisServer
+ *
+ * @return 0成功，非0失败
+ */
+int32_t TDL_MediaAnalysisServer_Stop();
+
+/**
+ * @brief 发送图像数据到MediaAnalysisServer
+ *
+ * @param image_data 图像数据指针 (JPEG/PNG encoded data)
+ * @param size 图像数据大小
+ * @param timestamp 时间戳
+ * @param channel_id 通道ID
+ * @param frame_id 帧ID
+ * @return 0成功，非0失败
+ */
+int32_t TDL_MediaAnalysisServer_SendImage(const uint8_t *image_data,
+                                          size_t size, uint64_t timestamp,
+                                          int channel_id, uint64_t frame_id);
+
 #endif
 
 #ifdef __cplusplus
