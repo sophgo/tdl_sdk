@@ -114,9 +114,21 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
       std::make_shared<FacePetCaptureResult>();
   PtrFrameInfo frame_info =
       pipeline_channels_[pipeline_name]->getProcessedFrame(0);
+  if (frame_info == nullptr) {
+    LOGW("frame_info is nullptr for pipeline %s\n", pipeline_name.c_str());
+    result = Packet::make(face_pet_capture_result);
+    return 0;
+  }
 
+  if (frame_info->node_data_.find("image") == frame_info->node_data_.end()) {
+    LOGE("image node not found in frame_info for pipeline %s\n",
+         pipeline_name.c_str());
+    result = Packet::make(face_pet_capture_result);
+    return -1;
+  }
   auto image =
       frame_info->node_data_["image"].get<std::shared_ptr<BaseImage>>();
+
   face_pet_capture_result->image = image;
   face_pet_capture_result->frame_id = frame_info->frame_id_;
   face_pet_capture_result->frame_width = frame_info->frame_width;
