@@ -33,17 +33,21 @@ int32_t TDL_InitObjectMeta(TDLObject *object_meta, int num_objects,
 }
 
 int32_t TDL_ReleaseObjectMeta(TDLObject *object_meta) {
-  for (size_t i = 0; i < object_meta->size; i++) {
-    if (object_meta->info[i].landmark_properity) {
-      free(object_meta->info[i].landmark_properity);
-      object_meta->info[i].landmark_properity = NULL;
+  if (object_meta->info != NULL) {
+    for (uint32_t i = 0; i < object_meta->size; i++) {
+      if (object_meta->info[i].landmark_properity != NULL) {
+        free(object_meta->info[i].landmark_properity);
+        object_meta->info[i].landmark_properity = NULL;
+      }
     }
-  }
 
-  if (object_meta->info) {
     free(object_meta->info);
     object_meta->info = NULL;
   }
+
+  object_meta->size = 0;
+  object_meta->width = 0;
+  object_meta->height = 0;
 
   return 0;
 }
@@ -546,6 +550,38 @@ int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image, const char *img_path,
   ofs.write(reinterpret_cast<const char *>(encoded_data.data()),
             encoded_data.size());
   ofs.close();
+  return 0;
+}
+
+int32_t TDL_EncodeFrameRaw(TDLHandle handle, TDLImage image, int vechn,
+                           uint8_t **encoded_data, uint32_t *encoded_size) {
+  TDLContext *context = (TDLContext *)handle;
+
+  if (!context->encoder) {
+    LOGI("ImageEncoder not init!");
+    context->encoder = std::make_shared<ImageEncoder>(vechn);
+  }
+
+  std::vector<uint8_t> encoded_data_vec;
+  TDLImageContext *image_context = (TDLImageContext *)image;
+
+  bool ret =
+      context->encoder->encodeFrame(image_context->image, encoded_data_vec);
+  if (!ret) {
+    std::cerr << "Image encoding failed.\n";
+    return -1;
+  }
+
+  // 分配内存并复制数据
+  *encoded_data = (uint8_t *)malloc(encoded_data_vec.size());
+  if (*encoded_data == nullptr) {
+    std::cerr << "Memory allocation failed.\n";
+    return -1;
+  }
+
+  memcpy(*encoded_data, encoded_data_vec.data(), encoded_data_vec.size());
+  *encoded_size = encoded_data_vec.size();
+
   return 0;
 }
 

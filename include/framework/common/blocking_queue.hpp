@@ -73,6 +73,7 @@ class BlockingQueue {
   std::queue<T> m_queue;
   pthread_mutex_t m_qmtx;
   pthread_cond_t m_condv;
+  pthread_condattr_t m_attr;
   int m_type;  // 0:queue,1:vector
 };
 
@@ -84,7 +85,9 @@ BlockingQueue<T>::BlockingQueue(const std::string &name, int type)
   m_name = name;
   m_type = type;
   pthread_mutex_init(&m_qmtx, NULL);
-  pthread_cond_init(&m_condv, NULL);
+  pthread_condattr_init(&m_attr);
+  pthread_condattr_setclock(&m_attr, CLOCK_MONOTONIC);
+  pthread_cond_init(&m_condv, &m_attr);
 }
 
 template <typename T>
@@ -98,6 +101,7 @@ BlockingQueue<T>::~BlockingQueue() {
   std::queue<T> empty;
   m_queue.swap(empty);
   pthread_mutex_unlock(&m_qmtx);
+  pthread_condattr_destroy(&m_attr);
 }
 
 template <typename T>
@@ -152,19 +156,22 @@ T BlockingQueue<T>::pop(int wait_ms, bool *is_timeout) {
   }
 
   struct timespec to;
-  struct timeval now;
-  gettimeofday(&now, NULL);
+  struct timespec now;
+  clock_gettime(CLOCK_MONOTONIC, &now);
   // double ms0 = now.tv_sec * 1000 + now.tv_usec / 1000.0;
   // std::cout<<m_name<<",pop:"<<now.tv_usec/1000.0;
   if (wait_ms == 0) {
     to.tv_sec = now.tv_sec + 9999999;
-    to.tv_nsec = now.tv_usec * 1000UL;
+    to.tv_nsec = now.tv_nsec;
   } else {
-    int nsec = now.tv_usec * 1000 + (wait_ms % 1000) * 1000000;
-    to.tv_sec = now.tv_sec + nsec / 1000000000 + wait_ms / 1000;
-    to.tv_nsec =
-        nsec % 1000000000;  //(now.tv_usec + wait_ms * 1000UL) * 1000UL;
+    to.tv_sec = now.tv_sec + wait_ms / 1000;
+    to.tv_nsec = now.tv_nsec + (wait_ms % 1000) * 1000000;
   }
+  if (to.tv_nsec >= 1000000000) {
+    to.tv_nsec -= 1000000000;
+    to.tv_sec += 1;
+  }
+
   // std::cout<<m_name<<" BlockingQueue
   // topop:"<<wait_ms<<",cursize:"<<sizeUnsafe()<<",datasize:"<<sizeof(T)<<std::endl;
   pthread_mutex_lock(&m_qmtx);
