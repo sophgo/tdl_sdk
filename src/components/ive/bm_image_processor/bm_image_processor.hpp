@@ -24,6 +24,14 @@ class BmImageProcessor : public ImageProcessor {
                                  std::shared_ptr<BaseImage> &right,
                                  std::shared_ptr<BaseImage> &wgt,
                                  std::shared_ptr<BaseImage> &output) override;
+
+  virtual int32_t fourWayBlending(
+      std::shared_ptr<BaseImage> &img0, std::shared_ptr<BaseImage> &img1,
+      std::shared_ptr<BaseImage> &img2, std::shared_ptr<BaseImage> &img3,
+      std::shared_ptr<BaseImage> &wgt0, std::shared_ptr<BaseImage> &wgt1,
+      std::shared_ptr<BaseImage> &wgt2, int overlay0, int overlay1,
+      int overlay2, std::shared_ptr<BaseImage> &output) override;
+
   virtual int32_t erode(std::shared_ptr<BaseImage> &input, CVI_U32 kernal_w,
                         CVI_U32 kernal_h,
                         std::shared_ptr<BaseImage> &output) override;
@@ -41,6 +49,7 @@ class BmImageProcessor : public ImageProcessor {
   tpu_kernel_function_t func_id_subads_;
   tpu_kernel_function_t func_id_threshold_;
   tpu_kernel_function_t func_id_blend_2way_;
+  tpu_kernel_function_t func_id_blend_4way_;
   tpu_kernel_function_t func_id_morph_;
 };
 

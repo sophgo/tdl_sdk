@@ -61,6 +61,15 @@ bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
                               tpu_kernel_module_t tpu_module,
                               tpu_kernel_function_t func_id);
 
+bm_status_t tpu_4way_blending(bm_handle_t handle, int img_num,
+                              bm_device_mem_t *img_mem, int *img_width,
+                              int *overlay, int overlay_num,
+                              bm_device_mem_t *wgt_mem,
+                              bm_device_mem_t blend_mem, int blend_width,
+                              int blend_height, PIXEL_FORMAT_E format,
+                              tpu_kernel_module_t tpu_module,
+                              tpu_kernel_function_t func_id);
+
 enum MorphTypes {
   MORPH_ERODE = 0,   //!< see #erode
   MORPH_DILATE = 1,  //!< see #dilate
