@@ -31,7 +31,7 @@ int32_t getChannelSize(CVI_S32 format, CVI_S32 width, CVI_S32 height,
     case PIXEL_FORMAT_NV12:
     case PIXEL_FORMAT_NV21:
       src1_size[0] = width * height;
-      src1_size[1] = ALIGN(height / 2, 2);
+      src1_size[1] = ALIGN(height / 2, 2) * width;  // 修复：需要乘以 width
       break;
     default:
       printf("Pixel format(%d) not supported!\n", format);
@@ -74,6 +74,8 @@ BmImageProcessor::BmImageProcessor(const std::string &tpu_kernel_module_path) {
       tpu_kernel_get_function(handle_, tpu_module_, "cv_threshold");
   func_id_blend_2way_ =
       tpu_kernel_get_function(handle_, tpu_module_, "cv_blend_2way");
+  func_id_blend_4way_ =
+      tpu_kernel_get_function(handle_, tpu_module_, "cv_blend_4way");
   func_id_morph_ = tpu_kernel_get_function(handle_, tpu_module_, "cv_morph");
 }
 
@@ -338,6 +340,7 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   CVI_S32 blend_w = lwidth + rwidth - overlay_w;
   CVI_S32 blend_h = lheight;
   CVI_S32 channel = (image_format == ImageFormat::GRAY) ? 1 : 3;
+
   int dsize = 0;
   if (left->getPixDataType() == TDLDataType::UINT8 ||
       left->getPixDataType() == TDLDataType::INT8) {
@@ -515,6 +518,148 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   bm_free_device(handle_, wgt_mem[0]);
   bm_free_device(handle_, wgt_mem[1]);
 #endif
+  return 0;
+}
+
+int32_t BmImageProcessor::fourWayBlending(
+    std::shared_ptr<BaseImage> &img0, std::shared_ptr<BaseImage> &img1,
+    std::shared_ptr<BaseImage> &img2, std::shared_ptr<BaseImage> &img3,
+    std::shared_ptr<BaseImage> &wgt0, std::shared_ptr<BaseImage> &wgt1,
+    std::shared_ptr<BaseImage> &wgt2, int overlay0, int overlay1, int overlay2,
+    std::shared_ptr<BaseImage> &output) {
+  // 参数校验
+  if (!img0 || !img1 || !img2 || !img3) {
+    printf("fourWayBlending: one of the input images is nullptr\n");
+    return -1;
+  }
+
+  if (!wgt0 || !wgt1 || !wgt2) {
+    printf("fourWayBlending: one of the weight images is nullptr\n");
+    return -1;
+  }
+
+  // 获取图像基本信息
+  CVI_S32 blend_height = img0->getHeight();
+  ImageFormat image_format = img0->getImageFormat();
+  TDLDataType pix_data_type = img0->getPixDataType();
+
+  // 存储图像和权重到数组中方便处理
+  std::shared_ptr<BaseImage> images[4] = {img0, img1, img2, img3};
+  std::shared_ptr<BaseImage> wgts[3] = {wgt0, wgt1, wgt2};
+  int overlays[3] = {overlay0, overlay1, overlay2};
+
+  // 计算混合后的宽度
+  int blend_width = 0;
+  int img_width[4] = {0};
+  for (int i = 0; i < 4; i++) {
+    img_width[i] = images[i]->getWidth();
+    blend_width += img_width[i];
+  }
+  for (int i = 0; i < 3; i++) {
+    blend_width -= overlays[i];
+  }
+
+  // 创建输出图像
+  if (!output || output->getHeight() != blend_height ||
+      output->getWidth() != blend_width ||
+      output->getImageFormat() != image_format ||
+      output->getPixDataType() != pix_data_type) {
+    output = ImageFactory::createImage(blend_width, blend_height, image_format,
+                                       pix_data_type, true,
+                                       InferencePlatform::AUTOMATIC);
+  }
+
+  // 将ImageFormat转换为PIXEL_FORMAT_E
+  PIXEL_FORMAT_E format =
+      VPSSImage::convertPixelFormat(image_format, pix_data_type);
+
+  // 设备内存
+  bm_device_mem_t img_mem[4];
+  bm_device_mem_t wgt_mem[3];
+  bm_device_mem_t blend_mem;
+
+#if defined(__CMODEL_CV184X__)
+  // CMODEL模式：分配设备内存并拷贝数据
+  int img_size[4] = {0};
+  int wgt_size[3] = {0};
+
+  // 计算图像大小并分配内存
+  for (int i = 0; i < 4; i++) {
+    int ch_size[3] = {0};
+    getChannelSize(format, img_width[i], blend_height, ch_size);
+    img_size[i] = ch_size[0] + ch_size[1] + ch_size[2];
+
+    bm_malloc_device_byte(handle_, &img_mem[i], img_size[i]);
+    bm_memcpy_s2d(handle_, img_mem[i], images[i]->getVirtualAddress()[0]);
+  }
+
+  // 计算权重大小并分配内存
+  for (int i = 0; i < 3; i++) {
+    int wgt_y_size = overlays[i] * blend_height;
+    int wgt_uv_size = overlays[i] * ALIGN(blend_height / 2, 2);
+    wgt_size[i] = wgt_y_size + wgt_uv_size;
+
+    bm_malloc_device_byte(handle_, &wgt_mem[i], wgt_size[i]);
+    bm_memcpy_s2d(handle_, wgt_mem[i], wgts[i]->getVirtualAddress()[0]);
+  }
+
+  // 分配输出内存
+  int blend_ch_size[3] = {0};
+  getChannelSize(format, blend_width, blend_height, blend_ch_size);
+  int blend_size = blend_ch_size[0] + blend_ch_size[1] + blend_ch_size[2];
+  bm_malloc_device_byte(handle_, &blend_mem, blend_size);
+
+#else
+  // 非CMODEL模式：直接使用物理地址
+  for (int i = 0; i < 4; i++) {
+    img_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+    img_mem[i].u.device.device_addr =
+        images[i]->getMemoryBlock()->physicalAddress;
+    img_mem[i].size = images[i]->getMemoryBlock()->size;
+  }
+
+  for (int i = 0; i < 3; i++) {
+    wgt_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+    wgt_mem[i].u.device.device_addr =
+        wgts[i]->getMemoryBlock()->physicalAddress;
+    wgt_mem[i].size = wgts[i]->getMemoryBlock()->size;
+  }
+
+  blend_mem.flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+  blend_mem.u.device.device_addr = output->getMemoryBlock()->physicalAddress;
+  blend_mem.size = output->getMemoryBlock()->size;
+#endif
+
+  printf(
+      "tpu_4way_blending: img_num=4, overlay_num=3, blend_width=%d, "
+      "blend_height=%d\n",
+      blend_width, blend_height);
+
+  bm_status_t ret = tpu_4way_blending(
+      handle_, 4, img_mem, img_width, overlays, 3, wgt_mem, blend_mem,
+      blend_width, blend_height, format, tpu_module_, func_id_blend_4way_);
+
+#if defined(__CMODEL_CV184X__)
+  if (ret == BM_SUCCESS) {
+    // 将结果从设备内存拷贝回主机内存
+    bm_memcpy_d2s(handle_, output->getVirtualAddress()[0], blend_mem);
+  }
+
+  // 释放设备内存
+  for (int i = 0; i < 4; i++) {
+    bm_free_device(handle_, img_mem[i]);
+  }
+  for (int i = 0; i < 3; i++) {
+    bm_free_device(handle_, wgt_mem[i]);
+  }
+  bm_free_device(handle_, blend_mem);
+#endif
+
+  if (ret != BM_SUCCESS) {
+    printf("tpu_4way_blending failed with error: %d\n", ret);
+    return static_cast<int32_t>(ret);
+  }
+
   return 0;
 }
 

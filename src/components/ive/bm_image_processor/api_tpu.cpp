@@ -54,6 +54,18 @@ typedef struct sg_cv_blend_2way {
   int wgt_mode;
 } __attribute__((packed)) sg_cv_blend_2way_t;
 
+typedef struct sg_cv_blend_4way {
+  unsigned long long img_addr[4];
+  int img_width[4];
+  unsigned long long wgt_mem_addr[3];
+  int overlay[3];
+  int overlay_num;
+  unsigned long long blend_img_addr;
+  int blend_width;
+  int blend_height;
+  int format;
+} __attribute__((packed)) sg_cv_blend_4way_t;
+
 typedef struct sg_api_cv_morph {
   unsigned long long src_addr;
   unsigned long long dst_addr;
@@ -843,9 +855,86 @@ bm_status_t tpu_2way_blending(bm_handle_t handle, ImageInfo *left_img,
     blend_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
     api.blend_img_addr[i] = bm_mem_get_device_addr(blend_mem[i]);
   }
+
+  printf("func_id: %d\n", func_id);
   ret = tpu_kernel_launch(handle, func_id, &api, sizeof(api));
   if (ret != BM_SUCCESS) {
     bmlib_log("BLEND", BMLIB_LOG_ERROR, "tpu_kernel_launch!\r\n");
+    return BM_ERR_FAILURE;
+  }
+
+  return ret;
+}
+
+bm_status_t tpu_4way_blending(bm_handle_t handle, int img_num,
+                              bm_device_mem_t *img_mem, int *img_width,
+                              int *overlay, int overlay_num,
+                              bm_device_mem_t *wgt_mem,
+                              bm_device_mem_t blend_mem, int blend_width,
+                              int blend_height, PIXEL_FORMAT_E format,
+                              tpu_kernel_module_t tpu_module,
+                              tpu_kernel_function_t func_id) {
+  bm_status_t ret = BM_ERR_FAILURE;
+
+  if (handle == NULL) {
+    bmlib_log("BLEND_4WAY", BMLIB_LOG_ERROR, "Can not get handle!\r\n");
+    return BM_ERR_PARAM;
+  }
+
+  if (img_num < 2 || img_num > 4) {
+    bmlib_log("BLEND_4WAY", BMLIB_LOG_ERROR, "img_num should be 2~4!\r\n");
+    return BM_ERR_PARAM;
+  }
+
+  if (overlay_num < 1 || overlay_num > 3 || overlay_num != img_num - 1) {
+    bmlib_log("BLEND_4WAY", BMLIB_LOG_ERROR,
+              "overlay_num should be img_num - 1!\r\n");
+    return BM_ERR_PARAM;
+  }
+
+  sg_cv_blend_4way_t api;
+  memset(&api, 0, sizeof(sg_cv_blend_4way_t));
+
+  // 设置图像地址和宽度
+  for (int i = 0; i < img_num; i++) {
+    img_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+    api.img_addr[i] = bm_mem_get_device_addr(img_mem[i]);
+    api.img_width[i] = img_width[i];
+  }
+
+  // 设置权重地址和重叠宽度
+  for (int i = 0; i < overlay_num; i++) {
+    api.overlay[i] = overlay[i];
+    // 只有当 overlay[i] > 0 时才设置权重地址
+    if (overlay[i] > 0) {
+      wgt_mem[i].flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+      api.wgt_mem_addr[i] = bm_mem_get_device_addr(wgt_mem[i]);
+    } else {
+      api.wgt_mem_addr[i] = 0;  // 没有重叠区域，权重地址置0
+    }
+  }
+
+  api.overlay_num = overlay_num;
+
+  // 设置输出混合图像
+  blend_mem.flags.u.mem_type = BM_MEM_TYPE_DEVICE;
+  api.blend_img_addr = bm_mem_get_device_addr(blend_mem);
+  api.blend_width = blend_width;
+  api.blend_height = blend_height;
+  api.format = format;
+
+  printf(
+      "tpu_4way_blending: img_num=%d, overlay_num=%d, blend_width=%d, "
+      "blend_height=%d\n",
+      img_num, overlay_num, blend_width, blend_height);
+  for (int i = 0; i < overlay_num; i++) {
+    printf("  overlay[%d]=%d, wgt_addr=0x%llx\n", i, overlay[i],
+           api.wgt_mem_addr[i]);
+  }
+
+  ret = tpu_kernel_launch(handle, func_id, &api, sizeof(api));
+  if (ret != BM_SUCCESS) {
+    bmlib_log("BLEND_4WAY", BMLIB_LOG_ERROR, "tpu_kernel_launch!\r\n");
     return BM_ERR_FAILURE;
   }
 
