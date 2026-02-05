@@ -39,6 +39,15 @@ if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STRE
    set(EX_SRCS $<TARGET_OBJECTS:c_apis_ex> $<TARGET_OBJECTS:network>)
 endif()
 
+if ("${CVI_PLATFORM}" STREQUAL "CV180X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV181X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV182X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV183X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV184X" )
+   set(EX_SRCS ${EX_SRCS} $<TARGET_OBJECTS:audio>)
+endif()
+
+
 if(APP_VIDEO_ENABLE)
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:video_decoder>)
 else()
@@ -89,7 +98,9 @@ add_library(tdl_ex SHARED ${EX_SRCS})
 target_link_libraries(tdl_ex ${LIBWEBSOCKETS_LIBS}
                       ${OPENSSL_LIBRARY}
                       ${ZLIB_LIBRARY}
-                      ${CURL_LIBRARY})
+                      ${CURL_LIBRARY}
+                      ${MIDDLEWARE_AUDIO_LIBS}
+                      stdc++fs)
 
 # static library
 add_library(tdl_core-static STATIC ${CORES_SRCS})
@@ -100,7 +111,7 @@ else()
 endif()
 
 add_library(tdl_ex-static STATIC ${EX_SRCS})
-target_link_libraries(tdl_ex-static ${LIBWEBSOCKETS_LIBS_STATIC} ${CURL_LIBRARY_STATIC} ${OPENSSL_LIBRARY_STATIC} ${ZLIB_LIBRARY_STATIC} )
+target_link_libraries(tdl_ex-static ${LIBWEBSOCKETS_LIBS_STATIC} ${CURL_LIBRARY_STATIC} ${OPENSSL_LIBRARY_STATIC} ${ZLIB_LIBRARY_STATIC} ${MIDDLEWARE_AUDIO_LIBS_STATIC})
 
 if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)
     add_subdirectory(python)

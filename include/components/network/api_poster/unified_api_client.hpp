@@ -11,6 +11,10 @@
 #include "asr_client.hpp"
 #include "tts_client.hpp"
 
+#if defined(__CV180X__) || defined(__CV181X__) || defined(__CV184X__)
+#include "voice_chat_client.hpp"
+#endif
+
 using MethodFunc = std::function<nlohmann::json(const nlohmann::json &)>;
 
 class UnifiedApiClient {
@@ -38,6 +42,9 @@ class UnifiedApiClient {
   std::unique_ptr<APIClient::SophnetClient> sophnetClient;
   std::unique_ptr<APIClient::VolcengineClient> volcengineClient;
   std::unique_ptr<APIClient::AliyunClient> aliyunClient;
+#if defined(__CV180X__) || defined(__CV181X__) || defined(__CV184X__)
+  std::unique_ptr<VoiceChat::VoiceChatClient> voiceChatClient;
+#endif
   // std::unique_ptr<Asr::AsrClient> asrClient;
   // std::unique_ptr<Tts::TtsClient> ttsClient;
 

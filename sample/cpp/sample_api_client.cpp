@@ -1,11 +1,22 @@
+#include <atomic>
+#include <chrono>
+#include <csignal>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <json.hpp>
 #include <sstream>
+#include <thread>
 #include "network/api_poster/unified_api_client.hpp"
+#if defined(__CV180X__) || defined(__CV181X__) || defined(__CV184X__)
+#include "network/api_poster/voice_chat_client.hpp"
+#endif
 
 using json = nlohmann::json;
+
+static std::atomic<bool> g_stop{false};
+
+static void signal_handler(int sig) { g_stop = true; }
 
 static void usage(const char* prog) {
   std::cerr
@@ -61,8 +72,31 @@ int main(int argc, char* argv[]) {
   }
 
   // 调用统一 API
-  UnifiedApiClient api;
-  auto resp = api.call(client, function, params);
+  UnifiedApiClient apiClient;
+
+#if defined(__CV180X__) || defined(__CV181X__) || defined(__CV184X__)
+  if (client == "doubao" && function == "voice_chat") {
+    signal(SIGINT, signal_handler);
+
+    json p = params;
+    // Start Chat
+    json result = apiClient.call("doubao", "voice_chat", p);
+    if (result.contains("error")) {
+      std::cerr << "VoiceChat start failed: " << result["error"] << std::endl;
+      return 1;
+    }
+
+    std::cout << "VoiceChat client started. Press Ctrl+C to stop." << std::endl;
+
+    while (!g_stop) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    apiClient.call("voice_chat", "stop", {});
+    return 0;
+  }
+#endif
+  auto resp = apiClient.call(client, function, params);
 
   if (resp.value("status", "") == "ok") {
     std::cout << "[" << client << "." << function
