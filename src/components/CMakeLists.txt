@@ -17,6 +17,15 @@ endif()
 if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
   add_subdirectory(network)
 endif()
+
+if ("${CVI_PLATFORM}" STREQUAL "CV180X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV181X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV182X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV183X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV184X" )
+  add_subdirectory(audio)
+endif()
+
 if("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" OR
    "${CVI_PLATFORM}" STREQUAL "CV184X")
    add_subdirectory(ive)

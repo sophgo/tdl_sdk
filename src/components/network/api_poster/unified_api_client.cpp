@@ -101,6 +101,40 @@ void UnifiedApiClient::registerMethods() {
         if (!r.success) return createErrorResponse(r.error_message);
         return nlohmann::json{{"status", "ok"}, {"content", r.content}};
       };
+
+#if defined(__CV180X__) || defined(__CV181X__) || defined(__CV184X__)
+  // VoiceChatClient
+  methodMap["doubao"]["voice_chat"] = [this](const nlohmann::json &p) {
+    VoiceChat::VoiceChatClient::Config config;
+    config.app_id = p.value("app_id", "");
+    config.access_key = p.value("access_key", "");
+    if (p.contains("app_key")) config.app_key = p["app_key"];
+
+    if (config.app_id.empty() || config.access_key.empty()) {
+      return createErrorResponse("VoiceChat requires app_id and access_key");
+    }
+
+    // Stop existing if any
+    if (voiceChatClient) {
+      voiceChatClient->stop();
+    }
+
+    voiceChatClient = std::make_unique<VoiceChat::VoiceChatClient>(config);
+    voiceChatClient->start();
+
+    return nlohmann::json{{"status", "ok"},
+                          {"content", "VoiceChat client started"}};
+  };
+
+  methodMap["doubao"]["stop"] = [this](const nlohmann::json &p) {
+    if (voiceChatClient) {
+      voiceChatClient->stop();
+      voiceChatClient.reset();
+    }
+    return nlohmann::json{{"status", "ok"},
+                          {"content", "VoiceChat client stopped"}};
+  };
+#endif
   methodMap["volcengine"]["humanSegment"] = [this](const nlohmann::json &p) {
     auto r = volcengineClient->humansegment(
         p.value("ak", ""), p.value("sk", ""), p.value("image_path", ""),
