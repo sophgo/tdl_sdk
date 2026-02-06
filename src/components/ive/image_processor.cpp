@@ -44,10 +44,9 @@ int32_t ImageProcessor::dilate(std::shared_ptr<BaseImage> &input,
   return 0;
 }
 
-std::shared_ptr<ImageProcessor> ImageProcessor::getImageProcessor(
-    const std::string &tpu_kernel_module_path) {
+std::shared_ptr<ImageProcessor> ImageProcessor::getImageProcessor() {
 #if defined(__CV184X__) || defined(__CMODEL_CV184X__)
-  return std::make_shared<BmImageProcessor>(tpu_kernel_module_path);
+  return std::make_shared<BmImageProcessor>();
 #else
   return nullptr;
 #endif

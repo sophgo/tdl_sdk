@@ -39,8 +39,7 @@ class ImageProcessor {
                          CVI_U32 kernal_h,
                          std::shared_ptr<BaseImage> &output) = 0;
   // 创建匹配器实例
-  static std::shared_ptr<ImageProcessor> getImageProcessor(
-      const std::string &tpu_kernel_module_path = "");
+  static std::shared_ptr<ImageProcessor> getImageProcessor();
 };
 
 #endif  // __IMAGE_PROCESSOR_HPP__
