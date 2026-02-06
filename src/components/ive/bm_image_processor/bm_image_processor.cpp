@@ -41,48 +41,39 @@ int32_t getChannelSize(CVI_S32 format, CVI_S32 width, CVI_S32 height,
   return 0;
 }
 
-BmImageProcessor::BmImageProcessor(const std::string &tpu_kernel_module_path) {
+BmImageProcessor::BmImageProcessor() {
   // 初始化handle
   bm_status_t ret = bm_dev_request(&handle_, 0);
   if (ret != BM_SUCCESS) {
     printf("Failed to initialize BM handle, error code: %d\n", ret);
   }
   // 加载TPU模块
-#if defined(__CV184X__)
-  if (tpu_kernel_module_path.empty()) {
-    std::string temp_kernel_path = getenv("BMRUNTIME_USING_FIRMWARE");
-    if (temp_kernel_path.empty()) {
-      LOGE("tpu_kernel_module_path is empty.");
-      return;
-    }
-    tpu_module_ =
-        tpu_kernel_load_module_file(handle_, temp_kernel_path.c_str());
-  } else {
-    tpu_module_ =
-        tpu_kernel_load_module_file(handle_, tpu_kernel_module_path.c_str());
-  }
-#elif defined(__CMODEL_CV184X__)
-  tpu_module_ = tpu_kernel_load_module_file(handle_, "");
+#if defined(__CV184X__) || defined(__CMODEL_CV184X__)
+  tpu_module_ = tpu_kernel_load_module_file(handle_, "libtpu_kernel_module.so");
 #endif
   if (!tpu_module_) {
     printf("Failed to load TPU kernel module\n");
+    tpu_module_ = nullptr;
     bm_dev_free(handle_);
-    return;
+    throw std::runtime_error(
+        "Failed to load TPU kernel module. Ensure libtpu_kernel_module.so is "
+        "in the dynamic linker search path (or already preloaded).");
   }
   func_id_subads_ = tpu_kernel_get_function(handle_, tpu_module_, "cv_subads");
   func_id_threshold_ =
       tpu_kernel_get_function(handle_, tpu_module_, "cv_threshold");
-  func_id_blend_2way_ =
-      tpu_kernel_get_function(handle_, tpu_module_, "cv_blend_2way");
-  func_id_blend_4way_ =
-      tpu_kernel_get_function(handle_, tpu_module_, "cv_blend_4way");
+  // blending 系列算子并非所有系统版本都提供；按需获取，避免无关 sample
+  // 启动就报错
+  func_id_blend_2way_ = 0;
+  func_id_blend_4way_ = 0;
   func_id_morph_ = tpu_kernel_get_function(handle_, tpu_module_, "cv_morph");
 }
 
 BmImageProcessor::~BmImageProcessor() {
-  // 释放TPU模块
-  tpu_kernel_unload_module(handle_, tpu_module_);
-  // 释放handle
+  if (tpu_module_) {
+    tpu_kernel_unload_module(handle_, tpu_module_);
+    tpu_module_ = nullptr;
+  }
   bm_dev_free(handle_);
 }
 
@@ -321,6 +312,14 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
                                          std::shared_ptr<BaseImage> &right,
                                          std::shared_ptr<BaseImage> &wgt,
                                          std::shared_ptr<BaseImage> &output) {
+  if (!func_id_blend_2way_) {
+    func_id_blend_2way_ =
+        tpu_kernel_get_function(handle_, tpu_module_, "cv_blend_2way");
+    if (!func_id_blend_2way_) {
+      printf("Failed to get TPU function cv_blend_2way\n");
+      return -1;
+    }
+  }
   // 参数校验
   if ((!left || !right || !wgt)) {
     printf("left, right or wgts is nullptr or empty\n");
@@ -527,6 +526,14 @@ int32_t BmImageProcessor::fourWayBlending(
     std::shared_ptr<BaseImage> &wgt0, std::shared_ptr<BaseImage> &wgt1,
     std::shared_ptr<BaseImage> &wgt2, int overlay0, int overlay1, int overlay2,
     std::shared_ptr<BaseImage> &output) {
+  if (!func_id_blend_4way_) {
+    func_id_blend_4way_ =
+        tpu_kernel_get_function(handle_, tpu_module_, "cv_blend_4way");
+    if (!func_id_blend_4way_) {
+      printf("Failed to get TPU function cv_blend_4way\n");
+      return -1;
+    }
+  }
   // 参数校验
   if (!img0 || !img1 || !img2 || !img3) {
     printf("fourWayBlending: one of the input images is nullptr\n");

@@ -20,7 +20,6 @@
     $(pwd)/ramdisk/rootfs/public/libz/uclibc/lib:\
     $(pwd)/tdl_sdk/install/CV184X/sample/3rd/curl/lib:\
     $(pwd)/tdl_sdk/install/CV184X/sample/3rd/libwebsockets/lib
-    export BMRUNTIME_USING_FIRMWARE=/mnt/tpu_files/lib/libtpu_kernel_module.so
     ```
 
 3. **每次板端重启后需重新设置系统时钟**

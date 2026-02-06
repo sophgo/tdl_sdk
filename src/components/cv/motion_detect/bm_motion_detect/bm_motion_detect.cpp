@@ -69,12 +69,14 @@ int32_t BmMotionDetection::setROI(const std::vector<ObjectBoxInfo> &_roi_s) {
   for (size_t i = 0; i < _roi_s.size(); i++) {
     auto p = _roi_s[i];
     if (p.x2 < p.x1 || p.x1 < 0 || p.x2 >= imw) {
-      LOGE("roi[%zu] x overflow, x1:%d, x2:%d, imgw:%d\n", i, p.x1, p.x2, imw);
+      LOGE("roi[%zu] x overflow, x1:%.2f, x2:%.2f, imgw:%d\n", i, p.x1, p.x2,
+           imw);
       use_roi_ = false;
       return -1;
     }
     if (p.y2 < p.y1 || p.y1 < 0 || p.y2 >= imh) {
-      LOGE("roi[%zu] y overflow, y1:%d, y2:%d, imgh:%d\n", i, p.y1, p.y2, imh);
+      LOGE("roi[%zu] y overflow, y1:%.2f, y2:%.2f, imgh:%d\n", i, p.y1, p.y2,
+           imh);
       use_roi_ = false;
       return -1;
     }
