@@ -9,7 +9,7 @@ endif()
 if("${CVI_PLATFORM}" STREQUAL "SOPHON")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/libsophon-0.4.9/include/)
 elseif("${CVI_PLATFORM}" STREQUAL "CV184X")
-  set(MLIR_INCLUDES ${TOP_DIR}/libsophon/install/libsophon-0.4.9/include/)
+  set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_INCLUDES ${MLIR_SDK_ROOT}/include/)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1684X")
@@ -44,13 +44,14 @@ elseif("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X
 )
 elseif("${CVI_PLATFORM}" STREQUAL "CV184X")
   set(MLIR_LIBS
-      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmrt.so
-      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmlib.so
+      ${MLIR_SDK_ROOT}/lib/libbmrt.so
+      ${MLIR_SDK_ROOT}/lib/libbmlib.so
+      ${MLIR_SDK_ROOT}/lib/libmodel_combine.so
   )
   set(MLIR_LIBS_STATIC
-      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmrt.a
-      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmlib.a
-      ${TOP_DIR}/libsophon/install/libsophon-0.4.9/lib/libbmodel.a
+      ${MLIR_SDK_ROOT}/lib/libbmrt.a
+      ${MLIR_SDK_ROOT}/lib/libbmlib.a
+      ${MLIR_SDK_ROOT}/lib/libbmodel.a
 )
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   set(MLIR_LIBS
@@ -126,10 +127,6 @@ if("${CVI_PLATFORM}" STREQUAL "BM1688")
   return()
 endif()
 
-set(MLIR_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/tpu)
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  install(FILES ${MLIR_LIBS} DESTINATION ${MLIR_PATH}/lib)
-  install(PROGRAMS ${MLIR_SDK_ROOT}/lib/libz.so.1.2.11 DESTINATION ${MLIR_PATH}/lib RENAME libz.so.1)
-  install(PROGRAMS ${MLIR_SDK_ROOT}/lib/libz.so.1.2.11 DESTINATION ${MLIR_PATH}/lib RENAME libz.so)
-  install(DIRECTORY ${MLIR_SDK_ROOT}/include/ DESTINATION ${MLIR_PATH}/include)
-endif()
+set(MLIR_PATH ${CMAKE_INSTALL_PREFIX}/sample/tpu)
+install(FILES ${MLIR_LIBS} DESTINATION ${MLIR_PATH}/lib)
+install(DIRECTORY ${MLIR_INCLUDES} DESTINATION ${MLIR_PATH}/include)

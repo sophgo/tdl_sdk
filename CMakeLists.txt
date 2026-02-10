@@ -268,6 +268,7 @@ include(cmake/mlir.cmake)
 # Check if mpi SDK exists.
 if( NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X"))
   include(cmake/middleware.cmake)
+  include(cmake/cvi_rtsp.cmake)
 endif()
 
 # 3rdparty libraries
@@ -308,7 +309,10 @@ else()
                        Valid options are '', 'sample', or 'all', and 'clean'.")
 endif()
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include DESTINATION .)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/configs DESTINATION .)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/envsetup.sh DESTINATION scripts)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sample_envsetup.sh DESTINATION scripts)
 
 # Prepare clang-tidy helper info for cross-compilation
 # Write key compiler/toolchain information to build/build_info.txt for scripts/codecheck.sh

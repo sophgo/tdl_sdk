@@ -253,7 +253,6 @@ CONFIG_DUAL_OS=OFF
 if [[ "$CHIP_ARCH" == "BM1688" ]]; then
     CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
     CROSS_COMPILE=aarch64-linux-
-    CV_UTILS=OFF
     OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1688/sophon-opencv
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1688/libsophon
     MPI_PATH=$CVI_TDL_ROOT/dependency/BM1688/sophon-ffmpeg
@@ -262,7 +261,6 @@ if [[ "$CHIP_ARCH" == "BM1688" ]]; then
 elif [[ "$CHIP_ARCH" == "BM1684" ]]; then
     CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
     CROSS_COMPILE=aarch64-linux-
-    CV_UTILS=OFF
     OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1684/sophon-opencv
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1684/libsophon
     MPI_PATH=$CVI_TDL_ROOT/dependency/BM1684/sophon-ffmpeg
@@ -270,7 +268,6 @@ elif [[ "$CHIP_ARCH" == "BM1684" ]]; then
 elif [[ "$CHIP_ARCH" == "BM1684X" ]]; then
     CROSS_COMPILE_PATH=$CVI_TDL_ROOT/../host-tools/gcc/gcc-buildroot-9.3.0-aarch64-linux-gnu/
     CROSS_COMPILE=aarch64-linux-
-    CV_UTILS=OFF
     OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/BM1684X/sophon-opencv
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/BM1684X/libsophon
     MPI_PATH=$CVI_TDL_ROOT/dependency/BM1684X/sophon-ffmpeg
@@ -278,20 +275,25 @@ elif [[ "$CHIP_ARCH" == "BM1684X" ]]; then
 elif [[ "$CHIP_ARCH" == "CMODEL_CV181X" ]]; then
     CROSS_COMPILE_PATH=/usr/
     CROSS_COMPILE=""
-    CV_UTILS=OFF
     OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL_CV181X/opencv
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CV181X
 
 elif [[ "$CHIP_ARCH" == "CMODEL_CV184X" ]]; then
     CROSS_COMPILE_PATH=/usr/
     CROSS_COMPILE=""
-    CV_UTILS=OFF
     OPENCV_ROOT_DIR=$CVI_TDL_ROOT/dependency/CMODEL_CV184X/opencv
     TPU_SDK_INSTALL_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CV184X
     MPI_PATH=$CVI_TDL_ROOT/dependency/CMODEL_CV184X
 
+elif [[ "$CHIP_ARCH" == "CV184X" ]]; then
+    TPU_SDK_INSTALL_PATH=${TOP_DIR}/libsophon/install/libsophon-0.4.9
+    MPI_PATH="${TOP_DIR}"/cvi_mpi
+
+elif [[ "$CHIP_ARCH" == "SOPHON" ]]; then
+    TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk
+    MPI_PATH="${TOP_DIR}"/middleware/v2
+
 else
-    CV_UTILS=ON
     TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk
     IVE_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_ive_sdk
     MW_VER=v2
@@ -356,7 +358,6 @@ fi
 # build start
 $CMAKE_BIN -G Ninja ${CVI_TDL_ROOT} -DCVI_PLATFORM=${CHIP_ARCH} \
                                     -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-                                    -DENABLE_CVI_TDL_CV_UTILS=${CV_UTILS} \
                                     -DMLIR_SDK_ROOT=${TPU_SDK_INSTALL_PATH} \
                                     -DISP_ROOT_DIR=${ISP_ROOT_DIR} \
                                     -DOPENCV_ROOT_DIR=${OPENCV_ROOT_DIR} \
@@ -369,7 +370,6 @@ $CMAKE_BIN -G Ninja ${CVI_TDL_ROOT} -DCVI_PLATFORM=${CHIP_ARCH} \
                                     -DBUILD_DOWNLOAD_DIR=${BUILD_DOWNLOAD_DIR} \
                                     -DCONFIG_DUAL_OS=${CONFIG_DUAL_OS} \
                                     -DBUILD_OPTION=${BUILD_OPTION} \
-                                    -DTARGET_MACHINE=${TARGET_MACHINE} \
                                     -DMW_VER=${MW_VER} \
                                     -DFTP_SERVER_IP=${FTP_SERVER_IP} \
                                     -DFTP_SERVER_NAME=${FTP_SERVER_NAME} \
