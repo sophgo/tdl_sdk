@@ -118,5 +118,3 @@ if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)
 endif()
 
 install(TARGETS tdl_core tdl_core-static tdl_ex tdl_ex-static DESTINATION lib)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include DESTINATION .)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/envsetup.sh DESTINATION scripts)
