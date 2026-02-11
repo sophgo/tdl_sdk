@@ -154,8 +154,8 @@ int main(int argc, char **argv) {
   }
   std::string model_id_name = argv[1];
   std::string model_dir = argv[2];
-  std::string txt_path = argv[3];
-  std::string image_root = argv[4];
+  std::string image_root = argv[3];
+  std::string txt_path = argv[4];
   std::string output_dir = argv[5];
 
   if (!file_exists(output_dir)) {

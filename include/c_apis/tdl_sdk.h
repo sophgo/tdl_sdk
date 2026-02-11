@@ -435,11 +435,15 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
  * 0 (TDL_REJECT): 不使用框选方法
  * 1 (TDL_GRABCUT ): 基于GrabCut框选方法（耗时高）
  * 2 (TDL_COLOR): 基于颜色阈值框选方法
+ * 3 (TDL_FASTSAM): 基于FastSAM框选方法
+ * @param model_path 当 frame_type 为 TDL_FASTSAM 时传入 FastSAM
+ * 模型路径，否则可传 NULL
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
                                     TDLObject *object_meta, int *set_values,
-                                    int size, TDLTargetSearchTypeE frame_type);
+                                    int size, TDLTargetSearchTypeE frame_type,
+                                    const char *model_path);
 
 /**
  * @brief 执行单目追踪

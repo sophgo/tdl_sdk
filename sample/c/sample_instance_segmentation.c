@@ -11,6 +11,8 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
   if (strstr(model_path, "yolov8n_seg_coco80") != NULL) {
     *model_index = TDL_MODEL_YOLOV8_SEG_COCO80;
+  } else if (strstr(model_path, "fastsam") != NULL) {
+    *model_index = TDL_MODEL_FASTSAM_SEG;
   } else {
     ret = -1;
   }

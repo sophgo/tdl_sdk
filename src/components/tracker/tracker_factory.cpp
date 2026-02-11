@@ -11,19 +11,21 @@ int32_t Tracker::setModel(std::shared_ptr<BaseModel> sot_model) { return 0; }
 
 int32_t Tracker::initialize(const std::shared_ptr<BaseImage>& image,
                             const std::vector<ObjectBoxInfo>& detect_boxes,
-                            const ObjectBoxInfo& bbox, int frame_type) {
+                            const ObjectBoxInfo& bbox, int frame_type,
+                            const std::string& model_path) {
   return 0;
 }
 
 int32_t Tracker::initialize(const std::shared_ptr<BaseImage>& image,
                             const std::vector<ObjectBoxInfo>& detect_boxes,
-                            float x, float y, int frame_type) {
+                            float x, float y, int frame_type,
+                            const std::string& model_path) {
   return 0;
 }
 
 int32_t Tracker::initialize(const std::shared_ptr<BaseImage>& image,
                             const std::vector<ObjectBoxInfo>& detect_boxes,
-                            int index) {
+                            int index, const std::string& model_path) {
   return 0;
 }
 

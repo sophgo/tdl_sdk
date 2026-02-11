@@ -1,5 +1,8 @@
 #include "sot.hpp"
+#include <cmath>
+#include <limits>
 #include "cv/target_search/color_segment.hpp"
+#include "cv/target_search/fastsam_segment.hpp"
 #include "cv/target_search/grabcut_segment.hpp"
 #include "utils/mot_box_helper.hpp"
 #include "utils/tdl_log.hpp"
@@ -153,7 +156,9 @@ int32_t SOT::setModel(std::shared_ptr<BaseModel> sot_model) {
 
 int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
                         const std::vector<ObjectBoxInfo>& detect_boxes,
-                        const ObjectBoxInfo& bbox, int frame_type) {
+                        const ObjectBoxInfo& bbox, int frame_type,
+                        const std::string& model_path) {
+  // 如果检测框为空，直接使用目标框选算法
   if (detect_boxes.empty()) {
     if (frame_type == 1) {
       cv::Point seed;
@@ -188,74 +193,135 @@ int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
       area_bbox.y1 = static_cast<float>(result.bbox.y);
       area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
       area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else if (frame_type == 3) {
+      cv::Point seed;
+      cvtdl_fastsam_result_t result;
+      FastSAMSegmentor segmentor(model_path);
+      seed.x = (bbox.x2 + bbox.x1) / 2;
+      seed.y = (bbox.y2 + bbox.y1) / 2;
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        initBBox(image, bbox);
+        return 0;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      std::cout << "area_bbox: " << area_bbox.x1 << " " << area_bbox.y1 << " "
+                << area_bbox.x2 << " " << area_bbox.y2 << std::endl;
       initBBox(image, area_bbox);
     } else {
       initBBox(image, bbox);
     }
     return 0;
   }
-  ObjectBoxInfo max_area_bbox;
-  float max_area = 0.0f;
+
+  // 查找与输入框有重叠的检测框（检测框中心点在输入框内）
+  float bbox_cx = (bbox.x1 + bbox.x2) / 2.0f;
+  float bbox_cy = (bbox.y1 + bbox.y2) / 2.0f;
+  float min_distance_sq =
+      std::numeric_limits<float>::max();  // 最小距离平方（避免开方运算）
+  ObjectBoxInfo closest_box;
+  bool found_closest = false;
+
   for (auto& detect_box : detect_boxes) {
-    if (detect_box.x1 >= bbox.x1 && detect_box.x2 <= bbox.x2 &&
-        detect_box.y1 >= bbox.y1 && detect_box.y2 <= bbox.y2) {
-      float area =
-          (detect_box.x2 - detect_box.x1) * (detect_box.y2 - detect_box.y1);
-      if (area > max_area) {
-        max_area = area;
-        max_area_bbox = detect_box;
+    // 计算检测框中心点
+    float db_cx = (detect_box.x1 + detect_box.x2) / 2.0f;
+    float db_cy = (detect_box.y1 + detect_box.y2) / 2.0f;
+
+    // 检查检测框中心点是否落入目标框内
+    if (db_cx >= bbox.x1 && db_cx <= bbox.x2 && db_cy >= bbox.y1 &&
+        db_cy <= bbox.y2) {
+      // 计算中心点距离平方（避免sqrt提升效率）
+      float dx = db_cx - bbox_cx;
+      float dy = db_cy - bbox_cy;
+      float distance_sq = dx * dx + dy * dy;
+
+      // 跟踪最小距离的检测框
+      if (distance_sq < min_distance_sq) {
+        min_distance_sq = distance_sq;
+        closest_box = detect_box;
+        found_closest = true;
       }
     }
   }
-  if (max_area > 0) {
-    // 如果bbox内的最大面积的检测框不为空，则使用 max_area_bbox 初始化
-    initBBox(image, max_area_bbox);
-  } else {
-    if (frame_type == 1) {
-      cv::Point seed;
-      cvtdl_grabcut_result_t result;
-      GrabCutSegmentor segmentor;
-      seed.x = (bbox.x2 + bbox.x1) / 2;
-      seed.y = (bbox.y2 + bbox.y1) / 2;
-      int ret = segmentor.segment(image, seed, &result);
-      if (ret != 0) {
-        initBBox(image, bbox);
-        return 0;
-      }
-      ObjectBoxInfo area_bbox;
-      area_bbox.x1 = static_cast<float>(result.bbox.x);
-      area_bbox.y1 = static_cast<float>(result.bbox.y);
-      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
-      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
-      initBBox(image, area_bbox);
-    } else if (frame_type == 2) {
-      cv::Point seed;
-      cvtdl_color_result_t result;
-      ColorSegmentor segmentor;
-      seed.x = (bbox.x2 + bbox.x1) / 2;
-      seed.y = (bbox.y2 + bbox.y1) / 2;
-      int ret = segmentor.segment(image, seed, &result);
-      if (ret != 0) {
-        initBBox(image, bbox);
-        return 0;
-      }
-      ObjectBoxInfo area_bbox;
-      area_bbox.x1 = static_cast<float>(result.bbox.x);
-      area_bbox.y1 = static_cast<float>(result.bbox.y);
-      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
-      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
-      initBBox(image, area_bbox);
-    } else {
+
+  // 如果找到重叠的检测框，使用最近的检测框初始化
+  if (found_closest) {
+    initBBox(image, closest_box);
+    return 0;
+  }
+
+  // 如果没有重叠，使用目标框选算法
+  if (frame_type == 1) {
+    cv::Point seed;
+    cvtdl_grabcut_result_t result;
+    GrabCutSegmentor segmentor;
+    seed.x = (bbox.x2 + bbox.x1) / 2;
+    seed.y = (bbox.y2 + bbox.y1) / 2;
+    int ret = segmentor.segment(image, seed, &result);
+    if (ret != 0) {
       initBBox(image, bbox);
+      return 0;
     }
+    ObjectBoxInfo area_bbox;
+    area_bbox.x1 = static_cast<float>(result.bbox.x);
+    area_bbox.y1 = static_cast<float>(result.bbox.y);
+    area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+    area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+    initBBox(image, area_bbox);
+  } else if (frame_type == 2) {
+    cv::Point seed;
+    cvtdl_color_result_t result;
+    ColorSegmentor segmentor;
+    seed.x = (bbox.x2 + bbox.x1) / 2;
+    seed.y = (bbox.y2 + bbox.y1) / 2;
+    int ret = segmentor.segment(image, seed, &result);
+    if (ret != 0) {
+      initBBox(image, bbox);
+      return 0;
+    }
+    ObjectBoxInfo area_bbox;
+    area_bbox.x1 = static_cast<float>(result.bbox.x);
+    area_bbox.y1 = static_cast<float>(result.bbox.y);
+    area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+    area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+    initBBox(image, area_bbox);
+  } else if (frame_type == 3) {
+    cv::Point seed;
+    cvtdl_fastsam_result_t result;
+    FastSAMSegmentor segmentor(model_path);
+    seed.x = (bbox.x2 + bbox.x1) / 2;
+    seed.y = (bbox.y2 + bbox.y1) / 2;
+    int ret = segmentor.segment(image, seed, &result);
+    if (ret != 0) {
+      initBBox(image, bbox);
+      return 0;
+    }
+    ObjectBoxInfo area_bbox;
+    area_bbox.x1 = static_cast<float>(result.bbox.x);
+    area_bbox.y1 = static_cast<float>(result.bbox.y);
+    area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+    area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+    std::cout << "area_bbox: " << area_bbox.x1 << " " << area_bbox.y1 << " "
+              << area_bbox.x2 << " " << area_bbox.y2 << std::endl;
+    initBBox(image, area_bbox);
+  } else {
+    initBBox(image, bbox);
   }
   return 0;
 }
 
 int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
                         const std::vector<ObjectBoxInfo>& detect_boxes, float x,
-                        float y, int frame_type) {
+                        float y, int frame_type,
+                        const std::string& model_path) {
+  // 如果检测框为空，直接使用目标框选算法
   if (detect_boxes.empty()) {
+    std::cout << "detect_boxes empty" << std::endl;
     if (frame_type == 1) {
       cv::Point seed;
       cvtdl_grabcut_result_t result;
@@ -289,6 +355,25 @@ int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
       area_bbox.y1 = static_cast<float>(result.bbox.y);
       area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
       area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else if (frame_type == 3) {
+      cv::Point seed;
+      cvtdl_fastsam_result_t result;
+      FastSAMSegmentor segmentor(model_path);
+      seed.x = static_cast<int>(x);
+      seed.y = static_cast<int>(y);
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        LOGE("该位置无检测框");
+        return -1;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      std::cout << "area_bbox: " << area_bbox.x1 << " " << area_bbox.y1 << " "
+                << area_bbox.x2 << " " << area_bbox.y2 << std::endl;
       initBBox(image, area_bbox);
     } else if (frame_type == 0) {
       LOGE("该位置无检测框");
@@ -299,20 +384,90 @@ int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
     }
     return 0;
   }
+
+  // 查找包含点 (x, y) 的检测框
+  bool found_overlap = false;
   for (auto& detect_box : detect_boxes) {
     if (detect_box.x1 <= x && detect_box.x2 >= x && detect_box.y1 <= y &&
         detect_box.y2 >= y) {
       initBBox(image, detect_box);
+      found_overlap = true;
       return 0;
     }
   }
+
+  // 如果没有重叠（没有检测框包含该点），使用目标框选算法
+  if (!found_overlap) {
+    if (frame_type == 1) {
+      cv::Point seed;
+      cvtdl_grabcut_result_t result;
+      GrabCutSegmentor segmentor;
+      seed.x = x;
+      seed.y = y;
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        LOGE("该位置无检测框");
+        return -1;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else if (frame_type == 2) {
+      cv::Point seed;
+      cvtdl_color_result_t result;
+      ColorSegmentor segmentor;
+      seed.x = x;
+      seed.y = y;
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        LOGE("该位置无检测框");
+        return -1;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else if (frame_type == 3) {
+      cv::Point seed;
+      cvtdl_fastsam_result_t result;
+      FastSAMSegmentor segmentor(model_path);
+      seed.x = static_cast<int>(x);
+      seed.y = static_cast<int>(y);
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        LOGE("该位置无检测框");
+        return -1;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      std::cout << "area_bbox: " << area_bbox.x1 << " " << area_bbox.y1 << " "
+                << area_bbox.x2 << " " << area_bbox.y2 << std::endl;
+      initBBox(image, area_bbox);
+    } else if (frame_type == 0) {
+      LOGE("该位置无检测框");
+      return -1;
+    } else {
+      LOGE("目标框选类型设置错误");
+      return -1;
+    }
+    return 0;
+  }
+
   LOGE("该位置无检测框");
   return -1;
 }
 
 int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
                         const std::vector<ObjectBoxInfo>& detect_boxes,
-                        int index) {
+                        int index, const std::string& model_path) {
   if (detect_boxes.empty()) {
     LOGE("no detection boxes");
     return -1;

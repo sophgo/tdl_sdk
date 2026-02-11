@@ -87,6 +87,7 @@
   /* segmentation models */                                                   \
   X(YOLOV8_SEG, "custom segmentation")                                        \
   X(YOLOV8_SEG_COCO80, "output 80 segmentation mask")                         \
+  X(FASTSAM_SEG, "output everything segmentation mask")                       \
   X(TOPFORMER_SEG_PERSON_FACE_VEHICLE,                                        \
     "0:background,1:person,2:face,3:vehicle,4:license plate")                 \
   X(TOPFORMER_SEG_MOTION, "0:static,2:transition,3:motion")                   \

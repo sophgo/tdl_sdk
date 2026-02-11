@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <getopt.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,7 @@
 #define YELLOW_R 255
 #define YELLOW_G 255
 #define YELLOW_B 0
+
 TDLObject p_selected_area = {0};
 void init_selected_area() {
   // 初始化对象元数据，创建一个包含1个对象的预选区
@@ -51,6 +53,7 @@ void init_selected_area() {
 }
 
 bool init_success = false;
+bool just_initialized = false;  // 标记是否刚刚初始化，用于绘制第一帧的框选结果
 static volatile bool to_exit = false;
 static ImageQueue image_queue;
 TDLObject g_obj_meta = {0};
@@ -108,22 +111,104 @@ char check_key_input() {
   return 0;
 }
 
+// 检查检测框中心点是否在预选区内
+static bool is_box_in_selection_area(const TDLObjectInfo *obj_info) {
+  float box_cx = (obj_info->box.x1 + obj_info->box.x2) / 2.0f;
+  float box_cy = (obj_info->box.y1 + obj_info->box.y2) / 2.0f;
+  return (box_cx >= BOX_LEFT && box_cx <= BOX_RIGHT && box_cy >= BOX_TOP &&
+          box_cy <= BOX_BOTTOM);
+}
+
+// 计算检测框中心点到预选区中心的距离平方
+static float get_distance_sq_to_center(const TDLObjectInfo *obj_info) {
+  float box_cx = (obj_info->box.x1 + obj_info->box.x2) / 2.0f;
+  float box_cy = (obj_info->box.y1 + obj_info->box.y2) / 2.0f;
+  float dx = box_cx - CENTER_X;
+  float dy = box_cy - CENTER_Y;
+  return dx * dx + dy * dy;
+}
+
+// 找到预选区内最接近中心的目标
+static int find_closest_box_in_selection(const TDLObject *obj_meta) {
+  int closest_idx = -1;
+  float min_distance_sq = 1e10f;
+
+  for (int i = 0; i < obj_meta->size; i++) {
+    if (is_box_in_selection_area(&obj_meta->info[i])) {
+      float dist_sq = get_distance_sq_to_center(&obj_meta->info[i]);
+      if (dist_sq < min_distance_sq) {
+        min_distance_sq = dist_sq;
+        closest_idx = i;
+      }
+    }
+  }
+  return closest_idx;
+}
+
+// 绘制中心+号
+static void draw_center_cross(VIDEO_FRAME_INFO_S *frame, TDLBrush brush) {
+  const int cross_size = 20;      // +号大小
+  const int cross_thickness = 3;  // +号线宽
+
+  // 创建横线
+  TDLObject cross_h = {0};
+  TDL_InitObjectMeta(&cross_h, 1, 0);
+  cross_h.info[0].box.x1 = CENTER_X - cross_size / 2;
+  cross_h.info[0].box.y1 = CENTER_Y - cross_thickness / 2;
+  cross_h.info[0].box.x2 = CENTER_X + cross_size / 2;
+  cross_h.info[0].box.y2 = CENTER_Y + cross_thickness / 2;
+  DrawObjRect(&cross_h, frame, false, brush);
+  TDL_ReleaseObjectMeta(&cross_h);
+
+  // 创建竖线
+  TDLObject cross_v = {0};
+  TDL_InitObjectMeta(&cross_v, 1, 0);
+  cross_v.info[0].box.x1 = CENTER_X - cross_thickness / 2;
+  cross_v.info[0].box.y1 = CENTER_Y - cross_size / 2;
+  cross_v.info[0].box.x2 = CENTER_X + cross_thickness / 2;
+  cross_v.info[0].box.y2 = CENTER_Y + cross_size / 2;
+  DrawObjRect(&cross_v, frame, false, brush);
+  TDL_ReleaseObjectMeta(&cross_v);
+}
+
+// 绘制预选区实线框
+static void draw_selection_rect(VIDEO_FRAME_INFO_S *frame, TDLBrush brush) {
+  DrawObjRect(&p_selected_area, frame, false, brush);
+}
+
 typedef struct {
   TDLHandle tdl_handle;
   int vi_chn;
   TDLModel det_model_id;
   TDLModel sot_model_id;
+  const char *sam_model_path;
+  TDLTargetSearchTypeE target_search_type;
 } THREAD_ARG_S;
 
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
-  printf("  %s -d <det_model_path> -s <sot_model_path>\n", prog_name);
-  printf("  %s --det_model_path <path> --sot_model_path <path> \n", prog_name);
+  printf(
+      "  %s -d <det_model_path> -s <sot_model_path> -t <target_search_type> "
+      "[-f <sam_model_path>]\n",
+      prog_name);
+  printf(
+      "  %s --det_model_path <path> --sot_model_path <path> "
+      "--target_search_type <type> [--sam_model_path <path>]\n",
+      prog_name);
   printf("Options:\n");
   printf(
       "  -d, --det_model_path : person vehicle detection model path\n"
       "  -s, --sot_model_path : sot model path\n"
+      "  -t, --target_search_type : target search method type (0-3, see "
+      "below)\n"
+      "  -f, --sam_model_path : FastSAM segment model path (required when "
+      "target_search_type=3)\n"
       "  -h, --help : print help\n");
+  printf("\nTarget Search Methods (target_search_type):\n");
+  printf("  0 (TDL_REJECT): 不使用框选方法\n");
+  printf("  1 (TDL_GRABCUT): 基于GrabCut框选方法（耗时高）\n");
+  printf("  2 (TDL_COLOR): 基于颜色阈值框选方法\n");
+  printf("  3 (TDL_FASTSAM): 基于FastSAM框选方法（需要传模型路径）\n");
 }
 
 void *get_frame_thread(void *args) {
@@ -187,18 +272,43 @@ void *run_det_thread(void *args) {
 
         TDL_WrapImage(image, &frame);
 
-        TDLBrush brush = {{0, 255, 0}, 5};
+        // 找到预选区内最接近中心的目标
+        int closest_idx = find_closest_box_in_selection(&obj_meta);
+        bool has_target_in_selection = (closest_idx >= 0);
+
+        // 绘制检测框：预选区内最接近中心的目标用黄色，其他用绿色
+        TDLBrush brush_green_det = {{0, 255, 0}, 5};
+        TDLBrush brush_yellow_det = {{255, 255, 0}, 5};
+
         for (int i = 0; i < obj_meta.size; i++) {
           TDLObjectInfo *obj_info = &obj_meta.info[i];
           snprintf(obj_info->name, sizeof(obj_info->name), "index:%d", i);
-        }
-        if (init_success) {
-          DrawObjRect(&p_selected_area, frame, true, brush_yellow);
-        } else {
-          DrawObjRect(&p_selected_area, frame, true, brush_green);
+
+          // 创建单个对象的TDLObject用于绘制
+          TDLObject single_obj = {0};
+          TDL_InitObjectMeta(&single_obj, 1, 0);
+          single_obj.info[0] = *obj_info;
+
+          // 如果是最接近中心的目标，用黄色，否则用绿色
+          if (i == closest_idx) {
+            DrawObjRect(&single_obj, frame, true, brush_yellow_det);
+          } else {
+            DrawObjRect(&single_obj, frame, true, brush_green_det);
+          }
+
+          TDL_ReleaseObjectMeta(&single_obj);
         }
 
-        DrawObjRect(&obj_meta, frame, true, brush);
+        // 绘制预选区实线框：如果有目标在预选区内，用黄色，否则用绿色
+        if (has_target_in_selection) {
+          draw_selection_rect(frame, brush_yellow);
+          // 绘制中心+号（黄色）
+          draw_center_cross(frame, brush_yellow);
+        } else {
+          draw_selection_rect(frame, brush_green);
+          // 绘制中心+号（绿色）
+          draw_center_cross(frame, brush_green);
+        }
 
         TDL_ReleaseObjectMeta(&obj_meta);
 
@@ -235,73 +345,91 @@ void *run_sot_thread(void *args) {
   TDLImage image = NULL;
   VIDEO_FRAME_INFO_S *frame = NULL;
 
-  printf("Usage: input i or I to start tracking ......\n");
+  printf("Usage: input i or I to start tracking (use pre-selection box).\n");
   while (to_exit == false) {
     char key = check_key_input();
     if (key == 'i' || key == 'I') {
-      restoreTerminal();  // 临时恢复终端设置以便输入
-      if (g_obj_meta.size > 0) {
-        printf(
-            "Enter  box index 0-%d or box x1,y1,x2,y2 or a point x,y to track: "
-            "\n",
-            g_obj_meta.size - 1);
-      } else {
-        printf(
-            "Enter bbox x1,y1,x2,y2 or a point x,y or bbox index to track: \n");
+      /* 固定使用预选框坐标，不再从用户输入读取 */
+      int values[4] = {
+          (int)p_selected_area.info[0].box.x1,
+          (int)p_selected_area.info[0].box.y1,
+          (int)p_selected_area.info[0].box.x2,
+          (int)p_selected_area.info[0].box.y2,
+      };
+      const int num_values = 4;
+
+      {
+        MutexAutoLock(ResultMutex, lock);
+        image = Image_Dequeue(&image_queue);
       }
-      char input[100];
-      while (true) {
-        char *p = fgets(input, sizeof(input), stdin);
-        if (p != NULL) {
-          int values[4];
-          int num_values = sscanf(input, "%d,%d,%d,%d", &values[0], &values[1],
-                                  &values[2], &values[3]);
+      if (image) {
+        const char *model_path = (pstArgs->target_search_type == TDL_FASTSAM)
+                                     ? pstArgs->sam_model_path
+                                     : NULL;
+        int ret = TDL_SetSingleObjectTracking(
+            pstArgs->tdl_handle, image, &g_obj_meta, values, num_values,
+            pstArgs->target_search_type, model_path);
 
-          if (num_values != 1 && num_values != 2 && num_values != 4) {
-            printf("num_values should be 1 or 2 or 4\n");
-            continue;
-          }
+        if (ret != 0) {
+          init_success = false;
+          printf("TDL_SetSingleObjectTracking failed: %#x\n", ret);
+          TDL_DestroyImage(image);
+          ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+        } else {
+          init_success = true;
+          g_status = TRACKING;
+          g_lost_timer_started = false;  // 重置丢失计时器
 
-          if (num_values == 1 && values[0] > g_obj_meta.size - 1) {
-            printf("box index out of range\n");
-            continue;
-          }
+          // 初始化成功后，立即用同一帧图像调用一次跟踪来获取框选结果
+          TDLTracker init_track_meta = {0};
+          int track_ret = TDL_SingleObjectTracking(
+              pstArgs->tdl_handle, image, &init_track_meta, g_frame_id);
 
-          for (int i = 0; i < num_values; i++) {
-            printf("values[%d] = %d\n", i, values[i]);
-          }
-          while (true) {
-            g_status = TRACKING;
-            {
-              MutexAutoLock(ResultMutex, lock);
-              image = Image_Dequeue(&image_queue);
+          TDL_WrapImage(image, &frame);
+          if (frame) {
+            if (track_ret == 0 && init_track_meta.info) {
+              // 成功获取到跟踪结果，绘制框选算法的结果
+              printf("Got initial track result: bbox=[%.1f,%.1f,%.1f,%.1f]\n",
+                     init_track_meta.info[0].bbox.x1,
+                     init_track_meta.info[0].bbox.y1,
+                     init_track_meta.info[0].bbox.x2,
+                     init_track_meta.info[0].bbox.y2);
+
+              TDLBrush brush_init_track = {0};
+              brush_init_track.size = 5;
+              brush_init_track.color.r = 255;
+              brush_init_track.color.g = 0;
+              brush_init_track.color.b = 0;
+
+              TDLObject init_track_obj = {0};
+              TDL_InitObjectMeta(&init_track_obj, 1, 0);
+              init_track_obj.info[0].box.x1 = init_track_meta.info[0].bbox.x1;
+              init_track_obj.info[0].box.y1 = init_track_meta.info[0].bbox.y1;
+              init_track_obj.info[0].box.x2 = init_track_meta.info[0].bbox.x2;
+              init_track_obj.info[0].box.y2 = init_track_meta.info[0].bbox.y2;
+
+              DrawObjRect(&init_track_obj, frame, true, brush_init_track);
+
+              TDL_ReleaseObjectMeta(&init_track_obj);
+            } else {
+              printf(
+                  "Initial track call failed: track_ret=%d, info=%p, will "
+                  "retry next frame\n",
+                  track_ret, init_track_meta.info);
             }
-            if (image) {
-              printf("g_obj_meta.size = %d\n", g_obj_meta.size);
 
-              int ret = TDL_SetSingleObjectTracking(pstArgs->tdl_handle, image,
-                                                    &g_obj_meta, values,
-                                                    num_values, TDL_COLOR);
+            // 无论是否有跟踪结果，都绘制预选区框和+号
+            draw_selection_rect(frame, brush_yellow);
+            draw_center_cross(frame, brush_yellow);
 
-              if (ret != 0) {
-                init_success = false;
-                printf("TDL_SetSingleObjectTracking failed with %#x!\n", ret);
-                TDL_DestroyImage(image);
-                ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
-                break;
-              }
-              init_success = true;
-              TDL_DestroyImage(image);
-              ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
-
-              set_non_blocking_input();  // 重新设置非阻塞输入
-
-              break;
-            }
+            SendFrameRTSP(frame, &rtsp_context);
           }
-          if (init_success) {
-            break;
-          }
+
+          TDL_ReleaseTrackMeta(&init_track_meta);
+
+          // 释放图像
+          TDL_DestroyImage(image);
+          ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
         }
       }
     }
@@ -322,19 +450,39 @@ void *run_sot_thread(void *args) {
 
         TDL_WrapImage(image, &frame);
 
+        // 如果刚刚初始化，记录状态
+        if (just_initialized) {
+          just_initialized = false;
+          printf("First frame after init: track_ret=%d, track_meta.info=%p\n",
+                 ret, track_meta.info);
+          if (track_meta.info) {
+            printf("Got track result: bbox=[%.1f,%.1f,%.1f,%.1f]\n",
+                   track_meta.info[0].bbox.x1, track_meta.info[0].bbox.y1,
+                   track_meta.info[0].bbox.x2, track_meta.info[0].bbox.y2);
+          } else {
+            printf("No track result in first frame, status may be LOST\n");
+          }
+        }
+
         if (track_meta.info) {
-          TDLBrush brush = {0};
-          brush.size = 5;
-          brush.color.r = 255;
-          brush.color.g = 0;
-          brush.color.b = 0;
+          // 绘制跟踪框
+          TDLBrush brush_track = {0};
+          brush_track.size = 5;
+          brush_track.color.r = 255;
+          brush_track.color.g = 0;
+          brush_track.color.b = 0;
 
           track_obj_meta.info[0].box.x1 = track_meta.info[0].bbox.x1;
           track_obj_meta.info[0].box.y1 = track_meta.info[0].bbox.y1;
           track_obj_meta.info[0].box.x2 = track_meta.info[0].bbox.x2;
           track_obj_meta.info[0].box.y2 = track_meta.info[0].bbox.y2;
 
-          DrawObjRect(&track_obj_meta, frame, true, brush);
+          DrawObjRect(&track_obj_meta, frame, true, brush_track);
+
+          // 绘制预选区实线框
+          draw_selection_rect(frame, brush_yellow);
+          // 绘制中心+号
+          draw_center_cross(frame, brush_yellow);
 
           g_lost_timer_started = false;
         } else {
@@ -342,6 +490,7 @@ void *run_sot_thread(void *args) {
           if (!g_lost_timer_started) {
             g_lost_start_time = get_time_in_ms();
             g_lost_timer_started = true;
+            printf("Target lost detected at frame %u\n", g_frame_id);
           } else {
             uint32_t current_time = get_time_in_ms();
             uint32_t elapsed_time = current_time - g_lost_start_time;
@@ -355,11 +504,9 @@ void *run_sot_thread(void *args) {
               init_success = false;
             }
           }
-        }
-        if (init_success) {
-          DrawObjRect(&p_selected_area, frame, true, brush_yellow);
-        } else {
-          DrawObjRect(&p_selected_area, frame, true, brush_green);
+          // 即使目标丢失，也绘制预选区实线框和+号
+          draw_selection_rect(frame, brush_yellow);
+          draw_center_cross(frame, brush_yellow);
         }
         ret = SendFrameRTSP(frame, &rtsp_context);
         if (ret != 0) {
@@ -386,22 +533,33 @@ exit0:
 int main(int argc, char *argv[]) {
   char *det_model_path = NULL;
   char *sot_model_path = NULL;
+  char *sam_model_path = NULL;
+  int target_search_type = -1;
   int vi_chn = 0;
 
   struct option long_options[] = {
       {"det_model_path", required_argument, 0, 'd'},
       {"sot_model_path", required_argument, 0, 's'},
+      {"target_search_type", required_argument, 0, 't'},
+      {"sam_model_path", required_argument, 0, 'f'},
       {"help", no_argument, 0, 'h'},
   };
 
   int opt;
-  while ((opt = getopt_long(argc, argv, "d:s:h", long_options, NULL)) != -1) {
+  while ((opt = getopt_long(argc, argv, "d:s:t:f:h", long_options, NULL)) !=
+         -1) {
     switch (opt) {
       case 'd':
         det_model_path = optarg;
         break;
       case 's':
         sot_model_path = optarg;
+        break;
+      case 't':
+        target_search_type = atoi(optarg);
+        break;
+      case 'f':
+        sam_model_path = optarg;
         break;
       case 'h':
         print_usage(argv[0]);
@@ -420,10 +578,26 @@ int main(int argc, char *argv[]) {
     print_usage(argv[0]);
     return -1;
   }
+  if (target_search_type < 0 || target_search_type > 3) {
+    fprintf(stderr, "Error: target_search_type is required and must be 0-3\n");
+    print_usage(argv[0]);
+    return -1;
+  }
+  if (target_search_type == TDL_FASTSAM && !sam_model_path) {
+    fprintf(stderr,
+            "Error: sam_model_path is required when target_search_type=3 "
+            "(TDL_FASTSAM)\n");
+    print_usage(argv[0]);
+    return -1;
+  }
 
   printf("Running with:\n");
   printf("det_model_path:    %s\n", det_model_path);
   printf("sot_model_path:    %s\n", sot_model_path);
+  printf("target_search_type: %d\n", target_search_type);
+  if (sam_model_path) {
+    printf("sam_model_path: %s\n", sam_model_path);
+  }
   printf("vi_chn:        %d\n", vi_chn);
 
   InitQueue(&image_queue);
@@ -455,10 +629,13 @@ int main(int argc, char *argv[]) {
 
   pthread_t stFrameThread, stDetThread, stSotThread;
 
-  THREAD_ARG_S total_args = {.tdl_handle = tdl_handle,
-                             .det_model_id = det_model_id,
-                             .sot_model_id = sot_model_id,
-                             .vi_chn = vi_chn};
+  THREAD_ARG_S total_args = {
+      .tdl_handle = tdl_handle,
+      .det_model_id = det_model_id,
+      .sot_model_id = sot_model_id,
+      .vi_chn = vi_chn,
+      .sam_model_path = sam_model_path,
+      .target_search_type = (TDLTargetSearchTypeE)target_search_type};
 
   pthread_create(&stFrameThread, NULL, get_frame_thread, &total_args);
   pthread_create(&stDetThread, NULL, run_det_thread, &total_args);

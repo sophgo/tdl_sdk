@@ -1305,7 +1305,8 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
 
 int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
                                     TDLObject *object_meta, int *set_values,
-                                    int size, TDLTargetSearchTypeE frame_type) {
+                                    int size, TDLTargetSearchTypeE frame_type,
+                                    const char *model_path) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
@@ -1318,6 +1319,9 @@ int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
     context->tracker->setModel(sot_model);
   }
 
+  std::string model_path_str = (model_path != nullptr && model_path[0] != '\0')
+                                   ? std::string(model_path)
+                                   : std::string("");
   TDLImageContext *image_context = (TDLImageContext *)image_handle;
 
   if (set_values == nullptr) {
@@ -1338,12 +1342,13 @@ int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
 
   if (size == 1) {
     return context->tracker->initialize(image_context->image, bboxes,
-                                        set_values[0]);
+                                        set_values[0], model_path_str);
   }
 
   if (size == 2) {
-    return context->tracker->initialize(
-        image_context->image, bboxes, set_values[0], set_values[1], frame_type);
+    return context->tracker->initialize(image_context->image, bboxes,
+                                        set_values[0], set_values[1],
+                                        frame_type, model_path_str);
 
   } else if (size == 4) {
     ObjectBoxInfo init_bbox;
@@ -1354,7 +1359,7 @@ int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
     init_bbox.score = 1.0f;
 
     return context->tracker->initialize(image_context->image, bboxes, init_bbox,
-                                        frame_type);
+                                        frame_type, model_path_str);
   } else {
     LOGE("set_values size should be 1 or 2 or 4, but got %d", size);
     return -1;
