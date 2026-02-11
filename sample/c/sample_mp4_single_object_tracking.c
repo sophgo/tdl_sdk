@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
   }
 
   ret = TDL_SetSingleObjectTracking(tdl_handle, image, &obj_meta, values, 4,
-                                    TDL_REJECT);
+                                    TDL_REJECT, NULL);
 
   if (ret != 0) {
     printf("TDL_SetSingleObjectTracking failed with %#x!\n", ret);

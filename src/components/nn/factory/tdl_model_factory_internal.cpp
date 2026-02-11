@@ -160,6 +160,7 @@ bool TDLModelFactory::isClassificationModel(const ModelType model_type) {
 bool TDLModelFactory::isSegmentationModel(const ModelType model_type) {
   return (model_type == ModelType::YOLOV8_SEG_COCO80 ||
           model_type == ModelType::YOLOV8_SEG ||
+          model_type == ModelType::FASTSAM_SEG ||
           model_type == ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE);
 }
 
@@ -377,6 +378,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createSegmentationModel(
 #ifndef DISABLE_SEGMENTATION
   if (model_type == ModelType::YOLOV8_SEG_COCO80) {
     model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 80));
+  } else if (model_type == ModelType::FASTSAM_SEG) {
+    model = std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, 1));
   } else if (model_type == ModelType::YOLOV8_SEG) {
     int num_cls = 0;
     model =

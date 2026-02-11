@@ -270,6 +270,9 @@ Segmentation model list
    * - TDL_MODEL_YOLOV8_SEG_COCO80
      - YOLOv8 COCO80 Segmentation Model
 
+   * - TDL_MODEL_FASTSAM_SEG
+     - FastSAM Segmentation Model
+
    * - TDL_MODEL_SEG_PERSON_FACE_VEHICLE
      - Person, Face and Vehicle Segmentation Model (0:background, 1:person, 2:face, 3:vehicle, 4:license plate)
 

@@ -58,7 +58,8 @@ typedef struct {
 typedef enum {
   TDL_REJECT = 0,
   TDL_GRABCUT = 1,
-  TDL_COLOR = 2
+  TDL_COLOR = 2,
+  TDL_FASTSAM = 3,
 } TDLTargetSearchTypeE;
 typedef struct {
   uint64_t *mem_addrs;

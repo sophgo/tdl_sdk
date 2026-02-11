@@ -494,5 +494,30 @@
         "dataset_dir": "vad_cls"
       }
     }
+  ],
+  "eval_semantic_segmentation": [
+    {
+      "topformer_seg_person_face_vehicle_384_640_INT8": {
+        "model_id": "TOPFORMER_SEG_PERSON_FACE_VEHICLE",
+        "file_list": "topformer/Ivis_and_licence_plate/image_paths.txt",
+        "dataset_dir": "topformer/Ivis_and_licence_plate/images"
+      }
+    }
+  ],
+  "eval_instance_segmentation": [
+    {
+      "yolov8n_seg_coco80_640_640_INT8": {
+        "model_id": "YOLOV8_SEG_COCO80",
+        "file_list": "instance_seg/image_paths.txt",
+        "dataset_dir": "instance_seg/coco128_seg/images/train2017"
+      }
+    },
+    {
+      "fastsam_seg_320_320_INT8": {
+        "model_id": "FASTSAM_SEG",
+        "file_list": "instance_seg/image_paths.txt",
+        "dataset_dir": "instance_seg/coco128_seg/images/train2017"
+      }
+    }
   ]
 }

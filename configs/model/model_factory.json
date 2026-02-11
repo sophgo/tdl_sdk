@@ -132,7 +132,6 @@
       "types":["face"],
       "file_name":"scrfd_det_face_432_768_INT8"
     },
-
     "CLS_ATTRIBUTE_GENDER_AGE_GLASS":{
       "_comment":"output age,gender(0:male,1:female),glass(0:no glass,1:glass)",
       "types":["age","gender","glass"],
@@ -274,6 +273,11 @@
       "is_coco_types":true,
       "_comment":"output 80 segmentation mask",
       "file_name":"yolov8n_seg_coco80_640_640_INT8"
+    },
+    "FASTSAM_SEG":{
+      "is_coco_types":true,
+      "_comment":"output everything segmentation mask",
+      "file_name":"fastsam_seg_320_320_INT8"
     },
     "TOPFORMER_SEG_PERSON_FACE_VEHICLE":{
       "_comment":"output mask",
