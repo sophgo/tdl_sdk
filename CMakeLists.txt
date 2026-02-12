@@ -268,8 +268,17 @@ include(cmake/mlir.cmake)
 # Check if mpi SDK exists.
 if( NOT ("${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X"))
   include(cmake/middleware.cmake)
+endif()
+
+if( "${CVI_PLATFORM}" STREQUAL "CV180X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV181X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV182X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV183X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV184X" OR
+    "${CVI_PLATFORM}" STREQUAL "SOPHON" )
   include(cmake/cvi_rtsp.cmake)
 endif()
+
 
 # 3rdparty libraries
 include(cmake/thirdparty.cmake)
