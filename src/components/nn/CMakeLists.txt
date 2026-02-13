@@ -15,6 +15,10 @@ foreach(src ${SRC_FRAMWORK_FILES_CUR})
     get_filename_component(fname "${src}" NAME)
     get_filename_component(basename "${src}" NAME_WE)
 
+    if (DEFINED ENABLE_SPEECH_RECOGNITION AND NOT ENABLE_SPEECH_RECOGNITION AND basename STREQUAL "fsmn_vad")
+        list(REMOVE_ITEM SRC_FRAMWORK_FILES_CUR ${src})
+    endif()
+
     string(REPLACE "/" ";" _parts "${src}")
     list(LENGTH _parts parts_count)    
     math(EXPR second_last_index "${parts_count} - 2")

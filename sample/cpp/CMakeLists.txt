@@ -108,6 +108,11 @@ foreach (fname ${SAMPLE_SRC_FILES})
     continue()
   endif()
 
+  string(FIND "${name}" "_vad" pos)
+  if(pos GREATER_EQUAL 0 AND DEFINED ENABLE_SPEECH_RECOGNITION AND NOT ENABLE_SPEECH_RECOGNITION)
+    continue()
+  endif()
+
   string(FIND "${name}" "_app" pos)
   if(pos GREATER_EQUAL 0 AND DEFINED ENABLE_APP_PIPELINE AND NOT ENABLE_APP_PIPELINE)
     continue()

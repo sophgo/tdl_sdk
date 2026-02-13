@@ -33,7 +33,7 @@ else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--end-group")
 endif()
 
-set(app_samples sample_vi_consumer_counting sample_vi_cross_detection sample_vi_face_pet_cap sample_vi_fall_detection)
+set(app_samples sample_vi_consumer_counting sample_vi_cross_detection sample_vi_face_pet_cap sample_vi_fall_detection sample_vi_human_pose_smooth)
 
 foreach(fname ${CAMERA_SRC_FILES})
     get_filename_component(name ${fname} NAME_WE)
