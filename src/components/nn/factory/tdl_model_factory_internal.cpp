@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include "audio_classification/audio_classification.hpp"
-#include "audio_classification/fsmn_vad.hpp"
 #include "face_attribute/face_attribute_cls.hpp"
 #include "face_detection/scrfd.hpp"
 #include "face_landmark/face_landmark_det2.hpp"
@@ -32,6 +31,7 @@
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
 #ifndef DISABLE_SPEECH_RECOGNITION
+#include "audio_classification/fsmn_vad.hpp"
 #include "speech_recognition/zipformer_decoder.hpp"
 #include "speech_recognition/zipformer_encoder.hpp"
 #include "speech_recognition/zipformer_joiner.hpp"
@@ -519,7 +519,7 @@ std::shared_ptr<BaseModel> TDLModelFactory::createSpeechRecognitionModel(
 std::shared_ptr<BaseModel> TDLModelFactory::createVoiceActivityDetectionModel(
     const ModelType model_type) {
   std::shared_ptr<BaseModel> model = nullptr;
-#ifndef DISABLE_VOICE_ACTIVITY_DETECTION
+#ifndef DISABLE_SPEECH_RECOGNITION
   if (model_type == ModelType::VAD_FSMN) {
     model = std::make_shared<FsmnVad>();
   }
