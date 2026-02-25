@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
            argv[0]);
     printf(
         "surpported_model_list:\nFEATURE_CVIFACE,FEATURE_BMFACE_R34,"
-        "FEATURE_BMFACE_R50");
+        "FEATURE_BMFACE_R50,FEATURE_REID");
     return -1;
   }
 

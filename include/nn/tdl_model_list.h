@@ -104,6 +104,9 @@
   X(FEATURE_BMFACE_R34, "resnet34 512-dimensional BMFace feature")            \
   X(FEATURE_BMFACE_R50, "resnet50 512-dimensional BMFace feature")            \
                                                                               \
+  /* person reid */                                                           \
+  X(FEATURE_REID, "reid 128x64 512-dimensional feature")                      \
+                                                                              \
   /* object tracking */                                                       \
   X(TRACKING_FEARTRACK, "single object tracking")                             \
                                                                               \

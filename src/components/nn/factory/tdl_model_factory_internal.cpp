@@ -181,7 +181,8 @@ bool TDLModelFactory::isFeatureExtractionModel(const ModelType model_type) {
           model_type == ModelType::FEATURE_BMFACE_R34 ||
           model_type == ModelType::FEATURE_BMFACE_R50 ||
           model_type == ModelType::FEATURE_CVIFACE ||
-          model_type == ModelType::FEATURE_IMG);
+          model_type == ModelType::FEATURE_IMG ||
+          model_type == ModelType::FEATURE_REID);
 }
 
 bool TDLModelFactory::isOCRModel(const ModelType model_type) {
@@ -425,7 +426,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createFeatureExtractionModel(
   } else if (model_type == ModelType::FEATURE_BMFACE_R34 ||
              model_type == ModelType::FEATURE_BMFACE_R50 ||
              model_type == ModelType::FEATURE_CVIFACE ||
-             model_type == ModelType::FEATURE_IMG) {
+             model_type == ModelType::FEATURE_IMG ||
+             model_type == ModelType::FEATURE_REID) {
     model = std::make_shared<FeatureExtraction>();
   }
 #endif
