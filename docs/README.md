@@ -23,3 +23,22 @@ docs/
 └── images/                           # 文档图片
 
 ```
+
+## 设计文档（可选子模块：design_docs）
+
+本仓库通过 git submodule 引入 `docs/design_docs`，用于存放方案设计/落地文档（例如 `media_analysis` 等），避免将大量文档历史直接合入主仓库，同时便于独立维护。
+
+- **按需获取（避免不必要的 clone/更新开销）**：默认 clone 不会拉取该子模块；仅在需要阅读/更新设计文档时执行如下命令拉取：
+
+  ```bash
+  cd tdl_sdk
+  git submodule update --init docs/design_docs
+  ```
+
+- 当需要同步最新文档时，可基于 `.gitmodules` 中配置的 `branch = master` 执行如下命令同步：
+
+  ```bash
+  cd tdl_sdk
+  git submodule update --remote --merge docs/design_docs
+  # 然后在主仓库提交 docs/design_docs 指针更新
+  ```
