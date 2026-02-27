@@ -262,6 +262,7 @@ typedef struct {
   uint64_t snapshot_frame_id;
   uint64_t track_id;
   uint64_t pair_track_id;
+  int32_t registered_id;
   TDLObjectTypeE object_type;
   bool male;
   bool glass;

@@ -44,7 +44,7 @@ json ImageAnalysisTask::run_analysis_step() {
 
   // 按日期时间排序，获取最新的目录
   std::sort(date_dirs.rbegin(), date_dirs.rend());
-  std::string latest_dir = date_dirs[0];
+  std::string latest_dir = date_dirs.size() > 1 ? date_dirs[1] : date_dirs[0];
 
   if (latest_dir == time_str_) {
     return json();

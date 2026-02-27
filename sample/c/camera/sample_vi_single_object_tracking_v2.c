@@ -16,6 +16,10 @@
 #include "sample_utils.h"
 #include "tdl_sdk.h"
 
+#ifndef __CV184X__
+#define ENABLE_RTSP
+#endif
+
 #define VI_WIDTH 960
 #define VI_HEIGHT 540
 
@@ -280,6 +284,7 @@ void *run_det_thread(void *args) {
         TDLBrush brush_green_det = {{0, 255, 0}, 5};
         TDLBrush brush_yellow_det = {{255, 255, 0}, 5};
 
+#ifdef ENABLE_RTSP
         for (int i = 0; i < obj_meta.size; i++) {
           TDLObjectInfo *obj_info = &obj_meta.info[i];
           snprintf(obj_info->name, sizeof(obj_info->name), "index:%d", i);
@@ -310,14 +315,14 @@ void *run_det_thread(void *args) {
           draw_center_cross(frame, brush_green);
         }
 
-        TDL_ReleaseObjectMeta(&obj_meta);
-
         ret = SendFrameRTSP(frame, &rtsp_context);
         if (ret != 0) {
           printf("SendFrameRTSP failed with %#x!\n", ret);
           continue;
         }
+#endif
 
+        TDL_ReleaseObjectMeta(&obj_meta);
         TDL_DestroyImage(image);
         ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
       }
@@ -385,44 +390,13 @@ void *run_sot_thread(void *args) {
           int track_ret = TDL_SingleObjectTracking(
               pstArgs->tdl_handle, image, &init_track_meta, g_frame_id);
 
-          TDL_WrapImage(image, &frame);
-          if (frame) {
-            if (track_ret == 0 && init_track_meta.info) {
-              // 成功获取到跟踪结果，绘制框选算法的结果
-              printf("Got initial track result: bbox=[%.1f,%.1f,%.1f,%.1f]\n",
-                     init_track_meta.info[0].bbox.x1,
-                     init_track_meta.info[0].bbox.y1,
-                     init_track_meta.info[0].bbox.x2,
-                     init_track_meta.info[0].bbox.y2);
-
-              TDLBrush brush_init_track = {0};
-              brush_init_track.size = 5;
-              brush_init_track.color.r = 255;
-              brush_init_track.color.g = 0;
-              brush_init_track.color.b = 0;
-
-              TDLObject init_track_obj = {0};
-              TDL_InitObjectMeta(&init_track_obj, 1, 0);
-              init_track_obj.info[0].box.x1 = init_track_meta.info[0].bbox.x1;
-              init_track_obj.info[0].box.y1 = init_track_meta.info[0].bbox.y1;
-              init_track_obj.info[0].box.x2 = init_track_meta.info[0].bbox.x2;
-              init_track_obj.info[0].box.y2 = init_track_meta.info[0].bbox.y2;
-
-              DrawObjRect(&init_track_obj, frame, true, brush_init_track);
-
-              TDL_ReleaseObjectMeta(&init_track_obj);
-            } else {
-              printf(
-                  "Initial track call failed: track_ret=%d, info=%p, will "
-                  "retry next frame\n",
-                  track_ret, init_track_meta.info);
-            }
-
-            // 无论是否有跟踪结果，都绘制预选区框和+号
-            draw_selection_rect(frame, brush_yellow);
-            draw_center_cross(frame, brush_yellow);
-
-            SendFrameRTSP(frame, &rtsp_context);
+          if (track_ret == 0 && init_track_meta.info) {
+            // 成功获取到跟踪结果，绘制框选算法的结果
+            printf("Got initial track result: bbox=[%.1f,%.1f,%.1f,%.1f]\n",
+                   init_track_meta.info[0].bbox.x1,
+                   init_track_meta.info[0].bbox.y1,
+                   init_track_meta.info[0].bbox.x2,
+                   init_track_meta.info[0].bbox.y2);
           }
 
           TDL_ReleaseTrackMeta(&init_track_meta);
@@ -465,6 +439,7 @@ void *run_sot_thread(void *args) {
         }
 
         if (track_meta.info) {
+#ifdef ENABLE_RTSP
           // 绘制跟踪框
           TDLBrush brush_track = {0};
           brush_track.size = 5;
@@ -483,6 +458,7 @@ void *run_sot_thread(void *args) {
           draw_selection_rect(frame, brush_yellow);
           // 绘制中心+号
           draw_center_cross(frame, brush_yellow);
+#endif
 
           g_lost_timer_started = false;
         } else {
@@ -504,11 +480,15 @@ void *run_sot_thread(void *args) {
               init_success = false;
             }
           }
+#ifdef ENABLE_RTSP
           // 即使目标丢失，也绘制预选区实线框和+号
           draw_selection_rect(frame, brush_yellow);
           draw_center_cross(frame, brush_yellow);
+#endif
         }
+#ifdef ENABLE_RTSP
         ret = SendFrameRTSP(frame, &rtsp_context);
+#endif
         if (ret != 0) {
           printf("SendFrameRTSP failed with %#x!\n", ret);
           continue;

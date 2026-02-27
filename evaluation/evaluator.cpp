@@ -48,8 +48,8 @@ std::string Evaluator::packOutput(
   return str_content;
 }
 
-std::string Evaluator::packOutput(
-    const std::vector<TrackerInfo> &track_results) {
+std::string Evaluator::packOutput(const std::vector<TrackerInfo> &track_results,
+                                  bool merge_pair_id) {
   std::string str_content;
   for (auto &track_result : track_results) {
     printf("track_result: %d,box:[%.2f,%.2f,%.2f,%.2f],score:%.2f\n",
@@ -67,9 +67,16 @@ std::string Evaluator::packOutput(
     printf("ctx:%.2f,cty:%.2f,w:%.2f,h:%.2f,imgw:%d,imgh:%d\n", ctx, cty, w, h,
            img_width_, img_height_);
     char sz_content[1024];
+
+    int dst_track_id = int(track_result.track_id_);
+    if (merge_pair_id &&
+        track_result.box_info_.object_type == OBJECT_TYPE_FACE &&
+        track_result.pair_track_idx_ > 0) {
+      dst_track_id = int(track_result.pair_track_idx_);
+    }
     sprintf(sz_content, "%d %.4f %.4f %.4f %.4f %d %.4f\n",
             int(track_result.box_info_.object_type), ctx, cty, w, h,
-            int(track_result.track_id_), track_result.box_info_.score);
+            int(dst_track_id), track_result.box_info_.score);
     str_content += std::string(sz_content);
   }
   return str_content;

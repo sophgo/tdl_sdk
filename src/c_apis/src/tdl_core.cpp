@@ -1843,6 +1843,8 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
           ori_capture_info->face_snapshots[i].track_id;
       capture_info->snapshot_info[i].pair_track_id =
           ori_capture_info->face_snapshots[i].pair_track_id;
+      capture_info->snapshot_info[i].registered_id =
+          ori_capture_info->face_snapshots[i].registered_id;
 
       if (ori_capture_info->face_snapshots[i].object_image) {
         TDLImageContext *object_image_context = new TDLImageContext();
@@ -1945,6 +1947,26 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
       }
     }
   }
+  return 0;
+}
+
+int32_t TDL_APP_SetFaceID(TDLHandle handle, const char *channel_name,
+                          uint64_t person_track_id, int registered_id) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->snapshot_comp == nullptr) {
+    context->snapshot_comp =
+        (std::dynamic_pointer_cast<FacePetCaptureApp>(context->app_task))
+            ->getSnapshot(std::string(channel_name));
+
+    if (context->snapshot_comp == nullptr) {
+      LOGE("snapshot_comp is not init\n");
+      return -1;
+    }
+  }
+  context->snapshot_comp->setFaceID(person_track_id, registered_id);
   return 0;
 }
 

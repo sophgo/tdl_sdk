@@ -2,6 +2,7 @@
 #define FACE_PET_CAPTURE_APP_HPP
 
 #include "app/app_task.hpp"
+#include "components/snapshot/object_snapshot.hpp"
 #include "components/video_decoder/video_decoder_type.hpp"
 #include "encoder/image_encoder/image_encoder.hpp"
 #include "nn/tdl_model_factory.hpp"
@@ -20,6 +21,7 @@ class FacePetCaptureApp : public AppTask {
   int32_t getResult(const std::string &pipeline_name, Packet &result) override;
   std::shared_ptr<ImageEncoder> getImageEncoder(
       const std::string &pipeline_name);
+  std::shared_ptr<ObjectSnapshot> getSnapshot(const std::string &pipeline_name);
   int32_t init() override;
   int32_t release() override;
 

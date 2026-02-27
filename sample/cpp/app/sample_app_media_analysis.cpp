@@ -28,7 +28,8 @@
 
 #define FACE_FEAT_SIZE 256
 
-#define SAVE_CAPTURE_IMAGE
+#define SIMILARITY_THRESHOLD 0.3
+// #define SAVE_CAPTURE_IMAGE
 
 static const char *emotionStr[] = {"Anger",   "Disgust", "Fear",    "Happy",
                                    "Neutral", "Sad",     "Surprise"};
@@ -112,7 +113,6 @@ std::vector<std::shared_ptr<ModelFeatureInfo>> createModelFeatureInfos(
   for (const auto &feature : features) {
     auto feature_info = std::make_shared<ModelFeatureInfo>();
     int feature_dim = feature.size();
-    printf("!!!! feature_dim:%d\n", feature_dim);
 
     // 分配内存并转换为UINT8
     feature_info->embedding = new uint8_t[feature_dim * sizeof(float)];
@@ -287,10 +287,6 @@ class AsyncImageSender {
   bool running_;
 };
 
-std::atomic<bool> g_running(true);
-
-void signal_handler(int signum) { g_running = false; }
-
 // -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
@@ -330,8 +326,6 @@ int main(int argc, char **argv) {
               << std::endl;
     return -1;
   }
-
-  signal(SIGINT, signal_handler);
 
   // Initialize MediaAnalysisServer
   std::cout << "Initializing MediaAnalysisServer..." << std::endl;
@@ -376,13 +370,30 @@ int main(int argc, char **argv) {
            output_folder_path.c_str());
   make_dir(llm_analysis_dir, 0755);
 
+  char identity_txt_path[512];
+  char identity_dir[512];
+  snprintf(identity_dir, sizeof(identity_dir), "%s/identity",
+           output_folder_path.c_str());
+  make_dir(identity_dir, 0755);
+  snprintf(identity_txt_path, sizeof(identity_txt_path), "%s/identity_info.txt",
+           output_folder_path.c_str());
+  std::ofstream identity_ofs(identity_txt_path, std::ios::app);
+
   char latest_analysis_dir[20] = {0};
 
   time_t rawtime;
   struct tm *timeinfo;
   char timestamp_str[20];
 
-  while (g_running) {
+  std::shared_ptr<ObjectSnapshot> snapshot_comp =
+      (std::dynamic_pointer_cast<FacePetCaptureApp>(app_task))
+          ->getSnapshot(std::string(channel_names[0]));
+  if (snapshot_comp == nullptr) {
+    std::cout << "snapshot_comp is null" << std::endl;
+    return -1;
+  }
+
+  while (true) {
     int processing_channel_num = app_task->getProcessingChannelNum();
     if (processing_channel_num == 0) {
       std::cout << "no processing channel, break" << std::endl;
@@ -394,6 +405,8 @@ int main(int argc, char **argv) {
       int ret = app_task->getResult(channel_name, result);
 
       if (ret != 0) {
+        std::cout << "get result failed" << std::endl;
+        app_task->removeChannel(channel_name);
         continue;
       }
       std::shared_ptr<FacePetCaptureResult> cap_result =
@@ -406,27 +419,101 @@ int main(int argc, char **argv) {
       timeinfo = localtime(&rawtime);
       strftime(timestamp_str, sizeof(timestamp_str), "%Y%m%d_%H%M%S", timeinfo);
 
-#ifdef SAVE_CAPTURE_IMAGE
-
       const std::map<uint64_t, std::vector<float>> &features =
           cap_result->features;
 
       // Save snapshots
       for (auto &snapshot : cap_result->face_snapshots) {
+        std::vector<uint64_t> face_track_ids;
+        std::vector<std::vector<float>> query_features_tmp;
+        if (snapshot.object_box_info.object_type == OBJECT_TYPE_FACE &&
+            cap_result->features.count(snapshot.track_id) &&
+            !cap_result->features[snapshot.track_id].empty()) {
+          face_track_ids.push_back(snapshot.track_id);
+          query_features_tmp.push_back(cap_result->features[snapshot.track_id]);
+        }
+
+        int match_id = -1;
+        if (query_features_tmp.size() > 0) {
+          std::vector<std::shared_ptr<ModelFeatureInfo>> query_features =
+              createModelFeatureInfos(query_features_tmp);
+          MatchResult results;
+          feature_matcher->queryWithTopK(query_features, 1, results);
+
+          for (size_t i = 0; i < results.indices.size(); ++i) {
+            std::cout << "  查询特征 " << i << " 的匹配结果:" << std::endl;
+            const auto &indices = results.indices[i];
+            const auto &scores = results.scores[i];
+            for (size_t j = 0; j < indices.size() && j < scores.size(); ++j) {
+              std::cout << " 特征库索引: " << std::setw(2) << indices[j]
+                        << ", 相似度分数: " << std::fixed
+                        << std::setprecision(6) << scores[j] << std::endl;
+
+              // 新增：检查相似度分数是否大于SIMILARITY_THRESHOLD
+
+              if (scores[j] > SIMILARITY_THRESHOLD) {
+                int face_feature_id = face_feature_ids[indices[j]];
+                int face_track_id = face_track_ids[i];
+                match_id = face_feature_id;
+
+                snapshot_comp->setFaceID(snapshot.pair_track_id,
+                                         face_feature_id);
+
+                auto task = MediaAnalysisEventManager::GetInstance()->GetTask(
+                    "face_matching");
+                if (task) {
+                  auto face_task =
+                      std::dynamic_pointer_cast<FaceMatchingTask>(task);
+                  if (face_task) {
+                    face_task->add_face_info(face_feature_id, face_track_id);
+                  }
+                }
+              }
+
+              // Output identity info to txt
+              if (identity_ofs.is_open()) {
+                identity_ofs << snapshot.snapshot_frame_id << ","
+                             << "face"
+                             << "," << snapshot.object_box_info.x1 << ","
+                             << snapshot.object_box_info.y1 << ","
+                             << snapshot.object_box_info.x2 << ","
+                             << snapshot.object_box_info.y2 << "," << match_id
+                             << std::endl;
+              }
+
+              std::cout << std::endl;
+            }
+          }
+        }
+
         if (snapshot.object_image) {
           char dst_dir[512];
           char filename[512];
 
           if (snapshot.object_box_info.object_type == OBJECT_TYPE_PERSON) {
+            // Output identity info to txt
+            if (identity_ofs.is_open() && snapshot.registered_id != -2) {
+              identity_ofs << snapshot.snapshot_frame_id << ","
+                           << "person"
+                           << "," << snapshot.object_box_info.x1 << ","
+                           << snapshot.object_box_info.y1 << ","
+                           << snapshot.object_box_info.x2 << ","
+                           << snapshot.object_box_info.y2 << ","
+                           << snapshot.registered_id << std::endl;
+            }
+#ifdef SAVE_CAPTURE_IMAGE
             create_id_folder(person_dir, snapshot.track_id,
                              snapshot.pair_track_id, dst_dir, sizeof(dst_dir));
             sprintf(filename,
-                    "%s/%s_frameID_%" PRIu64 "_personID_%" PRIu64
-                    "_pairID_%" PRIu64 "_qua_%.3f.jpg",
+                    "%s/%s_frameID_%" PRIu64
+                    "_registeredID_%d"
+                    "_personID_%" PRIu64 "_pairID_%" PRIu64 "_qua_%.3f.jpg",
                     dst_dir, timestamp_str, snapshot.snapshot_frame_id,
-                    snapshot.track_id, snapshot.pair_track_id,
-                    snapshot.quality);
+                    snapshot.registered_id, snapshot.track_id,
+                    snapshot.pair_track_id, snapshot.quality);
+#endif
           } else {
+#ifdef SAVE_CAPTURE_IMAGE
             // Assume FACE
             create_id_folder(face_dir, snapshot.track_id,
                              snapshot.pair_track_id, dst_dir, sizeof(dst_dir));
@@ -447,14 +534,16 @@ int main(int argc, char **argv) {
             }
 
             sprintf(filename,
-                    "%s/%s_frameID_%" PRIu64 "_faceID_%" PRIu64
-                    "_pairID_%" PRIu64
+                    "%s/%s_frameID_%" PRIu64
+                    "_registeredID_%d"
+                    "_faceID_%" PRIu64 "_pairID_%" PRIu64
                     "_qua_%.3f_male[%d]_glass[%d]_age[%d]_emotion[%s].jpg",
                     dst_dir, timestamp_str, snapshot.snapshot_frame_id,
-                    snapshot.track_id, snapshot.pair_track_id, snapshot.quality,
-                    male, glass, age, emotionStr[emotion]);
+                    match_id, snapshot.track_id, snapshot.pair_track_id,
+                    snapshot.quality, male, glass, age, emotionStr[emotion]);
+#endif
           }
-
+#ifdef SAVE_CAPTURE_IMAGE
           std::vector<uint8_t> snap_buf;
           if (encoder->encodeFrame(snapshot.object_image, snap_buf)) {
             std::ofstream ofs(filename, std::ios::binary);
@@ -463,8 +552,10 @@ int main(int argc, char **argv) {
                         snap_buf.size());
             }
           }
+#endif
         }
 
+#ifdef SAVE_CAPTURE_IMAGE
         // Save features
         if (snapshot.object_box_info.object_type == OBJECT_TYPE_PERSON &&
             cap_result->features.count(snapshot.track_id) &&
@@ -475,11 +566,12 @@ int main(int argc, char **argv) {
                            snapshot.pair_track_id, dst_dir, sizeof(dst_dir));
 
           sprintf(filename,
-                  "%s/%s_frameID_%" PRIu64 "_personID_%" PRIu64
-                  "_pairID_%" PRIu64 "_qua_%.3f.bin",
+                  "%s/%s_frameID_%" PRIu64
+                  "_registeredID_%d"
+                  "_personID_%" PRIu64 "_pairID_%" PRIu64 "_qua_%.3f.bin",
                   dst_dir, timestamp_str, snapshot.snapshot_frame_id,
-                  snapshot.track_id, snapshot.pair_track_id, snapshot.quality);
-          printf("!!![2]filename: %s\n", filename);
+                  snapshot.registered_id, snapshot.track_id,
+                  snapshot.pair_track_id, snapshot.quality);
 
           FILE *f = fopen(filename, "wb");
           if (f) {
@@ -490,53 +582,12 @@ int main(int argc, char **argv) {
           }
         }
 
-        std::vector<uint64_t> face_track_ids;
-        std::vector<std::vector<float>> query_features_tmp;
-        if (snapshot.object_box_info.object_type == OBJECT_TYPE_FACE &&
-            cap_result->features.count(snapshot.track_id) &&
-            !cap_result->features[snapshot.track_id].empty()) {
-          face_track_ids.push_back(snapshot.track_id);
-          query_features_tmp.push_back(cap_result->features[snapshot.track_id]);
-        }
-
-        if (query_features_tmp.size() > 0) {
-          std::vector<std::shared_ptr<ModelFeatureInfo>> query_features =
-              createModelFeatureInfos(query_features_tmp);
-          MatchResult results;
-          feature_matcher->queryWithTopK(query_features, 1, results);
-
-          for (size_t i = 0; i < results.indices.size(); ++i) {
-            std::cout << "  查询特征 " << i << " 的匹配结果:" << std::endl;
-            const auto &indices = results.indices[i];
-            const auto &scores = results.scores[i];
-            for (size_t j = 0; j < indices.size() && j < scores.size(); ++j) {
-              std::cout << " 特征库索引: " << std::setw(2) << indices[j]
-                        << ", 相似度分数: " << std::fixed
-                        << std::setprecision(6) << scores[j] << std::endl;
-
-              // 新增：检查相似度分数是否大于0.45
-              if (scores[j] > 0.45) {
-                int face_feature_id = indices[j];
-                int face_track_id = face_track_ids[i];
-
-                auto task = MediaAnalysisEventManager::GetInstance()->GetTask(
-                    "face_matching");
-                if (task) {
-                  auto face_task =
-                      std::dynamic_pointer_cast<FaceMatchingTask>(task);
-                  if (face_task) {
-                    face_task->add_face_info(face_feature_id, face_track_id);
-                  }
-                }
-              }
-              std::cout << std::endl;
-            }
-          }
-        }
+#endif
       }
 
-      // Save full frame for LLM analysis (every 2 frames)
-      if (cap_result->frame_id % 2 == 0) {
+#ifdef SAVE_CAPTURE_IMAGE
+      // Save full frame for LLM analysis (every 10 frames)
+      if (cap_result->frame_id % 75 == 0) {
         char target_dir[512];
         int file_count = 0;
 
@@ -612,9 +663,21 @@ int main(int argc, char **argv) {
   }
 
   std::cout << "Stopping..." << std::endl;
+
+  // 关闭身份日志文件
+  if (identity_ofs.is_open()) {
+    identity_ofs.close();
+    std::cout << "Identity log file closed." << std::endl;
+  }
+
   sender.stop();
+  std::cout << "Sender stopped." << std::endl;
+
   server->stop();
+  std::cout << "Server stopped." << std::endl;
+
   app_task->release();
+  std::cout << "App task released." << std::endl;
 
   return 0;
 }

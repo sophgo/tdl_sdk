@@ -5,12 +5,73 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include "app/app_data_types.hpp"
 #include "app/app_task.hpp"
 #include "framework/utils/tdl_log.hpp"
 #include "opencv2/opencv.hpp"
 
 #define FACE_FEAT_SIZE 256
+
+#define DO_FACE_RECOGNITION
+
+// 全局变量用于存储已识别的人脸特征
+#ifdef DO_FACE_RECOGNITION
+std::vector<std::vector<float>> g_registered_faces;
+const float SIMILARITY_THRESHOLD = 0.4f;
+
+// 人脸去重处理函数
+void processFaceDeduplication(
+    std::vector<ObjectSnapshotInfo> &face_snapshots,
+    const std::map<uint64_t, std::vector<float>> &features) {
+  for (auto &face_snapshot : face_snapshots) {
+    bool is_duplicate = false;
+
+    // 检查是否有人脸特征数据
+    if (features.count(face_snapshot.track_id)) {
+      std::vector<float> current_feature = features.at(face_snapshot.track_id);
+
+      // 与已注册的人脸特征进行比对
+      for (const auto &registered_feature : g_registered_faces) {
+        if (registered_feature.size() != current_feature.size()) continue;
+
+        // 计算相似度
+        float dot_product = 0.0f;
+        float norm1 = 0.0f;
+        float norm2 = 0.0f;
+
+        for (size_t i = 0; i < current_feature.size(); i++) {
+          dot_product += current_feature[i] * registered_feature[i];
+          norm1 += current_feature[i] * current_feature[i];
+          norm2 += registered_feature[i] * registered_feature[i];
+        }
+
+        norm1 = sqrt(norm1);
+        norm2 = sqrt(norm2);
+        float similarity = 0.0f;
+        if (norm1 > 0 && norm2 > 0) {
+          similarity = dot_product / (norm1 * norm2);
+        }
+
+        if (similarity > SIMILARITY_THRESHOLD) {
+          is_duplicate = true;
+          face_snapshot.other_info["duplicate"] = Packet::make(true);
+          printf("Duplicate face detected: track_id=%lu, similarity=%.2f\n",
+                 face_snapshot.track_id, similarity);
+          break;
+        }
+      }
+
+      // 如果不是重复人脸，则添加到注册列表
+      if (!is_duplicate) {
+        g_registered_faces.push_back(current_feature);
+        face_snapshot.other_info["duplicate"] = Packet::make(false);
+        printf("New face registered: track_id=%lu\n", face_snapshot.track_id);
+      }
+    }
+  }
+}
+#endif
 
 bool make_dir(const char *path, mode_t mode = 0755) {
   if (mkdir(path, mode) == 0) {
@@ -151,9 +212,13 @@ std::string capobj_to_str(std::vector<ObjectSnapshotInfo> &face_snapshots,
   std::stringstream ss;
 
   for (auto &face_snapshot : face_snapshots) {
-    ObjectBoxLandmarkInfo ori_face_meta =
-        face_snapshot.other_info.at("ori_face_meta")
-            .get<ObjectBoxLandmarkInfo>();
+    // 如果该人脸被标记为重复，则跳过
+    if (face_snapshot.other_info.count("duplicate") &&
+        face_snapshot.other_info.at("duplicate").get<bool>()) {
+      continue;
+    }
+
+    ObjectBoxInfo ori_face_meta = face_snapshot.object_box_info;
 
     float ctx = (ori_face_meta.x1 + ori_face_meta.x2) / 2.0 / w;
     float cty = (ori_face_meta.y1 + ori_face_meta.y2) / 2.0 / h;
@@ -164,9 +229,11 @@ std::string capobj_to_str(std::vector<ObjectSnapshotInfo> &face_snapshots,
        << cty << "," << ww << "," << hh << "," << face_snapshot.track_id << ","
        << ori_face_meta.score << ";";
 
-    for (int i = 0; i < ori_face_meta.landmarks_x.size(); i++) {
-      ss << ori_face_meta.landmarks_x[i] << "," << ori_face_meta.landmarks_y[i]
-         << ",";
+    std::vector<float> landmarks =
+        face_snapshot.other_info.at("landmarks").get<std::vector<float>>();
+
+    for (int i = 0; i < landmarks.size(); i++) {
+      ss << landmarks[i] << ",";
     }
     ss << "0"
        << "\n";
@@ -186,6 +253,12 @@ void exportFaceSnapshots(const std::string &dst_dir,
                          std::vector<ObjectSnapshotInfo> &face_snapshots) {
   char sz_frame_name[1024];
   for (auto &face_snapshot : face_snapshots) {
+    // 如果该人脸被标记为重复，则跳过
+    if (face_snapshot.other_info.count("duplicate") &&
+        face_snapshot.other_info.at("duplicate").get<bool>()) {
+      continue;
+    }
+
     sprintf(sz_frame_name, "%s/track_%d_frame_%04d_quality_%.2f.jpg",
             dst_dir.c_str(), int(face_snapshot.track_id),
             int(face_snapshot.snapshot_frame_id), face_snapshot.quality);
@@ -299,6 +372,12 @@ int main(int argc, char **argv) {
                              cap_result->person_boxes, cap_result->frame_width,
                              cap_result->frame_height);
 
+#ifdef DO_FACE_RECOGNITION
+        // 人脸去重处理
+        processFaceDeduplication(cap_result->face_snapshots,
+                                 cap_result->features);
+#endif
+
         cap_content =
             capobj_to_str(cap_result->face_snapshots, cap_result->frame_width,
                           cap_result->frame_height);
@@ -348,7 +427,7 @@ int main(int argc, char **argv) {
         std::ofstream outf(sz_frame_name);
         outf << track_content;
         outf.close();
-      } else {
+      } else {  // 如果放在前面，无法保存最后强制输出的抓拍图
         std::cout << "get result failed" << std::endl;
         app_task->removeChannel(channel_name);
         continue;

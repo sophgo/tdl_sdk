@@ -271,7 +271,6 @@ int main(int argc, char *argv[]) {
                   capture_info.snapshot_info[j].track_id,
                   capture_info.snapshot_info[j].pair_track_id,
                   capture_info.snapshot_info[j].quality);
-          printf("!!![2]filename: %s\n", filename);
 
           // sprintf(filename, "%s/%s_image_feature.bin", dst_dir,
           // timestamp_str);

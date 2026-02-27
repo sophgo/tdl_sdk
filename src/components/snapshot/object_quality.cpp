@@ -18,7 +18,7 @@ struct FaceQualityConfig {
   float min_eye_threshold{0.01};  // 对应1080p, 瞳距20
   float min_mouth_ratio{0.15f};
   // 权重
-  float w_lmk{0.3f}, w_pose{0.3f}, w_size{0.2f}, w_motion{0.1f}, w_blur{0.1f};
+  float w_lmk{0.2f}, w_pose{0.3f}, w_size{0.3f}, w_motion{0.1f}, w_blur{0.1f};
   // 运动最大贡献
   float max_motion{2.0f};
   // blur 最大扣分
@@ -395,14 +395,50 @@ float ObjectQualityHelper::getPersonQuality(
   }
 
   float aspect_ratio = width / height;
-  // 使用高斯函数计算相似度 (峰值在ideal_aspect_ratio)
+  // 使用高斯函数计算相似度 (峰值在 ideal_aspect_ratio)
   float aspect_score = std::exp(-10 * (aspect_ratio - ideal_aspect_ratio) *
                                 (aspect_ratio - ideal_aspect_ratio));
 
-  float score = 0.5 * area_score + 0.5 * aspect_score;
+  // 计算中心位置分数 - 人体框中心应该接近图像中心
+  float box_center_x = (box.x1 + box.x2) / 2.0f;
+  float box_center_y = (box.y1 + box.y2) / 2.0f;
+  float img_center_x = img_width / 2.0f;
+  float img_center_y = img_height / 2.0f;
 
-  LOGI("score: %f, aspect_score: %f, area_score: %f", score, aspect_score,
-       area_score);
+  // 计算中心偏移距离（归一化到 [0,1]）
+  float offset_x = std::abs(box_center_x - img_center_x) / img_width;
+  float offset_y = std::abs(box_center_y - img_center_y) / img_height;
+  float center_offset = std::sqrt(offset_x * offset_x + offset_y * offset_y);
 
+  // 使用高斯函数计算中心位置分数，偏移越小分数越高
+  // sigma=0.3 表示当偏移为 0.3 时，分数约为 0.5
+  const float center_sigma = 0.3f;
+  float center_score = std::exp(-(center_offset * center_offset) /
+                                (2.0f * center_sigma * center_sigma));
+
+  // 边界检查：如果人体框过于靠近图像边缘，降低分数
+  float boundary_margin = 0.1f;  // 允许的最小边距比例
+  float left_margin = box.x1 / img_width;
+  float right_margin = (img_width - box.x2) / img_width;
+  float top_margin = box.y1 / img_height;
+  float bottom_margin = (img_height - box.y2) / img_height;
+
+  float min_margin =
+      std::min({left_margin, right_margin, top_margin, bottom_margin});
+  float boundary_factor = 1.0f;
+
+  if (min_margin < boundary_margin) {
+    // 如果任意一边小于最小边距，根据超出程度扣分
+    boundary_factor = std::max(0.0f, min_margin / boundary_margin);
+  }
+
+  // 综合评分：面积 (50%) + 宽高比 (30%) + 中心位置 (15%) + 边界 (5%)
+  float score = 0.6f * area_score + 0.25f * aspect_score + 0.15f * center_score;
+
+  score = score * boundary_factor;
+  LOGI(
+      "score: %f, aspect_score: %f, area_score: %f, center_score: %f, "
+      "boundary_factor: %f\n",
+      score, aspect_score, area_score, center_score, boundary_factor);
   return score;
 }

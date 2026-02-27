@@ -29,6 +29,11 @@ FaceMatchingTask::FaceMatchingTask(const std::string& data_path)
 
 void FaceMatchingTask::add_face_info(int registered_id, int face_track_id) {
   std::lock_guard<std::mutex> lock(mutex_);
+  if (face_info_map_.find(registered_id) != face_info_map_.end()) {
+    LOGI("!已存在注册ID对应的人脸跟踪ID: %d, 新的人脸跟踪ID: %d\n",
+         face_info_map_[registered_id], face_track_id);
+    return;
+  }
   face_info_map_[registered_id] = face_track_id;
   LOGI("Updated face info: registered_id=%d, face_track_id=%d, map_size=%lu\n",
        registered_id, face_track_id, face_info_map_.size());
@@ -40,6 +45,9 @@ std::vector<std::string> FaceMatchingTask::get_face_images(
   if (name_to_id_map_.find(name) == name_to_id_map_.end()) {
     LOGI("未找到人名对应的注册ID: %s\n", name.c_str());
     return {};
+  } else {
+    LOGI("找到人名对应的注册ID: %s, registered_id: %d\n", name.c_str(),
+         name_to_id_map_[name]);
   }
 
   int registered_id = name_to_id_map_[name];
@@ -73,6 +81,8 @@ std::vector<std::string> FaceMatchingTask::get_face_images(
         }
       }
     }
+  } else {
+    LOGI("!未找到注册ID对应的人脸跟踪ID: %d\n", registered_id);
   }
 
   printf("matched face size: %lu\n", image_paths.size());

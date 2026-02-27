@@ -3,6 +3,7 @@
 
 #include <map>
 #include "app/app_task.hpp"
+#include "components/snapshot/object_snapshot.hpp"
 #include "cv/intrusion_detect/intrusion_detect.hpp"
 #include "cv/motion_detect/motion_detect.hpp"
 #include "encoder/image_encoder/image_encoder.hpp"
@@ -26,6 +27,7 @@ typedef struct {
   std::shared_ptr<IntrusionDetection> intrusion_detect;
   std::shared_ptr<Tracker> tracker;
   std::shared_ptr<ModelASRInfo> asr_meta;
+  std::shared_ptr<ObjectSnapshot> snapshot_comp;
 } TDLContext;
 
 typedef struct {

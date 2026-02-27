@@ -15,7 +15,8 @@ class Evaluator {
   int32_t writeResult(const std::string &result_file,
                       const std::string &str_content);
   std::string packOutput(std::shared_ptr<ModelOutputInfo> model_output);
-  std::string packOutput(const std::vector<TrackerInfo> &track_results);
+  std::string packOutput(const std::vector<TrackerInfo> &track_results,
+                         bool merge_pair_id = false);
 
  protected:
   int img_width_;

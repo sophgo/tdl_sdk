@@ -1,4 +1,5 @@
 #include "components/snapshot/object_snapshot.hpp"
+#include <cmath>
 #include <cstdio>
 #include "framework/utils/tdl_log.hpp"
 ObjectSnapshot::ObjectSnapshot(int vechn, int encoder_mode) {
@@ -25,6 +26,8 @@ ObjectSnapshot::ObjectSnapshot(int vechn, int encoder_mode) {
   config_.crop_size_max = 0;
   config_.min_snapshot_size = 0;
   config_.jpg_quality = 60;
+  config_.use_reid = false;
+  config_.reid_threshold = 0.6f;
 }
 
 int32_t ObjectSnapshot::updateConfig(const nlohmann::json& config) {
@@ -52,6 +55,9 @@ int32_t ObjectSnapshot::updateConfig(const nlohmann::json& config) {
   if (config.contains("crop_square")) {
     config_.crop_square = config.at("crop_square");
   }
+  if (config.contains("min_matched_times")) {
+    config_.min_matched_times = config.at("min_matched_times");
+  }
   if (config.contains("max_miss_counter")) {
     config_.max_miss_counter = config.at("max_miss_counter");
   }
@@ -61,6 +67,21 @@ int32_t ObjectSnapshot::updateConfig(const nlohmann::json& config) {
   if (config.contains("capture_person")) {
     capture_person_ = config.at("capture_person");
   }
+  if (config.contains("use_reid")) {
+    config_.use_reid = config.at("use_reid");
+  }
+  if (config.contains("reid_threshold")) {
+    config_.reid_threshold = config.at("reid_threshold");
+  }
+  if (config_.use_reid) {
+    reid_model_ =
+        TDLModelFactory::getInstance().getModel(ModelType::FEATURE_REID);
+    if (reid_model_ == nullptr) {
+      LOGE("Failed to load ReID model for snapshot node");
+      assert(false);
+    }
+  }
+
   return 0;
 }
 int32_t ObjectSnapshot::updateSnapshot(
@@ -71,7 +92,8 @@ int32_t ObjectSnapshot::updateSnapshot(
     const std::map<std::string, Packet>& other_info,
     const std::map<uint64_t, std::shared_ptr<BaseImage>>& crop_face_imgs) {
   std::map<uint64_t, int> track_valid_flag;
-  LOGI("ObjectSnapshot updateSnapshot, frame_id: %lu, tracks.size(): %zu",
+  LOGI("ObjectSnapshot updateSnapshot, frame_id: %" PRIu64
+       ", tracks.size(): %zu",
        frame_id, tracks.size());
 
   for (auto iter = snapshot_infos_.begin(); iter != snapshot_infos_.end();) {
@@ -83,8 +105,8 @@ int32_t ObjectSnapshot::updateSnapshot(
     const TrackerInfo& track = tracks[i];
     track_valid_flag[track.track_id_] = 1;
     int obj_idx = track.obj_idx_;
-    LOGI("process track_id: %lu, obj_idx: %d,i:%zu", track.track_id_, obj_idx,
-         i);
+    LOGI("process track_id: %" PRIu64 ", obj_idx: %d,i:%zu", track.track_id_,
+         obj_idx, i);
     if (snapshot_infos_.count(track.track_id_)) {
       snapshot_infos_[track.track_id_].miss_counter = 0;
     }
@@ -95,7 +117,7 @@ int32_t ObjectSnapshot::updateSnapshot(
         quality_scores.count(track.track_id_) == 0) {
       LOGE(
           "track_boxes or quality_scores not found, track_id: "
-          "%lu",
+          "%" PRIu64 "",
           track.track_id_);
       assert(false);
     }
@@ -106,6 +128,8 @@ int32_t ObjectSnapshot::updateSnapshot(
     float quality_threshold = box.object_type == OBJECT_TYPE_FACE
                                   ? config_.snapshot_quality_threshold
                                   : config_.snapshot_person_quality_threshold;
+
+    bool new_id = false;
     if (snapshot_infos_.count(track.track_id_)) {
       snapshot_infos_[track.track_id_].matched_times = track.matched_times_;
       if (quality_score > snapshot_infos_[track.track_id_].quality + 0.05) {
@@ -114,6 +138,7 @@ int32_t ObjectSnapshot::updateSnapshot(
     } else if (quality_score > quality_threshold &&
                track.status_ == TrackStatus::TRACKED) {
       update_snapshot = true;
+      new_id = true;
       ObjectSnapshotInfo snapshot_info;
       snapshot_info.export_frame_id = frame_id;
 
@@ -131,6 +156,16 @@ int32_t ObjectSnapshot::updateSnapshot(
 
       if (track.pair_track_idx_ > 0) {
         snapshot_info.pair_track_id = track.pair_track_idx_;
+        if (snapshot_infos_.count(track.pair_track_idx_)) {
+          snapshot_infos_[track.pair_track_idx_].pair_track_id =
+              track.track_id_;
+        }
+      }
+
+      if (config_.use_reid && box.object_type == OBJECT_TYPE_FACE) {
+        valid_face_ids_.insert(track.track_id_);
+        LOGI("valid_face_ids: %" PRIu64 ", frame_id: %" PRIu64 "\n",
+             track.track_id_, frame_id);
       }
 
       if (image_encoder_ != nullptr &&
@@ -146,12 +181,12 @@ int32_t ObjectSnapshot::updateSnapshot(
           LOGE("ObjectSnapshot updateSnapshot, object_image is nullptr");
           assert(false);
         }
-        LOGI(
-            "update snapshot,track_id: %lu, quality: %f,image_width: "
-            "%d,image_height: %d",
-            track.track_id_, quality_score,
-            snapshot_info.object_image->getWidth(),
-            snapshot_info.object_image->getHeight());
+        LOGI("update snapshot,track_id: %" PRIu64
+             ", quality: %f,image_width: "
+             "%d,image_height: %d",
+             track.track_id_, quality_score,
+             snapshot_info.object_image->getWidth(),
+             snapshot_info.object_image->getHeight());
 
         snapshot_info.object_box_info = box;
 
@@ -188,7 +223,13 @@ int32_t ObjectSnapshot::updateSnapshot(
           crop_x = std::max(int(box.x1), 0);
           crop_y = std::max(int(box.y1), 0);
           crop_width = int(box.x2 - box.x1);
+          crop_width = crop_x + crop_width > image->getWidth()
+                           ? image->getWidth() - crop_x
+                           : crop_width;
           crop_height = int(box.y2 - box.y1);
+          crop_height = crop_y + crop_height > image->getHeight()
+                            ? image->getHeight() - crop_y
+                            : crop_height;
           dst_width = std::min(crop_width, config_.crop_size_max);
           dst_width = dst_width & ~1;  // 奇数预处理的时候会报错
 
@@ -200,22 +241,26 @@ int32_t ObjectSnapshot::updateSnapshot(
         LOGI(
             "crop_x: %d, crop_y: %d, crop_width: %d, crop_height: %d, "
             "dst_width: "
-            "%d, dst_height: %d,track_id: %lu",
+            "%d, dst_height: %d,track_id: %" PRIu64 "",
             crop_x, crop_y, crop_width, crop_height, dst_width, dst_height,
             track.track_id_);
+        ImageFormat dst_image_format = ImageFormat::YUV420SP_UV;
+#if defined(__BM168X__)
+        dst_image_format = ImageFormat::UNKOWN;
+#endif
         snapshot_info.object_image = preprocessor_->cropResize(
             image, crop_x, crop_y, crop_width, crop_height, dst_width,
-            dst_height, ImageFormat::YUV420SP_UV);
+            dst_height, dst_image_format);
         if (snapshot_info.object_image == nullptr) {
           LOGE("ObjectSnapshot updateSnapshot, object_image is nullptr");
           assert(false);
         }
-        LOGI(
-            "update snapshot,track_id: %lu, quality: %f,image_width: "
-            "%d,image_height: %d",
-            track.track_id_, quality_score,
-            snapshot_info.object_image->getWidth(),
-            snapshot_info.object_image->getHeight());
+        LOGI("update snapshot,track_id: %" PRIu64
+             ", quality: %f,image_width: "
+             "%d,image_height: %d",
+             track.track_id_, quality_score,
+             snapshot_info.object_image->getWidth(),
+             snapshot_info.object_image->getHeight());
         snapshot_info.object_box_info = box;  // box is updated
 
         // TODO(fuquan.ke):wrap the code below as a callback function
@@ -242,6 +287,100 @@ int32_t ObjectSnapshot::updateSnapshot(
           snapshot_info.other_info["landmarks"] = Packet::make(landmarks);
         }
       }
+
+      // ReID assisted confirmation
+      if (config_.use_reid && box.object_type == OBJECT_TYPE_PERSON &&
+          reid_model_ != nullptr) {
+        std::vector<std::shared_ptr<BaseImage>> input_images = {
+            snapshot_info.object_image};
+        std::vector<std::shared_ptr<ModelOutputInfo>> output_datas;
+        reid_model_->inference(input_images, output_datas);
+
+        if (!output_datas.empty()) {
+          std::shared_ptr<ModelFeatureInfo> feature_info =
+              std::dynamic_pointer_cast<ModelFeatureInfo>(output_datas[0]);
+          if (feature_info && feature_info->embedding_num > 0) {
+            std::vector<float> current_feature(feature_info->embedding_num);
+
+            void* raw_data = feature_info->embedding;
+            if (feature_info->embedding_type == TDLDataType::FP32) {
+              float* p = reinterpret_cast<float*>(raw_data);
+              for (int j = 0; j < feature_info->embedding_num; j++)
+                current_feature[j] = p[j];
+            } else if (feature_info->embedding_type == TDLDataType::INT8) {
+              int8_t* p = reinterpret_cast<int8_t*>(raw_data);
+              for (int j = 0; j < feature_info->embedding_num; j++)
+                current_feature[j] = (float)p[j];
+            } else if (feature_info->embedding_type == TDLDataType::UINT8) {
+              uint8_t* p = reinterpret_cast<uint8_t*>(raw_data);
+              for (int j = 0; j < feature_info->embedding_num; j++)
+                current_feature[j] = (float)p[j];
+            } else {
+              LOGE("Unsupported embedding type %d\n",
+                   (int)feature_info->embedding_type);
+              return -1;
+            }
+
+            // L2 normalize the feature vector (same as
+            // sample_reid_similarity.cpp)
+            float norm = 0;
+            for (auto f : current_feature) norm += f * f;
+            norm = std::sqrt(norm);
+            if (norm > 0) {
+              for (auto& f : current_feature) f /= norm;
+            }
+
+            if (!new_id) {
+              uint64_t initial_id = person_id_map_.count(track.track_id_) > 0
+                                        ? person_id_map_[track.track_id_]
+                                        : track.track_id_;
+              if (reid_feature_map_.count(initial_id) == 0) {
+                LOGE("initial_id:%" PRIu64 " not found in reid_feature_map_",
+                     initial_id);
+                assert(false);
+              }
+              reid_feature_map_[initial_id] = current_feature;
+              LOGI("update reid_feature_map_, initial_id: %" PRIu64 "\n",
+                   initial_id);
+
+            } else {
+              // Search for match in reid_feature_map_
+              float max_sim = -1.0f;
+              uint64_t matched_initial_id = 0;
+
+              LOGI("Searching in reid_feature_map_, size: %zu\n",
+                   reid_feature_map_.size());
+              for (auto const& entry : reid_feature_map_) {
+                uint64_t init_id = entry.first;
+                const std::vector<float>& feat = entry.second;
+                float sim = 0;
+                for (size_t k = 0; k < feat.size(); ++k) {
+                  sim += feat[k] * current_feature[k];
+                }
+                if (sim > max_sim) {
+                  max_sim = sim;
+                  matched_initial_id = init_id;
+                }
+              }
+
+              LOGI("  max_sim: %.4f, matched_initial_id: %" PRIu64 "\n",
+                   max_sim, matched_initial_id);
+
+              if (max_sim > config_.reid_threshold) {  // ReID threshold
+                person_id_map_[track.track_id_] = matched_initial_id;
+                LOGI("track_id: %" PRIu64 ", match id: %" PRIu64 ", sim: %f\n",
+                     track.track_id_, matched_initial_id, max_sim);
+              } else {
+                LOGI("track_id: %" PRIu64
+                     ", no match, sim: %f, adding as new person\n",
+                     track.track_id_, max_sim);
+                // New person
+                reid_feature_map_[track.track_id_] = current_feature;
+              }
+            }
+          }
+        }
+      }
     }
   }
   LOGI(
@@ -250,6 +389,37 @@ int32_t ObjectSnapshot::updateSnapshot(
   for (auto iter = snapshot_infos_.begin(); iter != snapshot_infos_.end();) {
     if (track_valid_flag.count(iter->first) == 0 ||
         iter->second.miss_counter > config_.max_miss_counter) {
+      // Identity confirmation for person before export
+      if (config_.use_reid &&
+          iter->second.object_box_info.object_type == OBJECT_TYPE_PERSON &&
+          valid_face_ids_.find(iter->second.pair_track_id) ==
+              valid_face_ids_.end()) {
+        uint64_t initial_id = iter->first;
+        if (person_id_map_.count(iter->first)) {
+          initial_id = person_id_map_[iter->first];
+        }
+        if (person_faceID_map_.count(initial_id)) {
+          iter->second.registered_id = person_faceID_map_[initial_id];
+        } else {
+          iter->second.registered_id =
+              -1;  // 自始至抓拍人形过程中未出现人脸或为陌生人
+          if (reid_feature_map_.count(iter->first)) {
+            reid_feature_map_.erase(iter->first);
+            LOGI("erase reid_feature_map_, track_id: %" PRIu64 "\n",
+                 iter->first);
+          }
+        }
+        LOGI("person track_id: %" PRIu64 ", initial_id: %" PRIu64
+             "registered_id : %d\n",
+             iter->first, initial_id, iter->second.registered_id);
+      }
+
+      if (config_.use_reid &&
+          valid_face_ids_.find(iter->second.pair_track_id) !=
+              valid_face_ids_.end()) {
+        valid_face_ids_.erase(iter->second.pair_track_id);  // 避免越来越大
+      }
+
       // need to erase
       if (iter->second.object_image != nullptr &&
           iter->second.matched_times >= config_.min_matched_times) {
@@ -260,8 +430,55 @@ int32_t ObjectSnapshot::updateSnapshot(
       // check snapshot interval
       if (frame_id - iter->second.export_frame_id >
           static_cast<uint64_t>(config_.snapshot_interval)) {
+        // Identity confirmation for person before export
+        if (config_.use_reid &&
+            iter->second.object_box_info.object_type == OBJECT_TYPE_PERSON &&
+            valid_face_ids_.find(iter->second.pair_track_id) ==
+                valid_face_ids_.end()) {
+          uint64_t initial_id = iter->first;
+          if (person_id_map_.count(iter->first)) {
+            initial_id = person_id_map_[iter->first];
+          }
+          if (person_faceID_map_.count(initial_id)) {
+            iter->second.registered_id = person_faceID_map_[initial_id];
+          } else {
+            iter->second.registered_id =
+                -1;  // 自始至抓拍人形过程中未出现人脸或为陌生人
+            if (reid_feature_map_.count(iter->first)) {
+              reid_feature_map_.erase(iter->first);
+              LOGI("erase reid_feature_map_, track_id: %" PRIu64 "\n",
+                   iter->first);
+            }
+          }
+          LOGI("person track_id: %" PRIu64 ", initial_id: %" PRIu64
+               "registered_id : %d\n",
+               iter->first, initial_id, iter->second.registered_id);
+        }
+        if (config_.use_reid &&
+            valid_face_ids_.find(iter->second.pair_track_id) !=
+                valid_face_ids_.end()) {
+          valid_face_ids_.erase(iter->second.pair_track_id);  // 避免越来越大
+        }
+
         if (iter->second.object_image != nullptr) {
           LOGI(" to export ObjectSnapshotInfo\n");
+
+          // Identity confirmation for person before periodic export
+          if (config_.use_reid &&
+              iter->second.object_box_info.object_type == OBJECT_TYPE_PERSON &&
+              iter->second.pair_track_id == 0) {
+            uint64_t initial_id = iter->first;
+            if (person_id_map_.count(iter->first)) {
+              initial_id = person_id_map_[iter->first];
+            }
+            if (person_faceID_map_.count(initial_id)) {
+              iter->second.registered_id = person_faceID_map_[initial_id];
+            } else {
+              iter->second.registered_id =
+                  -1;  // 自始至抓拍人形过程中未出现人脸或为陌生人
+            }
+          }
+
           export_snapshots_.push_back(iter->second);
           resetSnapshotInfo(iter->second, frame_id);
         }
@@ -292,12 +509,28 @@ int32_t ObjectSnapshot::getSnapshotData(
   return 0;
 }
 
+void ObjectSnapshot::setFaceID(uint64_t person_track_id, int registered_id) {
+  uint64_t initial_person_id = person_track_id;
+  if (person_id_map_.count(person_track_id)) {
+    initial_person_id = person_id_map_[person_track_id];
+  }
+
+  person_faceID_map_[initial_person_id] = registered_id;
+
+  LOGI("ObjectSnapshot setFaceID, person_track_id: %" PRIu64
+       ", registered_id: %d\n",
+       person_track_id, registered_id);
+}
+
 void ObjectSnapshot::resetSnapshotInfo(ObjectSnapshotInfo& info,
                                        uint64_t frame_id) {
   info.miss_counter = 0;
   info.export_frame_id = frame_id;
   info.object_image = nullptr;
   info.quality = 0;
+  info.snapshot_frame_id = frame_id;
+  // info.registered_id = -1;
+  info.other_info.clear();
 }
 int32_t ObjectSnapshot::getCropBox(ObjectBoxInfo& box, int& x, int& y,
                                    int& width, int& height, int& dst_width,

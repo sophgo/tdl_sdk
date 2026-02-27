@@ -4,7 +4,6 @@
 #include <json.hpp>
 #include "app/app_data_types.hpp"
 #include "components/snapshot/object_quality.hpp"
-#include "components/snapshot/object_snapshot.hpp"
 #include "components/tracker/tracker_types.hpp"
 #include "components/video_decoder/video_decoder_type.hpp"
 #include "utils/tdl_log.hpp"
@@ -175,6 +174,18 @@ std::shared_ptr<ImageEncoder> FacePetCaptureApp::getImageEncoder(
       ->get<std::shared_ptr<ObjectSnapshot>>()
       ->getImageEncoder();
 }
+
+std::shared_ptr<ObjectSnapshot> FacePetCaptureApp::getSnapshot(
+    const std::string &pipeline_name) {
+  if (pipeline_channels_.find(pipeline_name) == pipeline_channels_.end()) {
+    return nullptr;
+  }
+  return pipeline_channels_[pipeline_name]
+      ->getNode("snapshot_node")
+      ->getWorker()
+      ->get<std::shared_ptr<ObjectSnapshot>>();
+}
+
 int32_t FacePetCaptureApp::release() {
   for (auto &channel : pipeline_channels_) {
     channel.second->stop();
@@ -471,9 +482,13 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
           std::shared_ptr<BasePreprocessor> preprocessor =
               landmark_detection_model->getPreprocessor();
 
-          std::shared_ptr<BaseImage> crop_face_img = preprocessor->cropResize(
-              image, crop_x, crop_y, crop_w, crop_w, dst_width, dst_height,
-              ImageFormat::YUV420SP_UV);
+          ImageFormat dst_image_format = ImageFormat::YUV420SP_UV;
+#if defined(__BM168X__)
+          dst_image_format = ImageFormat::UNKOWN;
+#endif
+          std::shared_ptr<BaseImage> crop_face_img =
+              preprocessor->cropResize(image, crop_x, crop_y, crop_w, crop_w,
+                                       dst_width, dst_height, dst_image_format);
 
           crop_face_imgs[t.track_id_] = crop_face_img;
 
@@ -540,8 +555,14 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
 
 std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
     const nlohmann::json &node_config) {
-  std::shared_ptr<ObjectSnapshot> snapshot = std::make_shared<ObjectSnapshot>(
-      node_config["vechn"], node_config["encoder_mode"]);
+  int vechn =
+      node_config.contains("vechn") ? node_config["vechn"].get<int>() : 0;
+  int encoder_mode = node_config.contains("encoder_mode")
+                         ? node_config["encoder_mode"].get<int>()
+                         : 1;
+
+  std::shared_ptr<ObjectSnapshot> snapshot =
+      std::make_shared<ObjectSnapshot>(vechn, encoder_mode);
   snapshot->updateConfig(node_config);
   std::shared_ptr<PipelineNode> snapshot_node =
       std::make_shared<PipelineNode>(Packet::make(snapshot));
@@ -971,14 +992,19 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getResizeImageNode(
     std::shared_ptr<BasePreprocessor> preprocessor =
         packet.get<std::shared_ptr<BasePreprocessor>>();
 
+    ImageFormat dst_image_format = ImageFormat::YUV420SP_UV;
+#if defined(__BM168X__)
+    dst_image_format = ImageFormat::UNKOWN;
+#endif
+
     // 不裁剪，直接缩放整个图像
     std::shared_ptr<BaseImage> resized_image =
-        preprocessor->cropResize(image, 0, 0,              // 从(0,0)开始
-                                 image->getWidth(),        // 原始宽度
-                                 image->getHeight(),       // 原始高度
-                                 resize_width,             // 目标宽度
-                                 resize_height,            // 目标高度
-                                 ImageFormat::YUV420SP_UV  // 保持原格式
+        preprocessor->cropResize(image, 0, 0,         // 从(0,0)开始
+                                 image->getWidth(),   // 原始宽度
+                                 image->getHeight(),  // 原始高度
+                                 resize_width,        // 目标宽度
+                                 resize_height,       // 目标高度
+                                 dst_image_format     // 保持原格式
         );
 
     // 更新frame_info中的图像
