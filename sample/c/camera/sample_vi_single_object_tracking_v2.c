@@ -368,7 +368,7 @@ void *run_sot_thread(void *args) {
                                      : NULL;
         int ret = TDL_SetSingleObjectTracking(
             pstArgs->tdl_handle, image, &g_obj_meta, values, num_values,
-            pstArgs->target_search_type, model_path);
+            g_frame_id, pstArgs->target_search_type, model_path);
 
         if (ret != 0) {
           init_success = false;

@@ -49,17 +49,20 @@ class Tracker {
 
   virtual int32_t initialize(const std::shared_ptr<BaseImage>& image,
                              const std::vector<ObjectBoxInfo>& detect_boxes,
-                             const ObjectBoxInfo& bbox, int frame_type,
+                             const ObjectBoxInfo& bbox, uint64_t frame_id,
+                             int frame_type,
                              const std::string& model_path = "");
 
   virtual int32_t initialize(const std::shared_ptr<BaseImage>& image,
                              const std::vector<ObjectBoxInfo>& detect_boxes,
-                             float x, float y, int frame_type,
+                             float x, float y, uint64_t frame_id,
+                             int frame_type,
                              const std::string& model_path = "");
 
   virtual int32_t initialize(const std::shared_ptr<BaseImage>& image,
                              const std::vector<ObjectBoxInfo>& detect_boxes,
-                             int index, const std::string& model_path = "");
+                             int index, uint64_t frame_id,
+                             const std::string& model_path = "");
 
   virtual void setPairConfig(
       std::map<TDLObjectType, TDLObjectType> object_pair_config){};

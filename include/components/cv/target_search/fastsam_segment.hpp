@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 #include "image/base_image.hpp"
+#include "tdl_model_factory.hpp"
 
 struct cvtdl_fastsam_result_t {
   cv::Rect bbox;
@@ -20,4 +21,5 @@ class FastSAMSegmentor {
 
  private:
   std::string model_path_;
+  std::shared_ptr<BaseModel> model_od_;
 };
