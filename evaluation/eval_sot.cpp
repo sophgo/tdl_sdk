@@ -262,7 +262,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<Tracker> tracker =
         TrackerFactory::createTracker(TrackerType::TDL_SOT);
     tracker->setModel(sot_model);
-    if (tracker->initialize(first_img, {}, init_box, 0) != 0) {
+    if (tracker->initialize(first_img, {}, init_box, 0, 0) != 0) {
       std::cout << "序列 " << seq_name << " 跟踪器初始化失败，跳过\n";
       continue;
     }

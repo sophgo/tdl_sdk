@@ -4,6 +4,8 @@
 #include "encoder/rtsp/rtsp.hpp"
 #include "utils/frame_dump.hpp"
 #endif
+#include <string.h>
+#include <sys/stat.h>
 #include "tdl_type_internal.hpp"
 #include "utils/tdl_log.hpp"
 #include "video_decoder/video_decoder_type.hpp"
@@ -195,11 +197,34 @@ TDLImage GetVideoFrame(TDLHandle handle, const char *video_path) {
   }
 
   if (!context->video_decoder) {
+    VideoDecoderType decoder_type;
+    // 检查是否为MP4文件
+    size_t path_len = strlen(video_path);
+    if (path_len >= 4 && strcmp(video_path + path_len - 4, ".mp4") == 0) {
+#ifdef __BM168X__
+      decoder_type = VideoDecoderType::OPENCV;
+#else
+      fprintf(stderr,
+              "Error: MP4 format is only supported on BM168X platform\n");
+      return nullptr;
+#endif
+    } else {
+      // 检查是否为文件夹路径
+      struct stat path_stat;
+      if (stat(video_path, &path_stat) == 0 && S_ISDIR(path_stat.st_mode)) {
+        decoder_type = VideoDecoderType::IMAGE_FOLDER;
+      } else {
+        fprintf(stderr, "Error: Unsupported path type - %s\n", video_path);
+        return nullptr;
+      }
+    }
+
+    // 创建相应类型的解码器
     context->video_decoder =
-        VideoDecoderFactory::createVideoDecoder(VideoDecoderType::OPENCV);
-    if (context->video_decoder == nullptr) {
-      LOGE("create video decoder failed\n");
-      return NULL;
+        VideoDecoderFactory::createVideoDecoder(decoder_type);
+    if (!context->video_decoder) {
+      fprintf(stderr, "Failed to create video decoder\n");
+      return nullptr;
     }
 
     context->video_decoder->init(std::string(video_path));

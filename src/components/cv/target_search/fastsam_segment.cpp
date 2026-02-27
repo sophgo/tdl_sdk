@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <limits>
 #include <opencv2/opencv.hpp>
-#include "tdl_model_factory.hpp"
+#include "utils/tdl_log.hpp"
 
 static int findSmallestBboxContainingPoint(
     std::shared_ptr<ModelBoxSegmentationInfo> obj_meta, uint32_t image_height,
@@ -42,7 +42,19 @@ static int findSmallestBboxContainingPoint(
 static const int kDefaultCropSize = 320;
 
 FastSAMSegmentor::FastSAMSegmentor(const std::string& model_path)
-    : model_path_(model_path) {}
+    : model_path_(model_path) {
+  if (model_path_.empty()) {
+    LOGE("FastSAMSegmentor: model_path is empty");
+    return;
+  }
+
+  TDLModelFactory& model_factory = TDLModelFactory::getInstance();
+  model_od_ = model_factory.getModel(ModelType::FASTSAM_SEG, model_path_);
+  if (!model_od_) {
+    LOGE("FastSAMSegmentor: get model failed");
+    return;
+  }
+}
 
 int FastSAMSegmentor::segment(std::shared_ptr<BaseImage> image,
                               cv::Point seed_point,
@@ -51,15 +63,8 @@ int FastSAMSegmentor::segment(std::shared_ptr<BaseImage> image,
     result->success = false;
     return -1;
   }
-  if (model_path_.empty()) {
-    result->success = false;
-    return -1;
-  }
 
-  TDLModelFactory& model_factory = TDLModelFactory::getInstance();
-  std::shared_ptr<BaseModel> model_od =
-      model_factory.getModel(ModelType::FASTSAM_SEG, model_path_);
-  if (!model_od) {
+  if (!model_od_) {
     result->success = false;
     return -1;
   }
@@ -81,7 +86,7 @@ int FastSAMSegmentor::segment(std::shared_ptr<BaseImage> image,
     return -1;
   }
 
-  std::shared_ptr<BasePreprocessor> preprocessor = model_od->getPreprocessor();
+  std::shared_ptr<BasePreprocessor> preprocessor = model_od_->getPreprocessor();
   if (!preprocessor) {
     result->success = false;
     return -1;
@@ -95,7 +100,7 @@ int FastSAMSegmentor::segment(std::shared_ptr<BaseImage> image,
 
   std::vector<std::shared_ptr<BaseImage>> input_images = {crop_image};
   std::vector<std::shared_ptr<ModelOutputInfo>> out_datas;
-  model_od->inference(input_images, out_datas);
+  model_od_->inference(input_images, out_datas);
 
   if (out_datas.empty()) {
     result->success = false;

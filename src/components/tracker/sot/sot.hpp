@@ -1,3 +1,4 @@
+#include "cv/target_search/fastsam_segment.hpp"
 #include "kalman_box_tracker.hpp"
 #include "model/base_model.hpp"
 #include "tdl_model_factory.hpp"
@@ -13,7 +14,7 @@ struct SOTInfo {
   float size_ratio;
   float confidence_of_occluded;
   float confidence_of_reappear;
-  int frame_id;
+  uint64_t frame_id;
   bool is_occluded;
   bool is_reappear;
 };
@@ -27,15 +28,17 @@ class SOT : public Tracker {
 
   int32_t initialize(const std::shared_ptr<BaseImage>& image,
                      const std::vector<ObjectBoxInfo>& detect_boxes,
-                     const ObjectBoxInfo& bbox, int frame_type,
+                     const ObjectBoxInfo& bbox, uint64_t frame_id,
+                     int frame_type,
                      const std::string& model_path = "") override;
 
   int32_t initialize(const std::shared_ptr<BaseImage>& image,
                      const std::vector<ObjectBoxInfo>& detect_boxes, float x,
-                     float y, int frame_type,
+                     float y, uint64_t frame_id, int frame_type,
                      const std::string& model_path = "") override;
   int32_t initialize(const std::shared_ptr<BaseImage>& image,
                      const std::vector<ObjectBoxInfo>& detect_boxes, int index,
+                     uint64_t frame_id,
                      const std::string& model_path = "") override;
   int32_t track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
                 TrackerInfo& tracker_info);
@@ -65,7 +68,7 @@ class SOT : public Tracker {
 
   // 模型
   std::shared_ptr<BaseModel> sot_model_;
-
+  std::shared_ptr<FastSAMSegmentor> fastsam_segmentor_;  // FastSAM分割器实例
   // 卡尔曼滤波器
   std::shared_ptr<KalmanBoxTracker> kalman_tracker_;
 
@@ -84,8 +87,8 @@ class SOT : public Tracker {
   // 判断目标是否丢失相关参数
   float occluded_score_ratio_threshold_ = 0.9;  // 目标丢失时得分比率阈值
   float occluded_score_threshold_ = 0.6;        // 目标丢失时得分阈值
-  float occluded_iou_threshold_ = 0.9;          // 目标丢失时IoU阈值
-  float occluded_threshold_ = 0.1;              // 遮挡阈值
+  float occluded_iou_threshold_ = 0.8;          // 目标丢失时IoU阈值
+  float occluded_threshold_ = 0.3;              // 遮挡阈值
 
   // 判断目标是否重现相关参数
   float reappear_score_threshold_ = 0.3;      // 目标重现时得分阈值
@@ -101,7 +104,7 @@ class SOT : public Tracker {
 
   // 是否已初始化
   bool is_initialized_ = false;
-  int frame_id_ = 0;
+  uint64_t frame_id_ = 0;
   std::deque<float> score_lst_;
   float score_ratio_ = 1.0f;
   int last_template_update_frame_ = 0;

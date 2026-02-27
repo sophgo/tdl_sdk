@@ -100,7 +100,7 @@ TEST_F(SotTestSuite, accuracy) {
       init_bbox.y2 = 655.0;
       init_bbox.score = 1.0;
       init_bbox.class_id = 0;
-      tracker->initialize(image, {}, init_bbox, 0);
+      tracker->initialize(image, {}, init_bbox, 0, 0);
     } else {
       TrackerInfo tracker_info;
       tracker->track(image, frame_id, tracker_info);
@@ -251,7 +251,7 @@ TEST_F(SotTestSuite, performance) {
   init_bbox.y2 = 655.0;
   init_bbox.score = 1.0;
   init_bbox.class_id = 0;
-  tracker->initialize(image, {}, init_bbox, 0);
+  tracker->initialize(image, {}, init_bbox, 0, 0);
 
   std::thread th_cpu(cpu_sampler);
   RUN_TDL_THREAD_CPU_ARGS_SOT tdl_args = {.tracker_info = tracker_info,

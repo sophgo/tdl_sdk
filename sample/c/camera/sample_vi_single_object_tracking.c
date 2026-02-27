@@ -245,7 +245,7 @@ void *run_sot_thread(void *args) {
 
               int ret = TDL_SetSingleObjectTracking(
                   pstArgs->tdl_handle, image, &g_obj_meta, values, num_values,
-                  TDL_REJECT, NULL);
+                  g_frame_id, TDL_REJECT, NULL);
               if (ret != 0) {
                 printf("TDL_SetSingleObjectTracking failed with %#x!\n", ret);
                 TDL_DestroyImage(image);
