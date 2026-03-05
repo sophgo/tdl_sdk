@@ -213,13 +213,13 @@ PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
     pixel_format = PIXEL_FORMAT_MAX;
   }
 
-  // if (pix_data_type == TDLDataType::UINT8 &&
-  //     (img_format == ImageFormat::RGB_PLANAR ||
-  //      img_format == ImageFormat::BGR_PLANAR)) {
-  //   LOGW("special case, imageFormat: %d,pix_data_type: %d", (int)img_format,
-  //        (int)pix_data_type);
-  //   pixel_format = PIXEL_FORMAT_UINT8_C3_PLANAR;
-  // }
+  if (pix_data_type == TDLDataType::UINT8 &&
+      (img_format == ImageFormat::RGB_PLANAR ||
+       img_format == ImageFormat::BGR_PLANAR)) {
+    LOGW("special case, imageFormat: %d,pix_data_type: %d", (int)img_format,
+         (int)pix_data_type);
+    pixel_format = PIXEL_FORMAT_UINT8_C3_PLANAR;
+  }
 
   if (pix_data_type != TDLDataType::INT8 &&
       pix_data_type != TDLDataType::UINT8) {
