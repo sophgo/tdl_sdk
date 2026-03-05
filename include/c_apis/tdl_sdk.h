@@ -400,12 +400,14 @@ int32_t TDL_SpeechRecognition(TDLHandle handle, const TDLModel model_id_encoder,
  *
  * @param handle TDLHandle 对象
  * @param model_id 指定深度估计模型类型枚举值
- * @param image_handle TDLImageHandle 对象
+ * @param left_image_handle 左图像 TDLImageHandle 对象
+ * @param right_image_handle 右图像 TDLImageHandle 对象
  * @param depth_logist 输出参数，存储深度估计结果
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_DepthStereo(TDLHandle handle, const TDLModel model_id,
-                        TDLImage image_handle, TDLDepthLogits *depth_logist);
+                        TDLImage left_image_handle, TDLImage right_image_handle,
+                        TDLDepthLogits *depth_logist);
 
 /**
  * @brief 执行目标跟踪任务

@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include "audio_classification/audio_classification.hpp"
+#include "depth_estimation/stereo.hpp"
 #include "face_attribute/face_attribute_cls.hpp"
 #include "face_detection/scrfd.hpp"
 #include "face_landmark/face_landmark_det2.hpp"
@@ -65,6 +66,10 @@ std::shared_ptr<BaseModel> TDLModelFactory::getModelInstance(
   // 6. 分割模型
   else if (isSegmentationModel(model_type)) {
     model = createSegmentationModel(model_type);
+  }
+  // 7. 深度估计模型
+  else if (isDepthEstimationModel(model_type)) {
+    model = createDepthEstimationModel(model_type);
   }
   // 7. 特征提取模型
   else if (isFeatureExtractionModel(model_type)) {
@@ -162,6 +167,10 @@ bool TDLModelFactory::isSegmentationModel(const ModelType model_type) {
           model_type == ModelType::YOLOV8_SEG ||
           model_type == ModelType::FASTSAM_SEG ||
           model_type == ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE);
+}
+
+bool TDLModelFactory::isDepthEstimationModel(const ModelType model_type) {
+  return (model_type == ModelType::DEPTH_ESTIMATION_STEREO);
 }
 
 bool TDLModelFactory::isFeatureExtractionModel(const ModelType model_type) {
@@ -368,6 +377,17 @@ std::shared_ptr<BaseModel> TDLModelFactory::createLaneDetectionModel(
     model = std::make_shared<LstrLane>();
   }
 #endif
+  return model;
+}
+
+std::shared_ptr<BaseModel> TDLModelFactory::createDepthEstimationModel(
+    const ModelType model_type) {
+  std::shared_ptr<BaseModel> model = nullptr;
+
+  if (model_type == ModelType::DEPTH_ESTIMATION_STEREO) {
+    model = std::make_shared<Stereo>();
+  }
+
   return model;
 }
 

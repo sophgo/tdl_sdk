@@ -1443,6 +1443,62 @@ int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
   return 0;
 }
 
+int32_t TDL_DepthStereo(TDLHandle handle, const TDLModel model_id,
+                        TDLImage left_image_handle, TDLImage right_image_handle,
+                        TDLDepthLogits *depth_logist) {
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+
+  TDLImageContext *left_image_context = (TDLImageContext *)left_image_handle;
+  TDLImageContext *right_image_context = (TDLImageContext *)right_image_handle;
+
+  if (left_image_context == nullptr || left_image_context->image == nullptr) {
+    LOGE("Invalid left image handle");
+    return -1;
+  }
+
+  if (right_image_context == nullptr || right_image_context->image == nullptr) {
+    LOGE("Invalid right image handle");
+    return -1;
+  }
+
+  // Create a vector of vectors for stereo input
+  std::vector<std::vector<std::shared_ptr<BaseImage>>> input_images;
+  std::vector<std::shared_ptr<BaseImage>> stereo_pair;
+  stereo_pair.push_back(left_image_context->image);
+  stereo_pair.push_back(right_image_context->image);
+  input_images.push_back(stereo_pair);
+
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(input_images, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+
+  if (outputs.empty()) {
+    LOGE("No output from model");
+    return -1;
+  }
+
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  if (output->getType() == ModelOutputType::DEPTH_ESTIMATION) {
+    ModelDepthInfo *depth_output = (ModelDepthInfo *)output.get();
+    depth_logist->w = depth_output->w;
+    depth_logist->h = depth_output->h;
+    depth_logist->logits = depth_output->logits;
+    // Transfer ownership to depth_logist
+    depth_output->logits = nullptr;
+  } else {
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
+    return -1;
+  }
+
+  return 0;
+}
+
 #if defined(__CV181X__) || defined(__CV184X__) || defined(__CV186X__)
 
 int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,

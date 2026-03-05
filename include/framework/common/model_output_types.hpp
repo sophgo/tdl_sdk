@@ -17,6 +17,7 @@ enum class ModelOutputType {
   OCR_INFO,
   ASR_INFO,
   VAD_INFO,
+  DEPTH_ESTIMATION,
   UNKOWN
 };
 
@@ -241,5 +242,25 @@ class ModelVADInfo : public ModelOutputInfo {
   bool has_segments = false;
   bool start_event = false;
   bool end_event = false;
+};
+
+class ModelDepthInfo : public ModelOutputInfo {
+ public:
+  ModelDepthInfo() : w(0), h(0), logits(nullptr) {}
+
+  ~ModelDepthInfo() {
+    if (logits != nullptr) {
+      free(logits);
+      logits = nullptr;
+    }
+  }
+
+  ModelOutputType getType() const override {
+    return ModelOutputType::DEPTH_ESTIMATION;
+  }
+
+  int w;
+  int h;
+  float *logits;
 };
 #endif

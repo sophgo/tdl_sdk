@@ -214,7 +214,7 @@ typedef struct {
 typedef struct {
   int w;
   int h;
-  int8_t *int_logits;
+  float *logits;
 } TDLDepthLogits;
 
 typedef struct {
