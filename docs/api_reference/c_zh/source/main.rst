@@ -302,6 +302,18 @@
    * - TDL_MODEL_FEATURE_BMFACE_R50
      - ResNet50 512维特征提取模型
 
+深度估计类模型列表
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - 模型名称
+     - 注释
+
+   * - TDL_MODEL_DEPTH_ESTIMATION_STEREO 
+     - 立体深度估计模型
+
 结构体参考
 ================
 
@@ -1070,7 +1082,7 @@ TDLDepthLogits
   typedef struct {
     int w;
     int h;
-    int8_t *int_logits;
+    float *logits;
   } TDLDepthLogits;
 
 【成员】
@@ -1087,7 +1099,7 @@ TDLDepthLogits
    * - h
      - 图像的高度
 
-   * - int_logits
+   * - logits
      - 深度估计信息
   
 TDLTrackerInfo
@@ -2301,7 +2313,8 @@ TDL_DepthStereo
 
   int32_t TDL_DepthStereo(TDLHandle handle,
                           const TDLModel model_id,
-                          TDLImage image_handle,
+                          TDLImage left_image_handle,
+                          TDLImage right_image_handle,
                           TDLDepthLogits *depth_logist);
 
 【描述】
@@ -2331,8 +2344,13 @@ TDL_DepthStereo
 
    * - 输入
      - TDLImage
-     - image_handle
-     - TDLImageHandle 对象
+     - left_image_handle
+     - 左图像 TDLImageHandle 对象
+
+   * - 输入
+     - TDLImage
+     - right_image_handle
+     - 右图像 TDLImageHandle 对象
 
    * - 输出
      - TDLDepthLogits\*

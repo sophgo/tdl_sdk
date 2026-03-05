@@ -253,6 +253,38 @@ int32_t VisualizText(int32_t x, int32_t y, char *text, char *input_path,
   return 0;
 }
 
+int32_t VisualizeDepthMap(TDLDepthLogits *depth_logits,
+                          const char *output_path) {
+  int width = depth_logits->w;
+  int height = depth_logits->h;
+  float *logits = depth_logits->logits;
+
+  if (!logits) {
+    LOGE("Depth logits is NULL\n");
+    return -1;
+  }
+
+  // 找到深度值的最小值和最大值用于归一化
+  float min_val = logits[0];
+  float max_val = logits[0];
+  for (int i = 1; i < width * height; i++) {
+    if (logits[i] < min_val) min_val = logits[i];
+    if (logits[i] > max_val) max_val = logits[i];
+  }
+
+  // 创建 float 类型的 Mat，包装原始数据
+  cv::Mat depth_map(height, width, CV_32FC1, logits);
+
+  // 归一化到 0-255
+  cv::Mat depth_map_vis;
+  cv::normalize(depth_map, depth_map_vis, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+
+  // 保存图像
+  cv::imwrite(output_path, depth_map_vis);
+
+  return 0;
+}
+
 #if defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
     defined(__CV183X__) || defined(__CV184X__) || defined(__CV186X__)
 typedef enum {

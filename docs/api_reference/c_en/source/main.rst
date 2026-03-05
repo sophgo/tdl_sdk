@@ -306,6 +306,17 @@ Feature extraction model list
    * - TDL_MODEL_FEATURE_BMFACE_R50
      - ResNet50 512-dimensional Feature Extraction Model
 
+Depth estimation model list
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Description
+
+   * - TDL_MODEL_DEPTH_ESTIMATION_STEREO 
+     - Stereo Depth Estimation Model
 
 Structure Reference
 ======================
@@ -1052,7 +1063,7 @@ Depth estimation data
   typedef struct {
     int w;
     int h;
-    int8_t *int_logits;
+    float *logits;
   } TDLDepthLogits;
 
 【Members】
@@ -1069,7 +1080,7 @@ Depth estimation data
    * - h
      - Image height
 
-   * - int_logits
+   * - logits
      - Depth estimation information
   
 TDLTrackerInfo
@@ -2282,7 +2293,8 @@ TDL_DepthStereo
 
   int32_t TDL_DepthStereo(TDLHandle handle,
                           const TDLModel model_id,
-                          TDLImage image_handle,
+                          TDLImage left_image_handle,
+                          TDLImage right_image_handle,
                           TDLDepthLogits *depth_logist);
 
 【Description】
@@ -2312,8 +2324,13 @@ Depth estimation based on stereo vision, outputting depth confidence map.
 
    * - Input
      - TDLImage
-     - image_handle
-     - TDLImageHandle object
+     - left_image_handle
+     - Left image TDLImageHandle object
+
+   * - Input
+     - TDLImage
+     - right_image_handle
+     - Right image TDLImageHandle object
 
    * - Output
      - TDLDepthLogits\*

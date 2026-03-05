@@ -130,6 +130,7 @@ class TDLModelFactory {
   bool isKeypointDetectionModel(const ModelType model_type);
   bool isClassificationModel(const ModelType model_type);
   bool isSegmentationModel(const ModelType model_type);
+  bool isDepthEstimationModel(const ModelType model_type);
   bool isFeatureExtractionModel(const ModelType model_type);
   bool isOCRModel(const ModelType model_type);
   bool isObjectTrackingModel(const ModelType model_type);
@@ -155,6 +156,8 @@ class TDLModelFactory {
   std::shared_ptr<BaseModel> createClassificationModel(
       const ModelType model_type);
   std::shared_ptr<BaseModel> createSegmentationModel(
+      const ModelType model_type);
+  std::shared_ptr<BaseModel> createDepthEstimationModel(
       const ModelType model_type);
   std::shared_ptr<BaseModel> createFeatureExtractionModel(
       const ModelType model_type);

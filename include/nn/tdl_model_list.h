@@ -114,6 +114,9 @@
   X(RECOGNITION_SPEECH_ZIPFORMER_JOINER, "zipformer joiner")                  \
                                                                               \
   /* voice activity detection */                                              \
-  X(VAD_FSMN, "fsmn voice activity detection")
+  X(VAD_FSMN, "fsmn voice activity detection")                                \
+                                                                              \
+  /* depth estimation */                                                      \
+  X(DEPTH_ESTIMATION_STEREO, "stereo depth estimation with two images")
 
 #endif
