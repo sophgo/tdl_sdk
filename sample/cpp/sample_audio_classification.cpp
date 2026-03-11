@@ -4,7 +4,7 @@
 #define AUDIOFORMATSIZE 2
 
 int main(int argc, char **argv) {
-  if (argc != 6) {
+  if (argc != 4) {
     printf("Usage: %s <model_id_name> <model_dir> <bin_data_path> ", argv[0]);
     return -1;
   }

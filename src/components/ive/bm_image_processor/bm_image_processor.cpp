@@ -487,7 +487,7 @@ int32_t BmImageProcessor::twoWayBlending(std::shared_ptr<BaseImage> &left,
   bm_status_t ret = tpu_2way_blending(
       handle_, &left_img, left_img_mem, &right_img, right_img_mem, &output_img,
       output_img_mem, overlay_lx, overlay_rx, wgt_mem,
-      TPU_BLEND_WGT_MODE::WGT_UV_SHARE, tpu_module_, func_id_blend_2way_);
+      TPU_BLEND_WGT_MODE::WGT_YUV_SHARE, tpu_module_, func_id_blend_2way_);
 
 #if defined(__CMODEL_CV184X__)
   // 将结果从设备内存拷贝回主机内存

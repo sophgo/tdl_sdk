@@ -243,8 +243,9 @@ void *run_sot_thread(void *args) {
             if (image) {
               printf("g_obj_meta.size = %d\n", g_obj_meta.size);
 
-              int ret = TDL_SetSingleObjectTracking(
-                  pstArgs->tdl_handle, image, &g_obj_meta, values, num_values);
+              int ret = TDL_SetSingleObjectTracking(pstArgs->tdl_handle, image,
+                                                    &g_obj_meta, values,
+                                                    num_values, TDL_REJECT);
               if (ret != 0) {
                 printf("TDL_SetSingleObjectTracking failed with %#x!\n", ret);
                 TDL_DestroyImage(image);
@@ -394,14 +395,14 @@ int main(int argc, char *argv[]) {
   }
 
   TDLModel det_model_id = TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE;
-  ret = TDL_OpenModel(tdl_handle, det_model_id, det_model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, det_model_id, det_model_path, NULL, 0);
   if (ret != 0) {
     printf("open detection model failed with %#x!\n", ret);
     goto exit1;
   }
 
   TDLModel sot_model_id = TDL_MODEL_TRACKING_FEARTRACK;
-  ret = TDL_OpenModel(tdl_handle, sot_model_id, sot_model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, sot_model_id, sot_model_path, NULL, 0);
   if (ret != 0) {
     printf("open sot model failed with %#x!\n", ret);
     goto exit2;

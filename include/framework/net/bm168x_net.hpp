@@ -17,10 +17,26 @@ class BM168xNet : public BaseNet {
   int32_t updateInputTensors() override;
   int32_t updateOutputTensors() override;
 
+  static int32_t getModelMemInfo(const std::string& model_file,
+                                 std::vector<uint64_t>& mem_addrs,
+                                 std::vector<uint32_t>& mem_sizes);
+  static int32_t getModelMemInfo(const void* model_buffer,
+                                 const uint32_t model_buffer_size,
+                                 std::vector<uint64_t>& mem_addrs,
+                                 std::vector<uint32_t>& mem_sizes);
+  uint32_t getIOTensorBytes() override;
+  int32_t setIOTensorMemory(uint64_t phy_addr, uint8_t* sys_mem,
+                            uint32_t size) override;
+
  private:
   TensorInfo extractTensorInfo(bool is_input, int idx);
+
   void updateTensorInfo(const std::string& name,
                         const std::shared_ptr<BaseTensor>& tensor);
+  int32_t loadModel();
+  int32_t updateMemoryInfo(const std::vector<uint64_t>& mem_addrs,
+                           const std::vector<uint32_t>& mem_sizes,
+                           void* mem_info_ptr);
   bm_handle_t bm_handle_;
   int store_mode_ = 0;
   void* p_bmrt_ = 0;

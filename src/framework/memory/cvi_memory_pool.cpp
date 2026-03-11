@@ -61,9 +61,11 @@ std::unique_ptr<MemoryBlock> CviMemoryPool::CreateExVb(uint32_t blk_cnt,
   uint32_t blk_size =
       COMMON_GetPicBufferSize(width, height, pix_fmt, DATA_BITWIDTH_8,
                               COMPRESS_MODE_NONE, DEFAULT_ALIGN);
+  char exvb_name[32];
+  sprintf(exvb_name, "%s_exvb", str_mem_pool_name_.c_str());
   CVI_S32 ret =
       CVI_SYS_IonAlloc(reinterpret_cast<CVI_U64 *>(&block->physicalAddress),
-                       &block->virtualAddress, "cvi_exvb", blk_size * blk_cnt);
+                       &block->virtualAddress, exvb_name, blk_size * blk_cnt);
   if (ret != CVI_SUCCESS) {
     std::cout << "CVI_SYS_IonAlloc failed! Mem size: " << blk_size * blk_cnt
               << std::endl;

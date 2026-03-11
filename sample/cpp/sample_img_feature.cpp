@@ -3,7 +3,7 @@
 
 void checkModelIdName(const std::string& model_id_name) {
   if (model_id_name != "FEATURE_CLIP_IMG" &&
-      model_id_name != "FEATURE_CLIP_TEXT" &&
+      model_id_name != "FEATURE_MOBILECLIP2_IMG" &&
       model_id_name != "FEATURE_BMFACE_R34" &&
       model_id_name != "FEATURE_BMFACE_R50" &&
       model_id_name != "FEATURE_CVIFACE") {

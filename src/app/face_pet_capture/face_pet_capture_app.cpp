@@ -1,4 +1,5 @@
 #include "face_pet_capture_app.hpp"
+#include <inttypes.h>
 #include <cstdio>
 #include <json.hpp>
 #include "app/app_data_types.hpp"
@@ -25,8 +26,9 @@ T getNodeData(const std::string &node_name, PtrFrameInfo &frame_info) {
 }
 
 FacePetCaptureApp::FacePetCaptureApp(const std::string &task_name,
-                                     const std::string &json_config)
-    : AppTask(task_name, json_config) {}
+                                     const std::string &json_config,
+                                     bool skip_input_alloc)
+    : AppTask(task_name, json_config, skip_input_alloc) {}
 
 int32_t FacePetCaptureApp::init() {
   std::string model_dir = json_config_.at("model_dir").get<std::string>();
@@ -79,6 +81,10 @@ int32_t FacePetCaptureApp::addPipeline(const std::string &pipeline_name,
       getSnapshotNode(get_config("snapshot_node", nodes_cfg)));
   face_capture_channel->addNode(getFeatureExtractionNode(
       get_config("feature_extraction_node", nodes_cfg)));
+  if (nodes_cfg.contains("clip_image_feature_node")) {
+    face_capture_channel->addNode(getClipImageFeatureNode(
+        get_config("clip_image_feature_node", nodes_cfg)));
+  }
   face_capture_channel->addNode(
       getFaceAttributeNode(get_config("face_attribute_node", nodes_cfg)));
 
@@ -117,11 +123,11 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
   face_pet_capture_result->frame_height = frame_info->frame_height;
   face_pet_capture_result->face_snapshots =
       getNodeData<std::vector<ObjectSnapshotInfo>>("snapshots", frame_info);
-  face_pet_capture_result->face_features =
-      getNodeData<std::map<uint64_t, std::vector<float>>>("face_features",
+  face_pet_capture_result->features =
+      getNodeData<std::map<uint64_t, std::vector<float>>>("features",
                                                           frame_info);
   face_pet_capture_result->face_attributes =
-      getNodeData<std::vector<std::map<TDLObjectAttributeType, float>>>(
+      getNodeData<std::map<uint64_t, std::map<TDLObjectAttributeType, float>>>(
           "face_attributes", frame_info);
   if (image == nullptr) {
     result = Packet::make(face_pet_capture_result);
@@ -143,6 +149,14 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
   return 0;
 }
 
+std::shared_ptr<ImageEncoder> FacePetCaptureApp::getImageEncoder(
+    const std::string &pipeline_name) {
+  return pipeline_channels_[pipeline_name]
+      ->getNode("snapshot_node")
+      ->getWorker()
+      ->get<std::shared_ptr<ObjectSnapshot>>()
+      ->getImageEncoder();
+}
 int32_t FacePetCaptureApp::release() {
   for (auto &channel : pipeline_channels_) {
     channel.second->stop();
@@ -240,8 +254,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getObjectDetectionNode(
 
     frame_info->node_data_["object_meta"] = Packet::make(object_meta->bboxes);
 
-    LOGI("frame id:%d, detecte object size: %d\n", frame_info->frame_id_,
-         object_meta->bboxes.size());
+    LOGI("frame id:%" PRIu64 ", detecte object size: %d\n",
+         frame_info->frame_id_, object_meta->bboxes.size());
 
     return 0;
   };
@@ -332,7 +346,7 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getTrackNode(
     tracker->track(bbox_infos, frame_info->frame_id_, track_results);
     frame_info->node_data_["track_results"] = Packet::make(track_results);
 
-    LOGI("frame id:%d, track size: %d\n", frame_info->frame_id_,
+    LOGI("frame id:%" PRIu64 ", track size: %d\n", frame_info->frame_id_,
          track_results.size());
 
     return 0;
@@ -437,7 +451,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
               landmark_detection_model->getPreprocessor();
 
           std::shared_ptr<BaseImage> crop_face_img = preprocessor->cropResize(
-              image, crop_x, crop_y, crop_w, crop_w, dst_width, dst_height);
+              image, crop_x, crop_y, crop_w, crop_w, dst_width, dst_height,
+              ImageFormat::YUV420SP_UV);
 
           crop_face_imgs[t.track_id_] = crop_face_img;
 
@@ -488,8 +503,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
     frame_info->node_data_["face_meta"] = Packet::make(face_infos);
     frame_info->node_data_["crop_face_imgs"] = Packet::make(crop_face_imgs);
 
-    LOGI("frame id:%d, crop_face_imgs size: %d\n", frame_info->frame_id_,
-         crop_face_imgs.size());
+    LOGI("frame id:%" PRIu64 ", crop_face_imgs size: %d\n",
+         frame_info->frame_id_, crop_face_imgs.size());
     return 0;
   };
   landmark_detection_node->setProcessFunc(lambda_func);
@@ -504,7 +519,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getLandmarkDetectionNode(
 
 std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
     const nlohmann::json &node_config) {
-  std::shared_ptr<ObjectSnapshot> snapshot = std::make_shared<ObjectSnapshot>();
+  std::shared_ptr<ObjectSnapshot> snapshot = std::make_shared<ObjectSnapshot>(
+      node_config["vechn"], node_config["encoder_mode"]);
   snapshot->updateConfig(node_config);
   std::shared_ptr<PipelineNode> snapshot_node =
       std::make_shared<PipelineNode>(Packet::make(snapshot));
@@ -523,9 +539,9 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
       return -1;
     }
 
-    std::map<uint64_t, ObjectBoxInfo> face_track_boxes;
-    std::vector<TrackerInfo> face_track_results;
-    std::map<uint64_t, float> face_qaulity_scores;
+    std::map<uint64_t, ObjectBoxInfo> track_boxes;
+    std::vector<TrackerInfo> select_track_results;
+    std::map<uint64_t, float> qaulity_scores;
     std::vector<float> face_landmarks;
     const std::vector<ObjectBoxLandmarkInfo> &rescale_face_infos =
         frame_info->node_data_["rescale_face_meta"]
@@ -534,6 +550,9 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
         frame_info->node_data_["face_meta"]
             .get<std::vector<ObjectBoxLandmarkInfo>>();
 
+    const std::vector<ObjectBoxInfo> &person_infos =
+        frame_info->node_data_["person_meta"].get<std::vector<ObjectBoxInfo>>();
+
     const std::vector<TrackerInfo> &track_results =
         frame_info->node_data_["track_results"].get<std::vector<TrackerInfo>>();
     const std::vector<float> &face_head_quality =
@@ -541,18 +560,19 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
 
     for (auto &t : track_results) {
       if (t.box_info_.object_type == OBJECT_TYPE_FACE) {
-        face_track_results.push_back(t);
+        select_track_results.push_back(t);
 
         if (t.obj_idx_ != -1) {
-          ObjectBoxLandmarkInfo face_info = rescale_face_infos[t.obj_idx_];
-          face_track_boxes[t.track_id_] =
+          ObjectBoxLandmarkInfo face_info = face_infos[t.obj_idx_];
+          track_boxes[t.track_id_] =
               ObjectBoxInfo(face_info.class_id, face_info.score, face_info.x1,
                             face_info.y1, face_info.x2, face_info.y2);
+          track_boxes[t.track_id_].object_type = OBJECT_TYPE_FACE;
           float vel = std::hypot(t.velocity_x_, t.velocity_y_);
 
           if (face_head_quality[t.obj_idx_] < 0.4 ||
               face_infos[t.obj_idx_].landmarks_score[0] < 0.4) {
-            face_qaulity_scores[t.track_id_] = -1.0f;  // skip directly
+            qaulity_scores[t.track_id_] = -1.0f;  // skip directly
           } else {
             std::map<std::string, float> other_info = {{"vel", vel},
                                                        {"blr", t.blurness}};
@@ -560,10 +580,22 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
             float face_quality = ObjectQualityHelper::getFaceQuality(
                 face_infos[t.obj_idx_], image->getWidth(), image->getHeight(),
                 other_info);
-            LOGI("track_id:%lu,frame_id:%lu,face_quality:%f\n", t.track_id_,
-                 frame_info->frame_id_, face_quality);
-            face_qaulity_scores[t.track_id_] = face_quality;
+            LOGI("track_id:%" PRIu64 ",frame_id:%" PRIu64 ",face_quality:%f\n",
+                 t.track_id_, frame_info->frame_id_, face_quality);
+            qaulity_scores[t.track_id_] = face_quality;
           }
+        }
+      } else if (snapshot->isCapturePerson()) {
+        select_track_results.push_back(t);
+
+        if (t.obj_idx_ != -1) {
+          float person_quality = ObjectQualityHelper::getPersonQuality(
+              person_infos[t.obj_idx_ - face_infos.size()], image->getWidth(),
+              image->getHeight());
+          qaulity_scores[t.track_id_] = person_quality;
+          track_boxes[t.track_id_] =
+              person_infos[t.obj_idx_ - face_infos.size()];
+          track_boxes[t.track_id_].object_type = OBJECT_TYPE_PERSON;
         }
       }
     }
@@ -574,24 +606,26 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getSnapshotNode(
 
     std::map<std::string, Packet> other_info;
     other_info["face_landmark"] = Packet::make(rescale_face_infos);
-    other_info["ori_face_meta"] = Packet::make(face_infos);
-    LOGI("to update snapshot,frame_id:%lu,face_track_boxes.size:%zu\n",
-         frame_info->frame_id_, face_track_boxes.size());
-    snapshot->updateSnapshot(image, frame_info->frame_id_, face_track_boxes,
-                             face_track_results, face_qaulity_scores,
-                             other_info, crop_face_imgs);
+
+    LOGI("to update snapshot,frame_id:%" PRIu64 ",track_boxes.size:%d\n",
+         frame_info->frame_id_, track_boxes.size());
+
+    snapshot->updateSnapshot(image, frame_info->frame_id_, track_boxes,
+                             select_track_results, qaulity_scores, other_info,
+                             crop_face_imgs);
 
     std::vector<ObjectSnapshotInfo> snapshots;
     snapshot->getSnapshotData(snapshots);
 
     for (auto &snapshot : snapshots) {
-      LOGI("snapshot_node,frame_id:%lu,track_id:%lu,quality:%f\n",
+      LOGI("snapshot_node,frame_id:%" PRIu64 ",track_id:" PRIu64
+           ",quality:%f\n",
            snapshot.snapshot_frame_id, snapshot.track_id, snapshot.quality);
     }
 
     frame_info->node_data_["snapshots"] = Packet::make(snapshots);
 
-    LOGI("snapshot_node,frame_id:%lu,snapshots.size:%zu update done\n",
+    LOGI("snapshot_node,frame_id:%" PRIu64 ",snapshots.size:%d update done\n",
          frame_info->frame_id_, snapshots.size());
     return 0;
   };
@@ -622,15 +656,23 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
             .get<std::vector<ObjectSnapshotInfo>>();
 
     std::vector<std::shared_ptr<BaseImage>> images = {};
+    std::vector<size_t> face_snapshots_index;
 
     for (size_t i = 0; i < snapshots_data.size(); i++) {
       ObjectSnapshotInfo snapshot_data = snapshots_data[i];
       std::shared_ptr<BaseImage> object_image = snapshot_data.object_image;
 
+      if (!object_image ||
+          snapshot_data.object_box_info.object_type == OBJECT_TYPE_PERSON) {
+        continue;
+      }
+
       if (snapshot_data.other_info.count("landmarks") == 0) {
         printf("failed to get landmarks\n");
         assert(false);
       }
+
+      face_snapshots_index.push_back(i);
 
       std::vector<float> landmarks =
           snapshot_data.other_info.at("landmarks").get<std::vector<float>>();
@@ -647,6 +689,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
     }
 
     frame_info->node_data_["align_faces"] = Packet::make(images);
+    frame_info->node_data_["face_snapshots_index"] =
+        Packet::make(face_snapshots_index);
 
     std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
     if (images.size() > 0) {
@@ -657,10 +701,11 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
       }
     }
 
-    std::map<uint64_t, std::vector<float>> face_features = {};
+    std::map<uint64_t, std::vector<float>> features = {};
 
-    for (size_t i = 0; i < snapshots_data.size(); i++) {
-      ObjectSnapshotInfo snapshot_data = snapshots_data[i];
+    for (size_t i = 0; i < images.size(); i++) {
+      ObjectSnapshotInfo snapshot_data =
+          snapshots_data[face_snapshots_index[i]];
 
       std::shared_ptr<ModelFeatureInfo> feature_meta =
           std::dynamic_pointer_cast<ModelFeatureInfo>(out_data[i]);
@@ -669,16 +714,16 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
       switch (feature_meta->embedding_type) {
         case TDLDataType::INT8: {
           int8_t *feature = reinterpret_cast<int8_t *>(feature_meta->embedding);
-          for (int32_t i = 0; i < feature_meta->embedding_num; ++i) {
-            feature_vec[i] = (float)feature[i];
+          for (int32_t j = 0; j < feature_meta->embedding_num; ++j) {
+            feature_vec[j] = (float)feature[j];
           }
           break;
         }
         case TDLDataType::UINT8: {
           uint8_t *feature =
               reinterpret_cast<uint8_t *>(feature_meta->embedding);
-          for (int32_t i = 0; i < feature_meta->embedding_num; ++i) {
-            feature_vec[i] = (float)feature[i];
+          for (int32_t j = 0; j < feature_meta->embedding_num; ++j) {
+            feature_vec[j] = (float)feature[j];
           }
           break;
         }
@@ -692,12 +737,12 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFeatureExtractionNode(
           assert(false && "Unsupported embedding_type");
       }
 
-      face_features[snapshot_data.track_id] = feature_vec;
+      features[snapshot_data.track_id] = feature_vec;
     }
 
-    frame_info->node_data_["face_features"] = Packet::make(face_features);
-    LOGI("frame_id:%lu,face_features size:%zu\n", frame_info->frame_id_,
-         face_features.size());
+    frame_info->node_data_["features"] = Packet::make(features);
+    LOGI("frame_id:%" PRIu64 ",features size:%d\n", frame_info->frame_id_,
+         features.size());
 
     return 0;
   };
@@ -731,6 +776,14 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFaceAttributeNode(
     auto images = frame_info->node_data_["align_faces"]
                       .get<std::vector<std::shared_ptr<BaseImage>>>();
 
+    const std::vector<ObjectSnapshotInfo> &snapshots_data =
+        frame_info->node_data_["snapshots"]
+            .get<std::vector<ObjectSnapshotInfo>>();
+
+    const std::vector<size_t> &face_snapshots_index =
+        frame_info->node_data_["face_snapshots_index"]
+            .get<std::vector<size_t>>();
+
     std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
     if (images.size() > 0) {
       int32_t ret = face_attribute_model->inference(images, out_data);
@@ -740,12 +793,14 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFaceAttributeNode(
       }
     }
 
-    std::vector<std::map<TDLObjectAttributeType, float>> face_attributes;
+    std::map<uint64_t, std::map<TDLObjectAttributeType, float>> face_attributes;
 
     for (size_t i = 0; i < images.size(); i++) {
       std::shared_ptr<ModelAttributeInfo> face_att_meta =
           std::dynamic_pointer_cast<ModelAttributeInfo>(out_data[i]);
-      face_attributes.push_back(face_att_meta->attributes);
+
+      face_attributes[snapshots_data[face_snapshots_index[i]].track_id] =
+          face_att_meta->attributes;
     }
 
     frame_info->node_data_["face_attributes"] = Packet::make(face_attributes);
@@ -760,4 +815,102 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getFaceAttributeNode(
   }
 
   return face_attribute_node;
+}
+
+std::shared_ptr<PipelineNode> FacePetCaptureApp::getClipImageFeatureNode(
+    const nlohmann::json &node_config) {
+  std::shared_ptr<BaseModel> image_feature_model = nullptr;
+  if (model_map_.count("clip_image_feature_extraction")) {
+    image_feature_model = model_map_["clip_image_feature_extraction"];
+  } else {
+    image_feature_model = TDLModelFactory::getInstance().getModel(
+        ModelType::FEATURE_MOBILECLIP2_IMG);
+    model_map_["clip_image_feature_extraction"] = image_feature_model;
+  }
+  std::shared_ptr<PipelineNode> image_feature_node =
+      node_factory_.createModelNode(image_feature_model);
+  image_feature_node->setName("clip_image_feature_node");
+
+  auto lambda_func = [](PtrFrameInfo &frame_info, Packet &packet) -> int32_t {
+    std::shared_ptr<BaseModel> image_feature_model =
+        packet.get<std::shared_ptr<BaseModel>>();
+    const std::vector<ObjectSnapshotInfo> &snapshots_data =
+        frame_info->node_data_["snapshots"]
+            .get<std::vector<ObjectSnapshotInfo>>();
+
+    std::vector<std::shared_ptr<BaseImage>> images;
+    std::vector<size_t> person_snapshots_index;
+
+    // 筛选出人物类型的快照
+    for (size_t i = 0; i < snapshots_data.size(); ++i) {
+      const auto &snapshot = snapshots_data[i];
+      if (snapshot.object_box_info.object_type == OBJECT_TYPE_PERSON &&
+          snapshot.object_image) {
+        images.push_back(snapshot.object_image);
+        person_snapshots_index.push_back(i);
+      }
+    }
+
+    // 批量推理提取特征
+    std::vector<std::shared_ptr<ModelOutputInfo>> out_data;
+    if (!images.empty()) {
+      int32_t ret = image_feature_model->inference(images, out_data);
+      if (ret != 0) {
+        LOGE("image feature extraction inference failed");
+        return -1;
+      }
+    }
+
+    // 获取现有特征字典并添加人物特征
+    auto features = frame_info->node_data_["features"]
+                        .get<std::map<uint64_t, std::vector<float>>>();
+
+    for (size_t i = 0; i < out_data.size(); ++i) {
+      auto feature_meta =
+          std::dynamic_pointer_cast<ModelFeatureInfo>(out_data[i]);
+      if (!feature_meta) continue;
+
+      std::vector<float> feature_vec(feature_meta->embedding_num);
+      // 处理不同数据类型的特征
+      switch (feature_meta->embedding_type) {
+        case TDLDataType::FP32: {
+          float *feature = reinterpret_cast<float *>(feature_meta->embedding);
+          std::memcpy(feature_vec.data(), feature,
+                      feature_meta->embedding_num * sizeof(float));
+          break;
+        }
+        case TDLDataType::INT8: {
+          int8_t *feature = reinterpret_cast<int8_t *>(feature_meta->embedding);
+          for (int32_t j = 0; j < feature_meta->embedding_num; ++j) {
+            feature_vec[j] = static_cast<float>(feature[j]);
+          }
+          break;
+        }
+        default:
+          LOGE("unsupported embedding type");
+          continue;
+      }
+
+      // 特征归一化
+      CommonUtils::normalize(feature_vec);
+
+      // 添加到特征字典
+      uint64_t track_id = snapshots_data[person_snapshots_index[i]].track_id;
+      features[track_id] = feature_vec;
+    }
+
+    frame_info->node_data_["features"] = Packet::make(features);
+    LOGI("frame_id:%" PRIu64 ",features size:%d\n", frame_info->frame_id_,
+         features.size());
+
+    return 0;
+  };
+  image_feature_node->setProcessFunc(lambda_func);
+
+  if (node_config.contains("config_thresh")) {
+    double thresh = node_config.at("config_thresh");
+    image_feature_model->setModelThreshold(thresh);
+  }
+
+  return image_feature_node;
 }

@@ -5,12 +5,16 @@
 #include "app/app_data_types.hpp"
 #include "common/common_types.hpp"
 #include "consumer_counting/consumer_counting_app.hpp"
+#include "face_pet_capture/face_pet_capture_app.hpp"
 #include "tdl_type_internal.hpp"
 #include "tdl_utils.h"
 #include "tracker/tracker_types.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
 #include "utils/tokenizer_bpe.hpp"
+#ifndef DISABLE_SPEECH_RECOGNITION
+#include "speech_recognition/zipformer_encoder.hpp"
+#endif
 
 static std::shared_ptr<BaseModel> get_model(TDLHandle handle,
                                             const TDLModel model_id) {
@@ -46,14 +50,15 @@ int32_t TDL_DestroyHandle(TDLHandle handle) {
   return 0;
 }
 
-TDLImage TDL_WrapFrame(void *frame, bool own_memory) {
+TDLImage TDL_WrapFrame(void *frame, bool own_memory, bool is_preprocessed) {
   if (frame == nullptr) {
     return nullptr;
   }
 
   // TODO(fuquan.ke): use own_memory to create VPSSFrame
   TDLImageContext *image_context = new TDLImageContext();
-  image_context->image = ImageFactory::wrapVPSSFrame(frame, own_memory);
+  image_context->image =
+      ImageFactory::wrapVPSSFrame(frame, own_memory, is_preprocessed);
   return (TDLImage)image_context;
 }
 
@@ -112,6 +117,17 @@ TDLImage TDL_ReadBin(const char *path, TDLDataTypeE data_type) {
   return (TDLImage)image_context;
 }
 
+TDLImage TDL_ReadAudioFrame(uint8_t *buffer, int frame_size) {
+  TDLImageContext *image_context = new TDLImageContext();
+
+  image_context->image = ImageFactory::createImage(
+      frame_size, 1, ImageFormat::GRAY, TDLDataType::UINT8, true);
+  uint8_t *data_buffer = image_context->image->getVirtualAddress()[0];
+  memcpy(data_buffer, buffer, frame_size);
+
+  return (TDLImage)image_context;
+}
+
 int32_t TDL_DestroyImage(TDLImage image_handle) {
   TDLImageContext *image_context = (TDLImageContext *)image_handle;
   if (image_context == nullptr) {
@@ -151,6 +167,53 @@ int32_t TDL_SetModelThreshold(TDLHandle handle, const TDLModel model_id,
   model->setModelThreshold(threshold);
   return 0;
 }
+
+int32_t TDL_GetPreprocessParameters(TDLHandle handle, const TDLModel model_id,
+                                    TDLPreprocessParams *pre_param) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+
+  if (pre_param == nullptr) {
+    LOGE("pre_param is null");
+    return -1;
+  }
+
+  // Get the C++ PreprocessParams
+  PreprocessParams cpp_pre_param;
+  int32_t ret = model->getPreprocessParameters(cpp_pre_param);
+  if (ret != 0) {
+    LOGE("Failed to get preprocess parameters");
+    return ret;
+  }
+
+  pre_param->dst_image_format =
+      convertImageFormat(cpp_pre_param.dst_image_format);
+  pre_param->dst_pixdata_type = convertDataType(cpp_pre_param.dst_pixdata_type);
+
+  pre_param->dst_width = cpp_pre_param.dst_width;
+  pre_param->dst_height = cpp_pre_param.dst_height;
+  pre_param->crop_x = cpp_pre_param.crop_x;
+  pre_param->crop_y = cpp_pre_param.crop_y;
+  pre_param->crop_width = cpp_pre_param.crop_width;
+  pre_param->crop_height = cpp_pre_param.crop_height;
+  pre_param->keep_aspect_ratio = cpp_pre_param.keep_aspect_ratio;
+
+  // Copy arrays
+  for (int i = 0; i < 3; i++) {
+    pre_param->mean[i] = cpp_pre_param.mean[i];
+    pre_param->scale[i] = cpp_pre_param.scale[i];
+  }
+
+  return 0;
+}
+
 int32_t TDL_LoadModelConfig(TDLHandle handle, const char *model_config_json) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
@@ -169,7 +232,8 @@ int32_t TDL_SetModelDir(TDLHandle handle, const char *model_dir) {
   return 0;
 }
 int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
-                      const char *model_path, const char *model_config_json) {
+                      const char *model_path, const char *model_config_json,
+                      const int vpss_dev) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
@@ -190,7 +254,7 @@ int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
 
   ModelConfig model_config = factory.getModelConfig(model_type);
   std::shared_ptr<BaseModel> model =
-      factory.getModel(model_type, str_model_path, model_config);
+      factory.getModel(model_type, str_model_path, model_config, vpss_dev);
   if (model == nullptr) {
     return -1;
   }
@@ -201,7 +265,8 @@ int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
 int32_t TDL_OpenModelFromBuffer(TDLHandle handle, const TDLModel model_id,
                                 const uint8_t *model_buffer,
                                 uint32_t model_buffer_size,
-                                const char *model_config_json) {
+                                const char *model_config_json,
+                                const int vpss_dev) {
   TDLContext *context = (TDLContext *)handle;
   if (context->models.find(model_id) != context->models.end()) {
     return 0;
@@ -214,8 +279,9 @@ int32_t TDL_OpenModelFromBuffer(TDLHandle handle, const TDLModel model_id,
   }
 
   ModelConfig model_config = factory.getModelConfig(model_type);
-  std::shared_ptr<BaseModel> model = factory.getModel(
-      model_type, model_buffer, model_buffer_size, model_config);
+  std::shared_ptr<BaseModel> model =
+      factory.getModel(model_type, model_buffer, model_buffer_size,
+                       model_config, {}, {}, vpss_dev);
   if (model == nullptr) {
     return -1;
   }
@@ -245,6 +311,7 @@ int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
   std::vector<std::shared_ptr<BaseImage>> images;
   TDLImageContext *image_context = (TDLImageContext *)image_handle;
   images.push_back(image_context->image);
+
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   int32_t ret = model->inference(images, outputs);
   if (ret != 0) {
@@ -638,6 +705,8 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
   if (object_meta->size != 0) {
     for (int32_t i = 0; i < object_meta->size; i++) {
       std::shared_ptr<BaseImage> target_img;
+      int32_t img_width = (int32_t)image_context->image->getWidth();
+      int32_t img_height = (int32_t)image_context->image->getHeight();
       int32_t width = (int32_t)object_meta->info[i].box.x2 -
                       (int32_t)object_meta->info[i].box.x1;
       int32_t height = (int32_t)object_meta->info[i].box.y2 -
@@ -649,6 +718,15 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
           (int32_t)object_meta->info[i].box.x1 - (new_width - width) / 2;
       int32_t crop_y =
           (int32_t)object_meta->info[i].box.y1 - (new_height - height) / 2;
+
+      //边界控制：保证整个裁剪框在图像内部
+      if (crop_x < 0) crop_x = 0;
+      if (crop_y < 0) crop_y = 0;
+      if (crop_x + new_width > img_width)
+        crop_x = std::max(0, img_width - new_width);
+      if (crop_y + new_height > img_height)
+        crop_y = std::max(0, img_height - new_height);
+
       target_img = preprocessor->crop(image_context->image, crop_x, crop_y,
                                       new_width, new_height);
       images.push_back(target_img);
@@ -1006,7 +1084,7 @@ int32_t TDL_LaneDetection(TDLHandle handle, const TDLModel model_id,
 }
 
 int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
-                                 TDLImage image_handle, TDLOcr *char_meta) {
+                                 TDLImage image_handle, TDLText *text_meta) {
   std::shared_ptr<BaseModel> model = get_model(handle, model_id);
   if (model == nullptr) {
     return -1;
@@ -1022,9 +1100,9 @@ int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
   std::shared_ptr<ModelOutputInfo> output = outputs[0];
   if (output->getType() == ModelOutputType::OCR_INFO) {
     ModelOcrInfo *char_output = (ModelOcrInfo *)output.get();
-    TDL_InitCharacterMeta(char_meta, char_output->length);
-    char_meta->size = char_output->length;
-    char_meta->text_info = char_output->text_info;
+    TDL_InitCharacterMeta(text_meta, char_output->length);
+    text_meta->size = char_output->length;
+    text_meta->text_info = char_output->text_info;
     char_output->text_info = NULL;
   } else {
     LOGE("Unsupported model output type: %d",
@@ -1034,6 +1112,138 @@ int32_t TDL_CharacterRecognition(TDLHandle handle, const TDLModel model_id,
 
   return 0;
 }
+
+int32_t TDL_VoiceActivityDetection(TDLHandle handle, const TDLModel model_id,
+                                   TDLImage image_handle, int is_final,
+                                   TDLVAD *vad_meta) {
+  if (vad_meta == nullptr) return -1;
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+  if (image_context == nullptr || image_context->image == nullptr) {
+    return -1;
+  }
+
+  std::shared_ptr<ModelOutputInfo> output_info;
+  std::map<std::string, float> params;
+  params["is_final"] = (is_final != 0) ? 1.0f : 0.0f;
+  int32_t ret = model->inference(image_context->image, output_info, params);
+  if (ret != 0) return ret;
+  if (!output_info || output_info->getType() != ModelOutputType::VAD_INFO) {
+    LOGE("Unsupported model output type: %d",
+         output_info ? static_cast<int>(output_info->getType()) : -1);
+    return -1;
+  }
+
+  std::shared_ptr<ModelVADInfo> vad_out =
+      std::static_pointer_cast<ModelVADInfo>(output_info);
+
+  // 展平 segments：按 batch->segments 遍历
+  std::vector<TDLVadSegment> segs;
+  for (const auto &batch_segments : vad_out->segments) {
+    for (const auto &seg : batch_segments) {
+      if (seg.size() < 2) continue;
+      TDLVadSegment s;
+      s.start_ms = seg[0];
+      s.end_ms = seg[1];
+      segs.push_back(s);
+    }
+  }
+
+  TDL_InitVADMeta(vad_meta, (int)segs.size());
+  vad_meta->has_speech = !segs.empty();
+  vad_meta->start_event = vad_out->start_event;
+  vad_meta->end_event = vad_out->end_event;
+  for (size_t i = 0; i < segs.size(); ++i) {
+    vad_meta->segments[i] = segs[i];
+  }
+
+  return 0;
+}
+
+#ifndef DISABLE_SPEECH_RECOGNITION
+int32_t TDL_SpeechRecognition_Init(TDLHandle handle,
+                                   const TDLModel model_id_encoder,
+                                   const TDLModel model_id_decoder,
+                                   const TDLModel model_id_joiner,
+                                   const char *tokens_path) {
+  std::shared_ptr<BaseModel> encoder_model =
+      get_model(handle, model_id_encoder);
+  if (encoder_model == nullptr) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> decoder_model =
+      get_model(handle, model_id_decoder);
+  if (decoder_model == nullptr) {
+    return -1;
+  }
+  std::shared_ptr<BaseModel> joiner_model = get_model(handle, model_id_joiner);
+  if (joiner_model == nullptr) {
+    return -1;
+  }
+
+  if (model_id_encoder ==
+      TDLModel::TDL_MODEL_RECOGNITION_SPEECH_ZIPFORMER_ENCODER) {
+    std::shared_ptr<ZipformerEncoder> asr_model =
+        std::dynamic_pointer_cast<ZipformerEncoder>(encoder_model);
+
+    asr_model->setTokensPath(std::string(tokens_path));
+    asr_model->setModel(decoder_model, joiner_model);
+
+  } else {  // other asr model
+    LOGE("Unsupported encoder model type: %d", model_id_encoder);
+    return -1;
+  }
+
+  return 0;
+}
+
+int32_t TDL_SpeechRecognition(TDLHandle handle, const TDLModel model_id_encoder,
+                              TDLImage image_handle, TDLText *text_meta) {
+  std::shared_ptr<BaseModel> encoder_model =
+      get_model(handle, model_id_encoder);
+  if (encoder_model == nullptr) {
+    return -1;
+  }
+
+  TDLContext *context = (TDLContext *)handle;
+  if (context->asr_meta == nullptr) {
+    context->asr_meta = std::make_shared<ModelASRInfo>();
+  }
+
+  if (!text_meta->text_info) {
+    free(text_meta->text_info);
+    text_meta->text_info = NULL;
+  }
+
+  std::shared_ptr<ModelOutputInfo> output_data =
+      std::static_pointer_cast<ModelOutputInfo>(context->asr_meta);
+
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+
+  if (model_id_encoder ==
+      TDLModel::TDL_MODEL_RECOGNITION_SPEECH_ZIPFORMER_ENCODER) {
+    std::shared_ptr<ZipformerEncoder> asr_model =
+        std::dynamic_pointer_cast<ZipformerEncoder>(encoder_model);
+
+    asr_model->inference(image_context->image, output_data);
+
+  } else {  // other asr model
+    LOGE("Unsupported encoder model type: %d", model_id_encoder);
+    return -1;
+  }
+
+  if (context->asr_meta->text_info) {
+    text_meta->text_info =
+        (char *)malloc(strlen(context->asr_meta->text_info) + 1);
+    strcpy(text_meta->text_info, context->asr_meta->text_info);
+  }
+
+  return 0;
+}
+#endif
 
 int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
                      TDLObject *obj_meta, TDLTracker *track_meta) {
@@ -1095,7 +1305,7 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
 
 int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
                                     TDLObject *object_meta, int *set_values,
-                                    int size) {
+                                    int size, TDLTargetSearchTypeE frame_type) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
@@ -1132,8 +1342,8 @@ int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
   }
 
   if (size == 2) {
-    return context->tracker->initialize(image_context->image, bboxes,
-                                        set_values[0], set_values[1]);
+    return context->tracker->initialize(
+        image_context->image, bboxes, set_values[0], set_values[1], frame_type);
 
   } else if (size == 4) {
     ObjectBoxInfo init_bbox;
@@ -1143,8 +1353,8 @@ int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
     init_bbox.y2 = set_values[3];
     init_bbox.score = 1.0f;
 
-    return context->tracker->initialize(image_context->image, bboxes,
-                                        init_bbox);
+    return context->tracker->initialize(image_context->image, bboxes, init_bbox,
+                                        frame_type);
   } else {
     LOGE("set_values size should be 1 or 2 or 4, but got %d", size);
     return -1;
@@ -1224,7 +1434,7 @@ int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
   return 0;
 }
 
-#if defined(__CV181X__) || defined(__CV184X__)
+#if defined(__CV181X__) || defined(__CV184X__) || defined(__CV186X__)
 
 int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
                             TDLImage detect_image, TDLObject *roi,
@@ -1317,13 +1527,14 @@ int32_t TDL_MotionDetection(TDLHandle handle, TDLImage background,
 
 #endif
 
+#ifndef DISABLE_APP_PIPELINE
 /*******************************************
  *          APP API implementation         *
  *******************************************/
 
 int32_t TDL_APP_Init(TDLHandle handle, const char *task,
                      const char *config_file, char ***channel_names,
-                     uint8_t *channel_size) {
+                     uint8_t *channel_size, bool skip_input_alloc) {
   TDLContext *context = (TDLContext *)handle;
   int ret = 0;
   if (context == nullptr) {
@@ -1331,7 +1542,8 @@ int32_t TDL_APP_Init(TDLHandle handle, const char *task,
   }
 
   if (context->app_task == nullptr) {
-    context->app_task = AppFactory::createAppTask(task, config_file);
+    context->app_task =
+        AppFactory::createAppTask(task, config_file, skip_input_alloc);
     if (context->app_task == nullptr) {
       LOGE("Failed to create app_task\n");
       return -1;
@@ -1436,6 +1648,17 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
       context->app_task->isExternalFrameChannel(std::string(channel_name))) {
     LOGE("only one of TDLImage and video_node should be set!");
     return -1;
+  }
+
+  if (context->encoder == nullptr) {
+    context->encoder =
+        (std::dynamic_pointer_cast<FacePetCaptureApp>(context->app_task))
+            ->getImageEncoder(std::string(channel_name));
+
+    if (context->encoder == nullptr) {
+      LOGE("Failed to get image encoder\n");
+      return -1;
+    }
   }
 
   Packet result;
@@ -1543,6 +1766,8 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
            capture_info->snapshot_size * sizeof(TDLSnapshotInfo));
     capture_info->features =
         (TDLFeature *)malloc(capture_info->snapshot_size * sizeof(TDLFeature));
+    memset(capture_info->features, 0,
+           capture_info->snapshot_size * sizeof(TDLFeature));
 
     for (int i = 0; i < capture_info->snapshot_size; i++) {
       capture_info->snapshot_info[i].quality =
@@ -1551,8 +1776,8 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
           ori_capture_info->face_snapshots[i].snapshot_frame_id;
       capture_info->snapshot_info[i].track_id =
           ori_capture_info->face_snapshots[i].track_id;
-      std::vector<float> feature = ori_capture_info->face_features.at(
-          ori_capture_info->face_snapshots[i].track_id);
+      capture_info->snapshot_info[i].pair_track_id =
+          ori_capture_info->face_snapshots[i].pair_track_id;
 
       if (ori_capture_info->face_snapshots[i].object_image) {
         TDLImageContext *object_image_context = new TDLImageContext();
@@ -1560,39 +1785,98 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
             ori_capture_info->face_snapshots[i].object_image;
         capture_info->snapshot_info[i].object_image =
             (TDLImage)object_image_context;
-      }
 
-      auto face_attribute = ori_capture_info->face_attributes[i];
-      capture_info->snapshot_info[i].male =
-          face_attribute
-                      [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER] >
-                  0.5
-              ? 1
-              : 0;
-      capture_info->snapshot_info[i].glass =
-          face_attribute
-                      [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GLASSES] >
-                  0.5
-              ? 1
-              : 0;
-      capture_info->snapshot_info[i].age =
-          (int)(face_attribute
-                    [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
-                100);
-      capture_info->snapshot_info[i].emotion = (int)face_attribute
-          [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION];
+        capture_info->snapshot_info[i].ori_box.x1 =
+            ori_capture_info->face_snapshots[i].object_box_info.x1;
+        capture_info->snapshot_info[i].ori_box.y1 =
+            ori_capture_info->face_snapshots[i].object_box_info.y1;
+        capture_info->snapshot_info[i].ori_box.x2 =
+            ori_capture_info->face_snapshots[i].object_box_info.x2;
+        capture_info->snapshot_info[i].ori_box.y2 =
+            ori_capture_info->face_snapshots[i].object_box_info.y2;
 
-      if (feature.size() == 0) {
-        LOGE("face feature size = 0!\n");
-        return -1;
-      }
+        if (ori_capture_info->face_snapshots[i].encoded_full_image.size()) {
+          if (!capture_info->snapshot_info[i].encoded_full_image) {
+            capture_info->snapshot_info[i].encoded_full_image =
+                (uint8_t *)malloc(ori_capture_info->face_snapshots[i]
+                                      .encoded_full_image.size() *
+                                  sizeof(uint8_t));
+          }
+          memcpy(capture_info->snapshot_info[i].encoded_full_image,
+                 ori_capture_info->face_snapshots[i].encoded_full_image.data(),
+                 ori_capture_info->face_snapshots[i].encoded_full_image.size());
+          capture_info->snapshot_info[i].full_length =
+              ori_capture_info->face_snapshots[i].encoded_full_image.size();
+        }
 
-      capture_info->features[i].size = feature.size();
-      capture_info->features[i].type = TDL_TYPE_INT8;
-      capture_info->features[i].ptr =
-          (int8_t *)malloc(feature.size() * sizeof(int8_t));
-      for (int j = 0; j < feature.size(); j++) {
-        capture_info->features[i].ptr[j] = (int)feature[j];
+        if (ori_capture_info->face_snapshots[i].object_box_info.object_type !=
+            TDLObjectType::OBJECT_TYPE_FACE) {
+          capture_info->snapshot_info[i].object_type =
+              TDLObjectTypeE::TDL_OBJECT_TYPE_PERSON;
+
+          if (ori_capture_info->features.count(
+                  ori_capture_info->face_snapshots[i].track_id) != 0) {
+            std::vector<float> feature = ori_capture_info->features.at(
+                ori_capture_info->face_snapshots[i].track_id);
+
+            if (feature.size() == 0) {
+              LOGE("person image feature size = 0!\n");
+              return -1;
+            }
+            capture_info->features[i].size = feature.size();
+            capture_info->features[i].type = TDL_TYPE_FP32;
+            // 将 float* 转换改为 int8_t*，匹配 ptr 的类型声明
+            capture_info->features[i].ptr =
+                (int8_t *)malloc(feature.size() * sizeof(float));
+            memcpy(capture_info->features[i].ptr, feature.data(),
+                   feature.size() * sizeof(float));
+          }
+          continue;
+        } else {
+          capture_info->snapshot_info[i].object_type =
+              TDLObjectTypeE::TDL_OBJECT_TYPE_FACE;
+        }
+
+        if (ori_capture_info->features.count(
+                ori_capture_info->face_snapshots[i].track_id) == 0) {
+          LOGE("face feature not found!\n");
+          return -1;
+        }
+
+        std::vector<float> feature = ori_capture_info->features.at(
+            ori_capture_info->face_snapshots[i].track_id);
+
+        if (feature.size() == 0) {
+          LOGE("face feature size = 0!\n");
+          return -1;
+        }
+
+        capture_info->features[i].size = feature.size();
+        capture_info->features[i].type = TDL_TYPE_INT8;
+        capture_info->features[i].ptr =
+            (int8_t *)malloc(feature.size() * sizeof(int8_t));
+        for (int j = 0; j < feature.size(); j++) {
+          capture_info->features[i].ptr[j] = (int)feature[j];
+        }
+
+        auto face_attribute = ori_capture_info->face_attributes.at(
+            ori_capture_info->face_snapshots[i].track_id);
+        capture_info->snapshot_info[i].male =
+            face_attribute[TDLObjectAttributeType::
+                               OBJECT_ATTRIBUTE_HUMAN_GENDER] > 0.5
+                ? 1
+                : 0;
+        capture_info->snapshot_info[i].glass =
+            face_attribute[TDLObjectAttributeType::
+                               OBJECT_ATTRIBUTE_HUMAN_GLASSES] > 0.5
+                ? 1
+                : 0;
+        capture_info->snapshot_info[i].age =
+            (int)(face_attribute
+                      [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_AGE] *
+                  100);
+        capture_info->snapshot_info[i].emotion = (int)face_attribute
+            [TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_EMOTION];
       }
     }
   }
@@ -1671,6 +1955,8 @@ int32_t TDL_APP_ObjectCounting(TDLHandle handle, const char *channel_name,
           consumer_counting_result->object_boxes[i].y2;
       object_counting_info->object_meta.info[i].score =
           consumer_counting_result->object_boxes[i].score;
+      object_counting_info->object_meta.info[i].class_id =
+          consumer_counting_result->object_boxes[i].class_id;
       object_counting_info->object_meta.info[i].is_cross = false;
     }
   }
@@ -1728,3 +2014,188 @@ int32_t TDL_APP_ObjectCountingSetLine(TDLHandle handle,
     return -1;
   }
 }
+
+int32_t TDL_APP_FallDetection(TDLHandle handle, const char *channel_name,
+                              TDLCaptureInfo *capture_info) {
+  TDLContext *context = (TDLContext *)handle;
+  int ret = 0;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->app_task == nullptr) {
+    LOGE("app_task is not init\n");
+    return -1;
+  }
+
+  int processing_channel_num = context->app_task->getProcessingChannelNum();
+  if (processing_channel_num == 0) {
+    printf("no processing channel\n");
+    return 2;
+  }
+  if ((context->app_task->getChannelNodeName(std::string(channel_name), 0) ==
+       "video_node") ==
+      context->app_task->isExternalFrameChannel(std::string(channel_name))) {
+    LOGE("only one of TDLImage and video_node should be set!");
+    return -1;
+  }
+
+  Packet result;
+  ret = context->app_task->getResult(std::string(channel_name), result);
+  if (ret != 0) {
+    printf("get result failed\n");
+    context->app_task->removeChannel(std::string(channel_name));
+    return 1;
+  }
+
+  std::shared_ptr<FallDetectionResult> det_info =
+      result.get<std::shared_ptr<FallDetectionResult>>();
+  if (det_info == nullptr) {
+    printf("det_info is nullptr\n");
+    return 1;
+  }
+
+  capture_info->frame_id = det_info->frame_id;
+  capture_info->frame_width = det_info->frame_width;
+  capture_info->frame_height = det_info->frame_height;
+
+  if (det_info->image) {
+    TDLImageContext *image_context = new TDLImageContext();
+    image_context->image = det_info->image;
+    capture_info->image = (TDLImage)image_context;
+  }
+
+  if (det_info->person_boxes_keypoints.size() <= 0) {
+    LOGI("person_boxes_keypoints.size() is 0\n");
+    return 0;
+  }
+
+  TDL_InitObjectMeta(&capture_info->person_meta,
+                     det_info->person_boxes_keypoints.size(),
+                     det_info->person_boxes_keypoints[0].landmarks_x.size());
+  for (int i = 0; i < det_info->person_boxes_keypoints.size(); i++) {
+    capture_info->person_meta.info[i].box.x1 =
+        det_info->person_boxes_keypoints[i].x1;
+    capture_info->person_meta.info[i].box.y1 =
+        det_info->person_boxes_keypoints[i].y1;
+    capture_info->person_meta.info[i].box.x2 =
+        det_info->person_boxes_keypoints[i].x2;
+    capture_info->person_meta.info[i].box.y2 =
+        det_info->person_boxes_keypoints[i].y2;
+    capture_info->person_meta.info[i].class_id =
+        det_info->person_boxes_keypoints[i].class_id;
+    capture_info->person_meta.info[i].score =
+        det_info->person_boxes_keypoints[i].score;
+
+    for (size_t j = 0;
+         j < det_info->person_boxes_keypoints[i].landmarks_x.size(); j++) {
+      capture_info->person_meta.info[i].landmark_properity[j].x =
+          det_info->person_boxes_keypoints[i].landmarks_x[j];
+      capture_info->person_meta.info[i].landmark_properity[j].y =
+          det_info->person_boxes_keypoints[i].landmarks_y[j];
+      capture_info->person_meta.info[i].landmark_properity[j].score =
+          det_info->person_boxes_keypoints[i].landmarks_score[j];
+    }
+  }
+
+  for (auto &t : det_info->track_results) {
+    if (t.obj_idx_ != -1) {
+      capture_info->person_meta.info[t.obj_idx_].falling =
+          bool(det_info->det_results.at(t.track_id_));
+      capture_info->person_meta.info[t.obj_idx_].track_id = t.track_id_;
+    }
+  }
+  return 0;
+}
+
+int32_t TDL_APP_HumanPoseSmooth(TDLHandle handle, const char *channel_name,
+                                TDLCaptureInfo *capture_info) {
+  TDLContext *context = (TDLContext *)handle;
+  int ret = 0;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->app_task == nullptr) {
+    LOGE("app_task is not init\n");
+    return -1;
+  }
+
+  int processing_channel_num = context->app_task->getProcessingChannelNum();
+  if (processing_channel_num == 0) {
+    printf("no processing channel\n");
+    return 2;
+  }
+  if ((context->app_task->getChannelNodeName(std::string(channel_name), 0) ==
+       "video_node") ==
+      context->app_task->isExternalFrameChannel(std::string(channel_name))) {
+    LOGE("only one of TDLImage and video_node should be set!");
+    return -1;
+  }
+
+  Packet result;
+  ret = context->app_task->getResult(std::string(channel_name), result);
+  if (ret != 0) {
+    printf("get result failed\n");
+    context->app_task->removeChannel(std::string(channel_name));
+    return 1;
+  }
+
+  std::shared_ptr<HumanPoseResult> det_info =
+      result.get<std::shared_ptr<HumanPoseResult>>();
+  if (det_info == nullptr) {
+    printf("det_info is nullptr\n");
+    return 1;
+  }
+
+  capture_info->frame_id = det_info->frame_id;
+  capture_info->frame_width = det_info->frame_width;
+  capture_info->frame_height = det_info->frame_height;
+
+  if (det_info->image) {
+    TDLImageContext *image_context = new TDLImageContext();
+    image_context->image = det_info->image;
+    capture_info->image = (TDLImage)image_context;
+  }
+
+  if (det_info->person_boxes_keypoints.size() <= 0) {
+    LOGI("person_boxes_keypoints.size() is 0\n");
+    return 0;
+  }
+
+  TDL_InitObjectMeta(&capture_info->person_meta,
+                     det_info->person_boxes_keypoints.size(),
+                     det_info->person_boxes_keypoints[0].landmarks_x.size());
+  for (int i = 0; i < det_info->person_boxes_keypoints.size(); i++) {
+    capture_info->person_meta.info[i].box.x1 =
+        det_info->person_boxes_keypoints[i].x1;
+    capture_info->person_meta.info[i].box.y1 =
+        det_info->person_boxes_keypoints[i].y1;
+    capture_info->person_meta.info[i].box.x2 =
+        det_info->person_boxes_keypoints[i].x2;
+    capture_info->person_meta.info[i].box.y2 =
+        det_info->person_boxes_keypoints[i].y2;
+    capture_info->person_meta.info[i].class_id =
+        det_info->person_boxes_keypoints[i].class_id;
+    capture_info->person_meta.info[i].score =
+        det_info->person_boxes_keypoints[i].score;
+
+    for (size_t j = 0;
+         j < det_info->person_boxes_keypoints[i].landmarks_x.size(); j++) {
+      capture_info->person_meta.info[i].landmark_properity[j].x =
+          det_info->person_boxes_keypoints[i].landmarks_x[j];
+      capture_info->person_meta.info[i].landmark_properity[j].y =
+          det_info->person_boxes_keypoints[i].landmarks_y[j];
+      capture_info->person_meta.info[i].landmark_properity[j].score =
+          det_info->person_boxes_keypoints[i].landmarks_score[j];
+    }
+  }
+
+  for (auto &t : det_info->track_results) {
+    if (t.obj_idx_ != -1) {
+      capture_info->person_meta.info[t.obj_idx_].track_id = t.track_id_;
+    }
+  }
+
+  return 0;
+}
+
+#endif

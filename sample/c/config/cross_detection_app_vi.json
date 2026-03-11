@@ -1,6 +1,7 @@
 {
   "model_dir": "./models/",
-  "frame_buffer_size": 1,
+  "model_config": "./configs/model/model_factory.json",
+  "frame_buffer_size": 0,
   "pipelines": [
     {
       "name": "cross_detection",

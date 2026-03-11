@@ -1,7 +1,9 @@
 #ifndef _RTSP_UTILS_H_
 #define _RTSP_UTILS_H_
 
+#if !defined(__BM168X__)
 #include <cvi_comm_video.h>
+#endif
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,34 +15,14 @@ extern "C" {
 
 #define QUEUE_SIZE 8
 
+#if !defined(__BM168X__)
 typedef struct {
   int32_t chn;
   PAYLOAD_TYPE_E pay_load_type;
   int32_t frame_width;
   int32_t frame_height;
 } RtspContext;
-
-typedef enum {
-  IMAGE_GRAY = 0,
-  IMAGE_RGB_PLANAR,
-  IMAGE_RGB_PACKED,
-  IMAGE_BGR_PLANAR,
-  IMAGE_BGR_PACKED,
-  IMAGE_YUV420SP_UV,  // NV12,semi-planar,one Y plane,one interleaved UV
-                      // plane,size = width * height * 1.5
-  IMAGE_YUV420SP_VU,  // NV21,semi-planar,one Y plane,one interleaved VU
-                      // plane,size = width * height * 1.5
-  IMAGE_YUV420P_UV,   // I420,planar,one Y plane(w*h),one U
-                      // plane(w/2*h/2),one V plane(w/2*h/2),size = width *
-                      // height * 1.5
-  IMAGE_YUV420P_VU,   // YV12,size = width * height * 1.5
-  IMAGE_YUV422P_UV,   // I422_16,size = width * height * 2
-  IMAGE_YUV422P_VU,   // YV12_16,size = width * height * 2
-  IMAGE_YUV422SP_UV,  // NV16,size = width * height * 2
-  IMAGE_YUV422SP_VU,  // NV61,size = width * height * 2
-
-  TDL_IMAGE_UNKOWN
-} ImageFormatE;
+#endif
 
 typedef struct {
   TDLImage queue[QUEUE_SIZE];
@@ -48,6 +30,9 @@ typedef struct {
   int rear;
   int count;
   pthread_mutex_t mutex;
+  pthread_cond_t cond_full;
+  pthread_cond_t cond_empty;
+  int to_exit;
 } ImageQueue;
 
 /**
@@ -63,6 +48,13 @@ void InitQueue(ImageQueue *q);
  * @param q 图像队列
  */
 void DestroyQueue(ImageQueue *q);
+
+/**
+ * @brief 退出图像队列，唤醒所有等待线程
+ *
+ * @param q 图像队列
+ */
+void ExitQueue(ImageQueue *q);
 
 /**
  * @brief 从图像队列中获取图像
@@ -118,7 +110,6 @@ int32_t ReleaseCameraFrame(TDLHandle handle, int chn);
  * @return 成功返回 0，失败返回-1
  */
 int32_t DestoryCamera(TDLHandle handle);
-#endif
 
 /**
  * @brief 发送图像到RTSP服务器
@@ -128,6 +119,26 @@ int32_t DestoryCamera(TDLHandle handle);
  * @return 成功返回 0，失败返回-1
  */
 int32_t SendFrameRTSP(VIDEO_FRAME_INFO_S *frame, RtspContext *rtsp_context);
+
+/**
+ * @brief 将frame图像保存为图片文件
+ *
+ * @param filename 文件路径
+ * @param pstVideoFrame frame图像
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t DumpFrame(char *filename, VIDEO_FRAME_INFO_S *pstVideoFrame);
+
+#endif
+
+/**
+ * @brief 获取视频文件的一帧图像
+ *
+ * @param handle 已初始化的 TDLHandle 对象，通过 TDL_CreateHandle 创建
+ * @param video_path 视频文件路径
+ * @return 返回包装的TDLImageHandle对象, 如果失败返回 NULL
+ */
+TDLImage GetVideoFrame(TDLHandle handle, const char *video_path);
 
 #ifdef __cplusplus
 }

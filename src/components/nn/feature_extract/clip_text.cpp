@@ -29,6 +29,7 @@ int32_t Clip_Text::inference(
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas,
     const std::map<std::string, float> &parameters) {
   for (auto &image : images) {
+    model_timer_.TicToc("runstart");
     // int32_t *temp_buffer = (int32_t *)image->getVirtualAddress()[0];
     int32_t *temp_buffer =
         reinterpret_cast<int32_t *>(image->getVirtualAddress()[0]);

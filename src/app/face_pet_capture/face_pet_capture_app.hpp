@@ -3,18 +3,23 @@
 
 #include "app/app_task.hpp"
 #include "components/video_decoder/video_decoder_type.hpp"
+#include "encoder/image_encoder/image_encoder.hpp"
 #include "nn/tdl_model_factory.hpp"
+#include "utils/common_utils.hpp"
 
 class FacePetCaptureApp : public AppTask {
  public:
   FacePetCaptureApp(const std::string &task_name,
-                    const std::string &json_config);
+                    const std::string &json_config,
+                    bool skip_input_alloc = false);
   ~FacePetCaptureApp() {}
 
   int32_t addPipeline(const std::string &pipeline_name,
                       int32_t frame_buffer_size,
                       const nlohmann::json &nodes_cfg);
   int32_t getResult(const std::string &pipeline_name, Packet &result) override;
+  std::shared_ptr<ImageEncoder> getImageEncoder(
+      const std::string &pipeline_name);
   int32_t init() override;
   int32_t release() override;
 
@@ -29,6 +34,8 @@ class FacePetCaptureApp : public AppTask {
   std::shared_ptr<PipelineNode> getSnapshotNode(
       const nlohmann::json &node_config);
   std::shared_ptr<PipelineNode> getFeatureExtractionNode(
+      const nlohmann::json &node_config);
+  std::shared_ptr<PipelineNode> getClipImageFeatureNode(
       const nlohmann::json &node_config);
   std::shared_ptr<PipelineNode> getFaceAttributeNode(
       const nlohmann::json &node_config);

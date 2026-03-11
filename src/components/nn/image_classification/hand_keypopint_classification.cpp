@@ -23,6 +23,7 @@ int32_t HandKeypointClassification::inference(
     std::vector<std::shared_ptr<ModelOutputInfo>> &out_datas,
     const std::map<std::string, float> &parameters) {
   for (auto &image : images) {
+    model_timer_.TicToc("runstart");
     std::string input_layer = net_->getInputNames()[0];
 
     const TensorInfo &tinfo = net_->getTensorInfo(input_layer);
@@ -55,15 +56,16 @@ int32_t HandKeypointClassification::inference(
     }
 
 #endif
-
+    model_timer_.TicToc("preprocess");
     net_->updateInputTensors();
     net_->forward();
+    model_timer_.TicToc("tpu");
     net_->updateOutputTensors();
     std::vector<std::shared_ptr<ModelOutputInfo>> batch_results;
 
     std::vector<std::shared_ptr<BaseImage>> batch_images = {image};
     outputParse(batch_images, batch_results);
-
+    model_timer_.TicToc("post");
     out_datas.insert(out_datas.end(), batch_results.begin(),
                      batch_results.end());
   }

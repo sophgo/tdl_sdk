@@ -290,7 +290,7 @@ int main(int argc, char *argv[]) {
   }
 
   ret = TDL_APP_Init(tdl_handle, "consumer_counting", config_file,
-                     &channel_names, &channel_size);
+                     &channel_names, &channel_size, false);
   if (ret != 0) {
     printf("TDL_APP_Init failed with %#x!\n", ret);
     goto exit0;

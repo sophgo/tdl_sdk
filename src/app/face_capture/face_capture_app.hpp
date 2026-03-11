@@ -7,7 +7,8 @@
 
 class FaceCaptureApp : public AppTask {
  public:
-  FaceCaptureApp(const std::string &task_name, const std::string &json_config);
+  FaceCaptureApp(const std::string &task_name, const std::string &json_config,
+                 bool skip_input_alloc = false);
   ~FaceCaptureApp() {}
 
   int32_t addPipeline(const std::string &pipeline_name,

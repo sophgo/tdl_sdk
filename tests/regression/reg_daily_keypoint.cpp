@@ -11,7 +11,6 @@
 #include "tdl_model_defs.hpp"
 #include "tdl_model_factory.hpp"
 #include "utils/tdl_log.hpp"
-
 namespace fs = std::experimental::filesystem;
 namespace cvitdl {
 namespace unitest {
@@ -36,7 +35,7 @@ class KeypointTestSuite : public CVI_TDLModelTestSuite {
     TDLModelFactory::getInstance().setModelDir(m_model_dir);
 
     std::string model_id_str = std::string(m_json_object["model_id"]);
-
+    // 通过执行命令、模型寻找函数、json文件数据等，获取模型路径
     std::string model_path =
         m_model_dir.string() + "/" + gen_model_dir() + "/" +
         m_json_object["model_name"].get<std::string>() + gen_model_suffix();
@@ -208,7 +207,37 @@ TEST_F(KeypointTestSuite, accuracy) {
     m_json_object[platform] = results;
     writeJsonFile(context.getJsonFilePath().string(), m_json_object);
   }
-}
+}  // end of TEST_F
+
+TEST_F(KeypointTestSuite, performance) {
+  std::string model_path = m_model_dir.string() + "/" + gen_model_dir() + "/" +
+                           m_json_object["model_name"].get<std::string>() +
+                           gen_model_suffix();
+
+  std::string image_dir = (m_image_dir / m_json_object["image_dir"]).string();
+  std::string platform = get_platform_str();
+  CVI_TDLTestContext& context = CVI_TDLTestContext::getInstance();
+  TestFlag test_flag = context.getTestFlag();
+  nlohmann::ordered_json results;
+  if (!checkToGetProcessResult(test_flag, platform, results)) {
+    return;
+  }
+  if (results.empty()) {
+    LOGIP("performance: no images available, skip");
+    return;
+  }
+
+  // 提前收集图片，避免推理过程中的I/O开销
+  auto iter = results.begin();
+  std::string image_path =
+      (m_image_dir / m_json_object["image_dir"] / iter.key()).string();
+  LOGIP("image_path: %s\n", image_path.c_str());
+
+  std::shared_ptr<BaseImage> frame = loadInputData(image_path);
+  ASSERT_NE(frame, nullptr);
+
+  run_performance(model_path, frame, keypoint_);
+};
 
 }  // namespace unitest
 }  // namespace cvitdl

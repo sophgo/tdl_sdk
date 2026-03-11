@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL, 0);
   if (ret != 0) {
     printf("open pose model failed with %#x!\n", ret);
     goto exit0;
@@ -156,7 +156,8 @@ int main(int argc, char *argv[]) {
         }
       }
       if (output_image != NULL) {
-        VisualizePoint(point, obj_meta.size * 17, input_image, output_image);
+        VisualizePointFromFile(point, obj_meta.size * 17, input_image,
+                               output_image);
         VisualizeLine(line, 19, input_image, output_image);
       }
     }

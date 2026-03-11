@@ -1,4 +1,6 @@
 
+#include <sys/stat.h>
+#include <unistd.h>
 #include "tdl_model_factory.hpp"
 
 void visualize_object_detection(std::shared_ptr<BaseImage> image,
@@ -36,11 +38,36 @@ void visualize_object_detection(std::shared_ptr<BaseImage> image,
   cv::imwrite(str_img_name, mat);
 }
 
+bool path_exists(const std::string &path) {
+  struct stat buffer;
+  return (stat(path.c_str(), &buffer) == 0);
+}
+
+bool is_directory(const std::string &path) {
+  struct stat buffer;
+  if (stat(path.c_str(), &buffer) != 0) {
+    return false;
+  }
+  return S_ISDIR(buffer.st_mode);
+}
+
+bool is_regular_file(const std::string &path) {
+  struct stat buffer;
+  if (stat(path.c_str(), &buffer) != 0) {
+    return false;
+  }
+  return S_ISREG(buffer.st_mode);
+}
+
 int main(int argc, char **argv) {
-  if (argc != 4 && argc != 5) {
+  if (argc != 4 && argc != 5 && argc != 6) {
     printf(
         "Usage: %s <model_id_name> <model_dir> <image_path> "
         "<model_threshold>\n",
+        argv[0]);
+    printf(
+        "Usage: %s <model_id_name> <model_dir> <image_path> "
+        "<model_threshold> <use_runtime_memory>\n",
         argv[0]);
     printf("Usage: %s <model_id_name> <model_dir> <image_path>\n", argv[0]);
     printf("model_id_name:\n");
@@ -53,8 +80,11 @@ int main(int argc, char **argv) {
   if (argc == 5) {
     model_threshold = atof(argv[4]);
   }
+  int use_runtime_memory = 0;
+  if (argc == 6) {
+    use_runtime_memory = std::atoi(argv[5]);
+  }
   std::string model_id_name = argv[1];
-
   std::string model_dir = argv[2];
   std::string image_path = argv[3];
 
@@ -66,7 +96,37 @@ int main(int argc, char **argv) {
   TDLModelFactory &model_factory = TDLModelFactory::getInstance();
   model_factory.loadModelConfig();
   model_factory.setModelDir(model_dir);
-  std::shared_ptr<BaseModel> model = model_factory.getModel(model_id_name);
+  std::shared_ptr<BaseModel> model = nullptr;
+  std::vector<std::unique_ptr<MemoryBlock>> mem_blocks;
+  std::shared_ptr<BaseMemoryPool> pool = MemoryPoolFactory::createMemoryPool();
+  if (use_runtime_memory) {
+    std::vector<uint64_t> mem_addrs;
+    std::vector<uint32_t> mem_sizes;
+    std::string model_path =
+        model_factory.getModelPath(modelTypeFromString(model_id_name));
+    NetFactory::getModelMemInfo(model_path, mem_addrs, mem_sizes);
+
+    mem_addrs.clear();
+    for (uint32_t i = 0; i < mem_sizes.size(); i++) {
+      if (mem_sizes[i] == 0) {
+        mem_addrs.push_back(0);
+        continue;
+      }
+      std::unique_ptr<MemoryBlock> mem_block = pool->allocate(mem_sizes[i]);
+      mem_addrs.push_back(mem_block->physicalAddress);
+      mem_blocks.push_back(std::move(mem_block));
+    }
+    model = TDLModelFactory::getInstance().getModel(
+        modelTypeFromString(model_id_name), model_path, mem_addrs, mem_sizes);
+    uint32_t io_mem_size = model->getIOTensorBytes();
+    std::unique_ptr<MemoryBlock> io_mem_block = pool->allocate(io_mem_size);
+    model->setIOTensorMemory(io_mem_block->physicalAddress,
+                             (uint8_t *)io_mem_block->virtualAddress,
+                             io_mem_size);
+  } else {
+    model = model_factory.getModel(modelTypeFromString(model_id_name));
+  }
+
   if (!model) {
     printf("Failed to create model\n");
     return -1;
@@ -99,6 +159,12 @@ int main(int argc, char **argv) {
     }
     std::string str_img_name = "object_detection_" + std::to_string(i) + ".jpg";
     visualize_object_detection(image, obj_meta, str_img_name);
+  }
+
+  if (use_runtime_memory) {
+    for (uint32_t i = 0; i < mem_blocks.size(); i++) {
+      pool->release(mem_blocks[i]);
+    }
   }
 
   return 0;

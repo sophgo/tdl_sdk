@@ -14,7 +14,8 @@
 #endif
 std::shared_ptr<BaseImage> ImageFactory::createImage(
     uint32_t width, uint32_t height, ImageFormat imageFormat,
-    TDLDataType pixDataType, bool alloc_memory, InferencePlatform platform) {
+    TDLDataType pixDataType, bool alloc_memory, InferencePlatform platform,
+    ImageType imageType) {
   if (platform == InferencePlatform::UNKOWN ||
       platform == InferencePlatform::AUTOMATIC) {
     platform = CommonUtils::getPlatform();
@@ -31,7 +32,7 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
     int32_t ret =
         img->prepareImageInfo(width, height, imageFormat, pixDataType);
     std::shared_ptr<BaseMemoryPool> memory_pool =
-        BaseMemoryPoolFactory::createMemoryPool();
+        MemoryPoolFactory::createMemoryPool();
     img->setMemoryPool(memory_pool);
 
     ret = img->allocateMemory();
@@ -50,7 +51,8 @@ std::shared_ptr<BaseImage> ImageFactory::createImage(
     not defined(__CMODEL_CV184X__)
       LOGI("create VPSSImage");
       return std::make_shared<VPSSImage>(width, height, imageFormat,
-                                         pixDataType, alloc_memory);
+                                         pixDataType, alloc_memory, nullptr,
+                                         imageType);
 #else
       return nullptr;
 #endif
@@ -236,19 +238,28 @@ std::shared_ptr<BaseImage> ImageFactory::alignFace(
     LOGE("Image is nullptr");
     return nullptr;
   }
+
+  // 允许支持的输入格式
   if (image->getImageFormat() != ImageFormat::BGR_PACKED &&
       image->getImageFormat() != ImageFormat::RGB_PACKED &&
-      image->getImageFormat() != ImageFormat::YUV420SP_VU) {
+      image->getImageFormat() != ImageFormat::YUV420SP_VU &&  // NV21
+      image->getImageFormat() != ImageFormat::YUV420SP_UV) {  // NV12
     LOGE(
-        "only BGR_PACKED or RGB_PACKED or YUV420SP_VU format is "
-        "supported,current format:%d",
+        "only BGR_PACKED or RGB_PACKED or YUV420SP_VU/NV21 or YUV420SP_UV/NV12 "
+        "format is supported, current format:%d",
         static_cast<int>(image->getImageFormat()));
     return nullptr;
   }
+
   int dst_img_size = 112;
-  ImageFormat dst_format = image->getImageFormat() == ImageFormat::YUV420SP_VU
-                               ? ImageFormat::RGB_PACKED
-                               : image->getImageFormat();
+
+  // 若输入为任一 YUV420SP，目标格式统一为 RGB_PACKED
+  ImageFormat dst_format =
+      (image->getImageFormat() == ImageFormat::YUV420SP_VU ||
+       image->getImageFormat() == ImageFormat::YUV420SP_UV)
+          ? ImageFormat::RGB_PACKED
+          : image->getImageFormat();
+
   std::shared_ptr<BaseImage> aligned_image = ImageFactory::createImage(
       dst_img_size, dst_img_size, dst_format, TDLDataType::UINT8, false,
       InferencePlatform::AUTOMATIC);
@@ -266,37 +277,83 @@ std::shared_ptr<BaseImage> ImageFactory::alignFace(
     return nullptr;
   }
 
-  LOGI("dstimg,width:%d,height:%d,stride:%d,addr:%lx", dst_img_size,
+  LOGI("dstimg,width:%d,height:%d,stride:%d,addr:%p", dst_img_size,
        dst_img_size, aligned_image->getStrides()[0],
        aligned_image->getVirtualAddress()[0]);
 
-  if (image->getImageFormat() == ImageFormat::YUV420SP_VU) {
-    uint32_t height = image->getHeight();
-    uint32_t width = image->getWidth();
+  // 分支一：输入为 YUV420SP（NV12 或 NV21）
+  if (image->getImageFormat() == ImageFormat::YUV420SP_VU ||
+      image->getImageFormat() == ImageFormat::YUV420SP_UV) {
+    const uint32_t width = image->getWidth();
+    const uint32_t height = image->getHeight();
 
-    size_t nv21_size = image->getHeight() * image->getWidth() * 3 / 2;
-    unsigned char* nv21_data = (unsigned char*)malloc(nv21_size);
+    // 期望 image->getVirtualAddress()[0] = Y 平面首地址
+    //       image->getVirtualAddress()[1] = UV/VU 平面首地址
+    // 并且 strides[0] 是 Y 步长，strides[1] 是 UV/VU 步长（如有）
+    // 如果底层 stride 与 width 不同，这里仍采用拼接到紧凑 NV12/NV21
+    // 的方式，再交给 OpenCV 转换。
 
-    memcpy(nv21_data, image->getVirtualAddress()[0], width * height);
-    memcpy(nv21_data + width * height, image->getVirtualAddress()[1],
-           height * width / 2);
+    size_t nv_size = static_cast<size_t>(width) * height * 3 / 2;
+    unsigned char* nv_data = (unsigned char*)malloc(nv_size);
+    if (!nv_data) {
+      LOGE("Failed to allocate NV buffer");
+      return nullptr;
+    }
 
-    cv::Mat nv21_img(height + height / 2, width, CV_8UC1, nv21_data);
+    // 拷贝 Y 平面（按行拷贝，考虑 stride 可能大于 width）
+    {
+      const uint8_t* src_y =
+          reinterpret_cast<const uint8_t*>(image->getVirtualAddress()[0]);
+      const int src_y_stride =
+          image->getStrides()[0] > 0 ? image->getStrides()[0] : (int)width;
+      uint8_t* dst_y = nv_data;
+      for (uint32_t r = 0; r < height; ++r) {
+        memcpy(dst_y + r * width, src_y + r * src_y_stride, width);
+      }
+    }
+
+    // 拷贝 UV（或 VU）平面（同样按行拷贝）
+    {
+      const uint8_t* src_uv =
+          reinterpret_cast<const uint8_t*>(image->getVirtualAddress()[1]);
+      const int src_uv_stride =
+          image->getStrides().size() > 1 && image->getStrides()[1] > 0
+              ? image->getStrides()[1]
+              : (int)width;  // UV/VU 平面步长通常等于宽度
+      uint8_t* dst_uv = nv_data + width * height;
+      const uint32_t uv_rows = height / 2;
+      // 每行字节数为 width（打包的交错色度，UV 或 VU）
+      for (uint32_t r = 0; r < uv_rows; ++r) {
+        memcpy(dst_uv + r * width, src_uv + r * src_uv_stride, width);
+      }
+    }
+
+    // 构造单通道 NV 图像
+    cv::Mat nv_img(height + height / 2, width, CV_8UC1, nv_data);
+
+    // 根据格式选择正确的颜色转换码
+    int cvt_code = (image->getImageFormat() == ImageFormat::YUV420SP_UV)
+                       ? cv::COLOR_YUV2RGB_NV12   // NV12: YUV420SP_UV
+                       : cv::COLOR_YUV2RGB_NV21;  // NV21: YUV420SP_VU
 
     cv::Mat rgb_img;
-    cv::cvtColor(nv21_img, rgb_img, cv::COLOR_YUV2RGB_NV21);
+    cv::cvtColor(nv_img, rgb_img, cvt_code);
 
-    LOGI("srcimg,width:%d,height:%d,stride:%d,addr:%lx", height, width,
-         rgb_img.step, rgb_img.data);
+    LOGI("srcimg,width:%d,height:%d,stride:%zu,addr:%p", (int)width,
+         (int)height, rgb_img.step, rgb_img.data);
 
-    tdl_face_warp_affine(rgb_img.data, rgb_img.step, width, height,
-                         aligned_image->getVirtualAddress()[0],
+    // 仿射对齐
+    tdl_face_warp_affine(rgb_img.data, (int)rgb_img.step, (int)width,
+                         (int)height, aligned_image->getVirtualAddress()[0],
                          aligned_image->getStrides()[0], dst_img_size,
                          dst_img_size, src_landmark_xy);
+
+    free(nv_data);
     return aligned_image;
   }
 
-  LOGI("srcimg,width:%d,height:%d,stride:%d,addr:%lx", image->getWidth(),
+  // 分支二：输入为 BGR/RGB 打包
+  LOGI("srcimg,width:%d,height:%d,stride:%d,addr:%p", image->getWidth(),
        image->getHeight(), image->getStrides()[0],
        image->getVirtualAddress()[0]);
 
@@ -357,7 +414,8 @@ std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
 }
 
 std::shared_ptr<BaseImage> ImageFactory::wrapVPSSFrame(void* vpss_frame,
-                                                       bool own_memory) {
+                                                       bool own_memory,
+                                                       bool is_preprocessed) {
 #if not defined(__BM168X__) && not defined(__CMODEL_CV181X__) && \
     not defined(__CMODEL_CV184X__)
   LOGI("create VPSSImage");
@@ -367,7 +425,7 @@ std::shared_ptr<BaseImage> ImageFactory::wrapVPSSFrame(void* vpss_frame,
   }
   (void)own_memory;
   VIDEO_FRAME_INFO_S* vpss_frame_info = (VIDEO_FRAME_INFO_S*)vpss_frame;
-  return std::make_shared<VPSSImage>(*vpss_frame_info);
+  return std::make_shared<VPSSImage>(*vpss_frame_info, is_preprocessed);
 #else
   LOGI("not support wrapImage on BM168X");
   return nullptr;
@@ -395,34 +453,37 @@ std::shared_ptr<BaseImage> ImageFactory::convertFromMat(cv::Mat& mat,
          mat.type());
     return nullptr;
   }
+
+#if defined(__BM168X__) || defined(__CMODEL_CV181X__) || \
+    defined(__CMODEL_CV184X__)
+  return std::make_shared<OpenCVImage>(mat, image_format);
+#else
   std::shared_ptr<BaseImage> image = ImageFactory::createImage(
       mat.cols, mat.rows, image_format, TDLDataType::UINT8, false);
   if (image == nullptr) {
     LOGE("Failed to create image");
     return nullptr;
   }
-  if (image->getImageType() == ImageType::OPENCV_FRAME) {
-    image = std::make_shared<OpenCVImage>(mat, image_format);
-  } else {
-    int32_t ret = image->allocateMemory();
-    if (ret != 0) {
-      LOGE("Failed to allocate memory");
-      return nullptr;
-    }
-    std::vector<uint8_t*> virtual_addresses = image->getVirtualAddress();
-    uint8_t* ptr_dst = virtual_addresses[0];
-    uint8_t* ptr_src = mat.data;
-    for (int r = 0; r < mat.rows; r++) {
-      uint8_t* dst = ptr_dst + r * image->getStrides()[0];
-      memcpy(dst, ptr_src + r * mat.step[0], mat.cols * 3);
-    }
-    ret = image->flushCache();
-    if (ret != 0) {
-      LOGE("Failed to flush cache");
-      return nullptr;
-    }
+
+  int32_t ret = image->allocateMemory();
+  if (ret != 0) {
+    LOGE("Failed to allocate memory");
+    return nullptr;
+  }
+  std::vector<uint8_t*> virtual_addresses = image->getVirtualAddress();
+  uint8_t* ptr_dst = virtual_addresses[0];
+  uint8_t* ptr_src = mat.data;
+  for (int r = 0; r < mat.rows; r++) {
+    uint8_t* dst = ptr_dst + r * image->getStrides()[0];
+    memcpy(dst, ptr_src + r * mat.step[0], mat.cols * 3);
+  }
+  ret = image->flushCache();
+  if (ret != 0) {
+    LOGE("Failed to flush cache");
+    return nullptr;
   }
   return image;
+#endif
 }
 
 int32_t ImageFactory::convertToMat(std::shared_ptr<BaseImage>& image,

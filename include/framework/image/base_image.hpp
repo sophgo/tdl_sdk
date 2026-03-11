@@ -81,6 +81,7 @@ class BaseImage {
   uint32_t width_ = 0;
   uint32_t height_ = 0;
   std::vector<uint32_t> strides_;
+  std::vector<uint32_t> plane_sizes_;  // 每个 plane 的字节大小
   uint32_t plane_num_ = 0;
   uint32_t img_bytes_ = 0;
   uint32_t align_size_ = 0;
@@ -91,7 +92,8 @@ class ImageFactory {
   static std::shared_ptr<BaseImage> createImage(
       uint32_t width, uint32_t height, ImageFormat imageFormat,
       TDLDataType pixDataType, bool alloc_memory,
-      InferencePlatform platform = InferencePlatform::AUTOMATIC);
+      InferencePlatform platform = InferencePlatform::AUTOMATIC,
+      ImageType imageType = ImageType::UNKOWN);
 
   static std::shared_ptr<BaseImage> constructImage(void* custom_frame,
                                                    ImageType frame_type);
@@ -114,7 +116,8 @@ class ImageFactory {
       std::shared_ptr<BaseMemoryPool> memory_pool);
 
   static std::shared_ptr<BaseImage> wrapVPSSFrame(void* vpss_frame,
-                                                  bool own_memory);
+                                                  bool own_memory,
+                                                  bool is_preprocessed = false);
   static std::shared_ptr<BaseImage> wrapMat(void* mat_frame, bool is_rgb);
 
   static std::shared_ptr<BaseImage> convertFromMat(cv::Mat& mat,

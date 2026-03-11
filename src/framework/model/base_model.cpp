@@ -7,6 +7,7 @@
 #include "preprocess/base_preprocessor.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
+
 void print_netparam(const NetParam& net_param) {
   std::stringstream ss;
   ss << "mean:[";
@@ -34,7 +35,7 @@ int32_t BaseModel::setPreprocessor(
   preprocessor_ = preprocessor;
   return 0;
 }
-int32_t BaseModel::modelOpen() {
+int32_t BaseModel::modelOpen(const int device_id) {
   // net_param_.model_file_path = model_path;
   print_netparam(net_param_);
   int32_t ret = setupNetwork(net_param_);
@@ -52,7 +53,7 @@ int32_t BaseModel::modelOpen() {
   }
   if (preprocessor_ == nullptr) {
     preprocessor_ =
-        PreprocessorFactory::createPreprocessor(net_param_.platform);
+        PreprocessorFactory::createPreprocessor(net_param_.platform, device_id);
   }
   return 0;
 }
@@ -66,7 +67,7 @@ void BaseModel::setInputBatchSize(const std::string& layer_name,
   }
   input_tensor->reshape(batch_size, input_tensor->getShape()[1],
                         input_tensor->getShape()[2],
-                        input_tensor->getShape()[3]);
+                        input_tensor->getShape()[3], net_->useRuntimeMemory());
   input_batch_size_ = batch_size;
 }
 
@@ -235,20 +236,26 @@ int32_t BaseModel::inference(
       net_->getInputTensor(input_layer_name);
   while (process_idx < batch_size) {
     int fit_batch_size = getFitBatchSize(batch_size - process_idx);
-    setInputBatchSize(input_layer_name, fit_batch_size);
     std::vector<std::shared_ptr<BaseImage>> batch_images;
     batch_rescale_params_[input_layer_name].clear();
-
     for (int i = 0; i < fit_batch_size; i++) {
       batch_images.push_back(images[process_idx + i]);
       if (images[process_idx + i]->getImageType() == ImageType::TENSOR_FRAME) {
-        if (images[process_idx + i]->getVirtualAddress()[0] !=
-            input_tensor->getBatchPtr<uint8_t>(i)) {
-          LOGE(
-              "image memory address is not equal to input tensor memory "
-              "address");
-          assert(false);
+        if (net_->skipInputAlloc()) {
+          if (i == 0) {
+            int32_t ret = net_->setInputTensorFromImage(
+                input_layer_name, images[process_idx + i]);
+            if (ret != 0) {
+              LOGE("Failed to set input tensor from image");
+              return -1;
+            }
+            input_tensor = net_->getInputTensor(input_layer_name);
+          }
+        } else {
+          input_tensor->copyFromImage(images[process_idx + i], i);
         }
+        batch_rescale_params_[input_layer_name].push_back(
+            std::vector<float>({1.0f, 1.0f, 0.0f, 0.0f}));
       } else {
         preprocessor_->preprocessToTensor(
             images[process_idx + i], preprocess_params, i,
@@ -392,6 +399,19 @@ int32_t BaseModel::outputParse(
   return -1;
 }
 
+int32_t BaseModel::outputParse(const std::shared_ptr<BaseImage>& image,
+                               std::shared_ptr<ModelOutputInfo>& out_data) {
+  LOGW("outputParse not implemented");
+  return -1;
+}
+
+int32_t BaseModel::outputParse(
+    const std::vector<std::shared_ptr<BaseImage>>& images,
+    std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) {
+  LOGW("outputParse not implemented");
+  return -1;
+}
+
 void BaseModel::setTypeMapping(
     const std::map<int, TDLObjectType>& type_mapping) {
   type_mapping_ = type_mapping;
@@ -404,4 +424,21 @@ void BaseModel::setExportFeature(int flag) {
   LOGE("only can  be used for evaluating the LSTR model");
   throw std::runtime_error(
       "setExportFeature() should not be called on BaseModel");
+}
+
+const std::vector<std::string>& BaseModel::getOutputNames() const {
+  return net_->getOutputNames();
+}
+
+const std::vector<std::string>& BaseModel::getInputNames() const {
+  return net_->getInputNames();
+}
+
+int32_t BaseModel::getTensorInfo(const std::string& name, TensorInfo& info) {
+  info = net_->getTensorInfo(name);
+  if (info.shape.size() == 0) {
+    LOGE("Tensor info not found for %s", name.c_str());
+    return -1;
+  }
+  return 0;
 }

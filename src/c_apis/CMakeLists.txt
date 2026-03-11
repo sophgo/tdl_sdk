@@ -5,7 +5,9 @@ include_directories(${REPO_DIR}/include
                     ${REPO_DIR}/include/nn
                     ${REPO_DIR}/include/c_apis
                     ${REPO_DIR}/src/app
+                    ${REPO_DIR}/src/components/nn
                     ${CMAKE_CURRENT_SOURCE_DIR}/include
+                    ${FBANK_INCLUDES}
                 )
 
 file(GLOB_RECURSE SRC_CORE_FILES_CUR ${CMAKE_CURRENT_SOURCE_DIR}/src/tdl_core.cpp

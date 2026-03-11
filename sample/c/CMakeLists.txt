@@ -6,11 +6,13 @@ project(sample_c)
 set(SAMPLE_INCLUDES
     ${MLIR_INCLUDES}
     ${MIDDLEWARE_INCLUDES}
+    ${FBANK_INCLUDES}
     ${REPO_DIR}/include
     ${REPO_DIR}/include/framework
     ${REPO_DIR}/include/components
     ${REPO_DIR}/include/nn
     ${REPO_DIR}/include/c_apis
+    ${REPO_DIR}/src/components/nn
     ${CMAKE_CURRENT_SOURCE_DIR}/utils
 )
 
@@ -45,17 +47,15 @@ endif()
 include_directories(${SAMPLE_INCLUDES})
 
 file(GLOB SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
-if(${CVI_PLATFORM} STREQUAL "CV180X" OR
-   ${CVI_PLATFORM} STREQUAL "CV181X" OR
-   ${CVI_PLATFORM} STREQUAL "CV182X" OR
-   ${CVI_PLATFORM} STREQUAL "CV183X" OR
-   ${CVI_PLATFORM} STREQUAL "CV184X" OR
-   ${CVI_PLATFORM} STREQUAL "SOPHON")
-  file(GLOB APP_SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/app/*.c)
-  list(APPEND SAMPLE_SRC_FILES ${APP_SAMPLE_SRC_FILES})
+file(GLOB APP_SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/app/*.c)
+list(APPEND SAMPLE_SRC_FILES ${APP_SAMPLE_SRC_FILES})
+
+
+if(NOT "${CVI_PLATFORM}" MATCHES "BM")
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_mp4_single_object_tracking.c)
 endif()
 
-if(NOT ${CVI_PLATFORM} STREQUAL "CV181X" AND NOT ${CVI_PLATFORM} STREQUAL "CV184X")
+if(NOT ${CVI_PLATFORM} STREQUAL "CV181X" AND NOT ${CVI_PLATFORM} STREQUAL "CV184X" AND NOT ${CVI_PLATFORM} STREQUAL "SOPHON")
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_motion_detection.c)
 endif()
 
@@ -64,11 +64,32 @@ if(${CVI_PLATFORM} STREQUAL "CMODEL_CV181X" OR ${CVI_PLATFORM} STREQUAL "CMODEL_
 endif()
 list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_llm_api.c)
 list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_api_client.c)
+
+if (NOT ("${CVI_PLATFORM}" STREQUAL "CV180X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV181X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV182X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV183X") AND
+    NOT ("${CVI_PLATFORM}" STREQUAL "CV184X"))
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_microphone_asr.c)
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_microphone_vad_asr.c)
+endif()
+
 message(STATUS "SAMPLE_SRC_FILES:${SAMPLE_SRC_FILES}")
 
 foreach (fname ${SAMPLE_SRC_FILES})
   set(EXAMPLE_SRC_FILES ${EXAMPLE_SRC_FILES} ${fname})
   get_filename_component(name ${fname} NAME_WE)
+
+  string(FIND "${name}" "_asr" pos)
+  if(pos GREATER_EQUAL 0 AND DEFINED ENABLE_SPEECH_RECOGNITION AND NOT ENABLE_SPEECH_RECOGNITION)
+    continue()
+  endif()
+
+  string(FIND "${fname}" "app" pos)
+  if(pos GREATER_EQUAL 0 AND DEFINED ENABLE_APP_PIPELINE AND NOT ENABLE_APP_PIPELINE)
+    continue()
+  endif()
+
   add_executable(${name} ${fname})
 
   # 默认只链接核心库，避免不必要的网络依赖
@@ -78,6 +99,14 @@ foreach (fname ${SAMPLE_SRC_FILES})
   if(name STREQUAL "sample_llm_api")
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt atomic m)
     message(STATUS "SAMPLE_LIBS:${SAMPLE_LIBS} for ${name}")
+  endif()
+
+  if(name MATCHES "microphone")
+    if(BUILD_SHARED)
+      set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_AUDIO_LIBS})
+    else()
+      set(SAMPLE_LIBS ${SAMPLE_LIBS} ${MIDDLEWARE_AUDIO_LIBS_STATIC})
+    endif()
   endif()
 
   target_link_libraries(${name} ${SAMPLE_LIBS})

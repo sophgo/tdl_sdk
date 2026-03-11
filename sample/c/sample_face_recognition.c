@@ -169,20 +169,22 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id_detect, model_path_detect, config);
+  ret =
+      TDL_OpenModel(tdl_handle, model_id_detect, model_path_detect, config, 0);
   if (ret != 0) {
     printf("open detect model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  ret =
-      TDL_OpenModel(tdl_handle, model_id_landmark, model_path_landmark, config);
+  ret = TDL_OpenModel(tdl_handle, model_id_landmark, model_path_landmark,
+                      config, 0);
   if (ret != 0) {
     printf("open landkark model failed with %#x!\n", ret);
     goto exit1;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id_feature, model_path_feature, config);
+  ret = TDL_OpenModel(tdl_handle, model_id_feature, model_path_feature, config,
+                      0);
   if (ret != 0) {
     printf("open feature model failed with %#x!\n", ret);
     goto exit2;

@@ -2,9 +2,11 @@
 #include <fstream>
 #include <iostream>
 #include "framework/utils/tdl_log.hpp"
+#include "nn/tdl_model_factory.hpp"
 AppTask::AppTask(const std::string &task_name,
-                 const std::string &json_config_file) {
+                 const std::string &json_config_file, bool skip_input_alloc) {
   task_name_ = task_name;
+  skip_input_alloc_ = skip_input_alloc;
   std::ifstream inf(json_config_file);
   if (!inf.is_open()) {
     throw std::runtime_error("Unable to open JSON config file: " +
@@ -82,5 +84,35 @@ int AppTask::getChannelMaxProcessingNum(const std::string &channel_name) {
     return 0;
   } else {
     return pipeline_channels_[channel_name]->getMaxProcessingNum();
+  }
+}
+
+std::shared_ptr<BaseModel> AppTask::createModel(ModelType model_type) {
+  if (skip_input_alloc_) {
+    // 使用 skip_input_alloc = true 的方式创建模型
+    std::shared_ptr<BaseModel> model =
+        TDLModelFactory::getInstance().getModelWithoutOpen(model_type);
+    if (model == nullptr) {
+      LOGE("Failed to get model without open, model_type: %d",
+           static_cast<int>(model_type));
+      return nullptr;
+    }
+
+    // 设置 skip_input_alloc = true
+    NetParam &net_param = model->getNetParam();
+    net_param.skip_input_alloc = true;
+
+    // 打开模型（此时 addInput 不会分配输入 tensor 内存）
+    int32_t ret = model->modelOpen();
+    if (ret != 0) {
+      LOGE("Failed to open model, model_type: %d",
+           static_cast<int>(model_type));
+      return nullptr;
+    }
+
+    return model;
+  } else {
+    // 默认方式：直接创建并打开模型（会分配输入 tensor 内存）
+    return TDLModelFactory::getInstance().getModel(model_type);
   }
 }

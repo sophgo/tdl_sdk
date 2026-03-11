@@ -54,7 +54,7 @@ class BaseMemoryPool {
   int32_t device_id_ = 0;
 };
 
-class BaseMemoryPoolFactory {
+class MemoryPoolFactory {
  public:
   static std::shared_ptr<BaseMemoryPool> createMemoryPool();
 };

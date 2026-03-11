@@ -31,7 +31,17 @@ if(${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
     list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/vi_decoder/vi_decoder.cpp)
 endif()
 
-if(NOT ${CVI_PLATFORM} STREQUAL "CV181X" AND NOT ${CVI_PLATFORM} STREQUAL "CV184X")
+if(${CVI_PLATFORM} STREQUAL "BM1688" OR ${CVI_PLATFORM} STREQUAL "BM1684" OR ${CVI_PLATFORM} STREQUAL "BM1684X")
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/video_decoder_factory.cpp)
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/image_folder/image_folder_decoder.cpp)
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/opencv_decoder/opencv_decoder.cpp)
+endif()
+
+if(NOT ${CVI_PLATFORM} STREQUAL "CV181X" 
+    AND NOT ${CVI_PLATFORM} STREQUAL "CV184X"
+    AND NOT ${CVI_PLATFORM} STREQUAL "BM1688"
+    AND NOT ${CVI_PLATFORM} STREQUAL "BM1684"
+    AND NOT ${CVI_PLATFORM} STREQUAL "BM1684X")
     list(REMOVE_ITEM UTILS_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/sample_utils.cpp)
 endif()
 

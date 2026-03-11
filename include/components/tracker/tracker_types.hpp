@@ -48,11 +48,11 @@ class Tracker {
 
   virtual int32_t initialize(const std::shared_ptr<BaseImage>& image,
                              const std::vector<ObjectBoxInfo>& detect_boxes,
-                             const ObjectBoxInfo& bbox);
+                             const ObjectBoxInfo& bbox, int frame_type);
 
   virtual int32_t initialize(const std::shared_ptr<BaseImage>& image,
                              const std::vector<ObjectBoxInfo>& detect_boxes,
-                             float x, float y);
+                             float x, float y, int frame_type);
 
   virtual int32_t initialize(const std::shared_ptr<BaseImage>& image,
                              const std::vector<ObjectBoxInfo>& detect_boxes,

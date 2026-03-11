@@ -136,13 +136,13 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id_d, detect_model, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id_d, detect_model, NULL, 0);
   if (ret != 0) {
     printf("open hand keypoint model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id_k, kp_model, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id_k, kp_model, NULL, 0);
   if (ret != 0) {
     printf("open hand keypoint model failed with %#x!\n", ret);
     goto exit1;
@@ -203,10 +203,11 @@ int main(int argc, char *argv[]) {
       }
       if (output_image2 != NULL) {
         if (i == 0) {
-          VisualizeRectangle(boxes, obj_meta.size, input_image, output_image1);
+          VisualizeRectangleFromFile(boxes, obj_meta.size, input_image,
+                                     output_image1);
         } else {
-          VisualizeRectangle(boxes, obj_meta.size, output_image1,
-                             output_image1);
+          VisualizeRectangleFromFile(boxes, obj_meta.size, output_image1,
+                                     output_image1);
         }
         char crop_image[128] = "";
         snprintf(crop_image, sizeof(crop_image), "%s%d.jpg", basename, i);
@@ -216,8 +217,8 @@ int main(int argc, char *argv[]) {
                     (int)round((0.25 * obj_meta.height) / 2);
         CropImage(cropX, cropY, obj_meta.width, obj_meta.height, output_image1,
                   crop_image);
-        VisualizePoint(point, obj_meta.info[i].landmark_size, crop_image,
-                       crop_image);
+        VisualizePointFromFile(point, obj_meta.info[i].landmark_size,
+                               crop_image, crop_image);
       }
     }
   }
