@@ -107,8 +107,8 @@ set(OPENCV_LIBS_IMCODEC ${OPENCV_ROOT}/lib/libopencv_core.so
 
 if(ENABLE_OPENCV_4_5)
 
-  set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_imgproc.a
-                                ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a
+  set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a
+                                ${OPENCV_ROOT}/lib/libopencv_imgproc.a
                                 ${OPENCV_ROOT}/lib/libopencv_core.a
                                 ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibjpeg-turbo.a
                                 ${OPENCV_ROOT}/lib/opencv4/3rdparty/liblibpng.a
@@ -136,9 +136,9 @@ if(ENABLE_OPENCV_4_5)
 
 else()
 
-  set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_core.a
+  set(OPENCV_LIBS_IMCODEC_STATIC ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a
                                 ${OPENCV_ROOT}/lib/libopencv_imgproc.a
-                                ${OPENCV_ROOT}/lib/libopencv_imgcodecs.a
+                                ${OPENCV_ROOT}/lib/libopencv_core.a
                                 ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/libIlmImf.a
                                 ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjasper.a
                                 ${OPENCV_ROOT}/share/OpenCV/3rdparty/lib/liblibjpeg.a
