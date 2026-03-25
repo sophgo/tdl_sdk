@@ -29,6 +29,7 @@
 #include "object_detection/yolox.hpp"
 #include "object_tracking/feartrack.hpp"
 #include "segmentation/topformer_seg.hpp"
+#include "segmentation/topformer_seg_motion.hpp"
 #include "segmentation/yolov8_seg.hpp"
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
@@ -169,7 +170,8 @@ bool TDLModelFactory::isSegmentationModel(const ModelType model_type) {
   return (model_type == ModelType::YOLOV8_SEG_COCO80 ||
           model_type == ModelType::YOLOV8_SEG ||
           model_type == ModelType::FASTSAM_SEG ||
-          model_type == ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE);
+          model_type == ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE ||
+          model_type == ModelType::TOPFORMER_SEG_MOTION);
 }
 
 bool TDLModelFactory::isDepthEstimationModel(const ModelType model_type) {
@@ -425,6 +427,8 @@ std::shared_ptr<BaseModel> TDLModelFactory::createSegmentationModel(
         std::make_shared<YoloV8Segmentation>(std::make_tuple(64, 32, num_cls));
   } else if (model_type == ModelType::TOPFORMER_SEG_PERSON_FACE_VEHICLE) {
     model = std::make_shared<TopformerSeg>(16);  // Downsampling ratio
+  } else if (model_type == ModelType::TOPFORMER_SEG_MOTION) {
+    model = std::make_shared<TopformerSegMotion>();
   }
 #endif
   return model;

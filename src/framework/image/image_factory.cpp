@@ -493,9 +493,18 @@ int32_t ImageFactory::convertToMat(std::shared_ptr<BaseImage>& image,
     return -1;
   }
   if (image->getImageFormat() != ImageFormat::BGR_PACKED &&
-      image->getImageFormat() != ImageFormat::RGB_PACKED) {
-    LOGE("only BGR_PACKED or RGB_PACKED format is supported,current format:%d",
-         static_cast<int>(image->getImageFormat()));
+      image->getImageFormat() != ImageFormat::RGB_PACKED &&
+      image->getImageFormat() != ImageFormat::GRAY) {
+    LOGE(
+        "only BGR_PACKED or RGB_PACKED or GRAY format is "
+        "supported,current format:%d",
+        static_cast<int>(image->getImageFormat()));
+    return -1;
+  }
+  if (image->getImageFormat() == ImageFormat::GRAY &&
+      image->getPixDataType() != TDLDataType::UINT8) {
+    LOGE("only UINT8 GRAY image can be converted to cv::Mat, current type:%d",
+         static_cast<int>(image->getPixDataType()));
     return -1;
   }
 
@@ -505,6 +514,10 @@ int32_t ImageFactory::convertToMat(std::shared_ptr<BaseImage>& image,
   uint8_t* ptr_src = image->getVirtualAddress()[0];
   is_rgb = image->getImageFormat() == ImageFormat::RGB_PACKED;
 
-  mat = cv::Mat(height, width, CV_8UC3, ptr_src, stride);
+  if (image->getImageFormat() == ImageFormat::GRAY) {
+    mat = cv::Mat(height, width, CV_8UC1, ptr_src, stride);
+  } else {
+    mat = cv::Mat(height, width, CV_8UC3, ptr_src, stride);
+  }
   return 0;
 }

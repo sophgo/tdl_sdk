@@ -4,6 +4,7 @@ include_directories(
                     ${REPO_DIR}/include/framework
                     ${REPO_DIR}/include/components
                     ${REPO_DIR}/include/nn
+                    ${REPO_DIR}/src/components/cv/motion_detect
                     ${CMAKE_CURRENT_SOURCE_DIR}/
                     ${FBANK_INCLUDES}
                     )

@@ -374,6 +374,11 @@
     "DEPTH_ESTIMATION_STEREO":{
       "_comment":"stereo depth estimation with two images",
       "file_name":"depth_estimation_lightstereo_320_480_BF16"
+    },
+
+    "TOPFORMER_SEG_MOTION":{
+      "_comment":"motion detection using segmentation",
+      "file_name":"topformer_seg_motion_512_960_INT8"
     }
   }
 }

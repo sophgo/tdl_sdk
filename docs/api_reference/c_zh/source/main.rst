@@ -2961,6 +2961,59 @@ TDL_MotionDetection
      - obj_meta
      - 输出参数，存储检测结果
 
+TDL_SegMotionDetection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_SegMotionDetection(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              uint32_t min_area,
+                              TDLObject *obj_meta);
+
+【描述】
+
+使用分割模型执行移动侦测任务。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const TDLModel
+     - model_id
+     - 指定分割模型类型枚举值
+
+   * - 输入
+     - TDLImage
+     - image_handle
+     - TDLImageHandle 对象
+
+   * - 输入
+     - uint32_t
+     - min_area
+     - 最小检测面积
+
+   * - 输出
+     - TDLObject*
+     - obj_meta
+     - 输出参数，存储检测结果
+
 TDL_VoiceActivityDetection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

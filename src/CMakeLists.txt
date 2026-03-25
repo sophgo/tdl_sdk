@@ -57,19 +57,23 @@ endif()
 
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm> )
+   list(APPEND CORES_SRCS ${REPO_DIR}/src/components/cv/motion_detect/common/ccl.cpp)
 endif()
 
 if("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:ive>)
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X"  OR "${CVI_PLATFORM}" STREQUAL "SOPHON" OR "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
+if("${CVI_PLATFORM}" STREQUAL "CV180X" OR "${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV184X"  OR "${CVI_PLATFORM}" STREQUAL "SOPHON" OR "${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X")
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:motion_detect>)
 endif()
 
 
 # shared library
 add_library(tdl_core SHARED ${CORES_SRCS})
+target_include_directories(tdl_core PRIVATE
+  ${REPO_DIR}/include/framework
+)
 
 if(NOT DEFINED ENABLE_APP_PIPELINE OR ENABLE_APP_PIPELINE)
    target_link_libraries(tdl_core
@@ -104,6 +108,9 @@ target_link_libraries(tdl_ex ${LIBWEBSOCKETS_LIBS}
 
 # static library
 add_library(tdl_core-static STATIC ${CORES_SRCS})
+target_include_directories(tdl_core-static PRIVATE
+  ${REPO_DIR}/include/framework
+)
 if(NOT DEFINED ENABLE_SPEECH_RECOGNITION OR ENABLE_SPEECH_RECOGNITION)
    target_link_libraries(tdl_core-static ${MLIR_LIBS_STATIC} ${OPENCV_LIBS_IMCODEC_STATIC} kaldi-native-fbank-core)
 else()

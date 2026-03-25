@@ -2943,6 +2943,59 @@ Execute motion detection task.
      - obj_meta
      - Output detection results
 
+TDL_SegMotionDetection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_SegMotionDetection(TDLHandle handle,
+                              const TDLModel model_id,
+                              TDLImage image_handle,
+                              uint32_t min_area,
+                              TDLObject *obj_meta);
+
+【Description】
+
+Execute motion detection task using a segmentation model.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Model type enumeration
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - TDLImageHandle object
+
+   * - Input
+     - uint32_t
+     - min_area
+     - Minimum detection area
+
+   * - Output
+     - TDLObject*
+     - obj_meta
+     - Output parameter that stores the detection results
+
 TDL_VoiceActivityDetection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
