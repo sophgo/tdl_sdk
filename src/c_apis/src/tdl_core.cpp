@@ -90,6 +90,13 @@ TDLImage TDL_ReadImage(const char *path) {
   return (TDLImage)image_context;
 }
 
+TDLImage TDL_ReadImageGray(const char *path) {
+  TDLImageContext *image_context = new TDLImageContext();
+  image_context->image = ImageFactory::readImage(path, ImageFormat::GRAY,
+                                                 InferencePlatform::AUTOMATIC);
+  return (TDLImage)image_context;
+}
+
 TDLImage TDL_ReadBin(const char *path, TDLDataTypeE data_type) {
   FILE *file = fopen(path, "rb");
   if (!file) {
@@ -1440,6 +1447,132 @@ int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
 
   *is_intrusion = context->intrusion_detect->isIntrusion(bbox);
 
+  return 0;
+}
+
+int32_t TDL_DepthStereo(TDLHandle handle, const TDLModel model_id,
+                        TDLImage left_image_handle, TDLImage right_image_handle,
+                        TDLDepthLogits *depth_logist) {
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+
+  TDLImageContext *left_image_context = (TDLImageContext *)left_image_handle;
+  TDLImageContext *right_image_context = (TDLImageContext *)right_image_handle;
+
+  if (left_image_context == nullptr || left_image_context->image == nullptr) {
+    LOGE("Invalid left image handle");
+    return -1;
+  }
+
+  if (right_image_context == nullptr || right_image_context->image == nullptr) {
+    LOGE("Invalid right image handle");
+    return -1;
+  }
+
+  // Create a vector of vectors for stereo input
+  std::vector<std::vector<std::shared_ptr<BaseImage>>> input_images;
+  std::vector<std::shared_ptr<BaseImage>> stereo_pair;
+  stereo_pair.push_back(left_image_context->image);
+  stereo_pair.push_back(right_image_context->image);
+  input_images.push_back(stereo_pair);
+
+  std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
+  int32_t ret = model->inference(input_images, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+
+  if (outputs.empty()) {
+    LOGE("No output from model");
+    return -1;
+  }
+
+  std::shared_ptr<ModelOutputInfo> output = outputs[0];
+  if (output->getType() == ModelOutputType::DEPTH_ESTIMATION) {
+    ModelDepthInfo *depth_output = (ModelDepthInfo *)output.get();
+    depth_logist->w = depth_output->w;
+    depth_logist->h = depth_output->h;
+    depth_logist->logits = depth_output->logits;
+    // Transfer ownership to depth_logist
+    depth_output->logits = nullptr;
+  } else {
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
+    return -1;
+  }
+
+  return 0;
+}
+
+int32_t TDL_SegMotionDetection(TDLHandle handle, const TDLModel model_id,
+                               TDLImage image_handle, uint32_t min_area,
+                               TDLObject *obj_meta) {
+  std::shared_ptr<BaseModel> model = get_model(handle, model_id);
+  if (model == nullptr) {
+    return -1;
+  }
+  if (obj_meta == nullptr) {
+    LOGE("Invalid obj_meta");
+    return -1;
+  }
+
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+  if (image_context == nullptr || image_context->image == nullptr) {
+    LOGE("Invalid image handle");
+    return -1;
+  }
+
+  std::vector<std::shared_ptr<BaseImage>> images;
+  images.push_back(image_context->image);
+
+  std::shared_ptr<ModelOutputInfo> output;
+
+  // Set model parameters
+  std::map<std::string, float> parameters = {{"min_area", min_area}};
+
+  int32_t ret = model->inference(image_context->image, output, parameters);
+  if (ret != 0) {
+    return ret;
+  }
+  if (output == nullptr) {
+    LOGE("No output from model");
+    return -1;
+  }
+
+  if (output->getType() ==
+      ModelOutputType::OBJECT_DETECTION_WITH_SEGMENTATION) {
+    ModelBoxSegmentationInfo *seg_output =
+        (ModelBoxSegmentationInfo *)output.get();
+    const size_t num_boxes = seg_output->box_seg.size();
+    if (num_boxes == 0) {
+      obj_meta->size = 0;
+      obj_meta->width = image_context->image->getWidth();
+      obj_meta->height = image_context->image->getHeight();
+      return 0;
+    }
+
+    if (obj_meta->info != NULL && obj_meta->size < num_boxes) {
+      TDL_ReleaseObjectMeta(obj_meta);
+    }
+    TDL_InitObjectMeta(obj_meta, num_boxes, 0);
+    for (size_t i = 0; i < num_boxes; i++) {
+      obj_meta->info[i].box.x1 = seg_output->box_seg[i].x1;
+      obj_meta->info[i].box.y1 = seg_output->box_seg[i].y1;
+      obj_meta->info[i].box.x2 = seg_output->box_seg[i].x2;
+      obj_meta->info[i].box.y2 = seg_output->box_seg[i].y2;
+      obj_meta->info[i].class_id = seg_output->box_seg[i].class_id;
+      obj_meta->info[i].score = seg_output->box_seg[i].score;
+    }
+  } else {
+    LOGE("Unsupported model output type: %d",
+         static_cast<int>(output->getType()));
+    return -1;
+  }
+
+  obj_meta->width = image_context->image->getWidth();
+  obj_meta->height = image_context->image->getHeight();
   return 0;
 }
 

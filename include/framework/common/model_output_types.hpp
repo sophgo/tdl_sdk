@@ -77,6 +77,49 @@ class ObjectBoxSegmentationInfo {
         mask(nullptr),
         mask_point(nullptr),
         mask_point_size(0) {}
+  ObjectBoxSegmentationInfo(const ObjectBoxSegmentationInfo &) = default;
+  ObjectBoxSegmentationInfo &operator=(const ObjectBoxSegmentationInfo &) =
+      default;
+  ObjectBoxSegmentationInfo(ObjectBoxSegmentationInfo &&other) noexcept
+      : class_id(other.class_id),
+        object_type(other.object_type),
+        score(other.score),
+        x1(other.x1),
+        y1(other.y1),
+        x2(other.x2),
+        y2(other.y2),
+        mask(other.mask),
+        mask_point(other.mask_point),
+        mask_point_size(other.mask_point_size) {
+    other.mask = nullptr;
+    other.mask_point = nullptr;
+    other.mask_point_size = 0;
+  }
+  ObjectBoxSegmentationInfo &operator=(
+      ObjectBoxSegmentationInfo &&other) noexcept {
+    if (this != &other) {
+      if (mask != nullptr) {
+        free(mask);
+      }
+      if (mask_point != nullptr) {
+        free(mask_point);
+      }
+      class_id = other.class_id;
+      object_type = other.object_type;
+      score = other.score;
+      x1 = other.x1;
+      y1 = other.y1;
+      x2 = other.x2;
+      y2 = other.y2;
+      mask = other.mask;
+      mask_point = other.mask_point;
+      mask_point_size = other.mask_point_size;
+      other.mask = nullptr;
+      other.mask_point = nullptr;
+      other.mask_point_size = 0;
+    }
+    return *this;
+  }
   ~ObjectBoxSegmentationInfo() {
     if (mask != nullptr) {
       free(mask);

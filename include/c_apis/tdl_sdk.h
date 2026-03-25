@@ -55,6 +55,14 @@ int32_t TDL_WrapImage(TDLImage image, void *frame);
 TDLImage TDL_ReadImage(const char *path);
 
 /**
+ * @brief 读取一张灰度图片为 TDLImageHandle 对象
+ *
+ * @param path 图片路径
+ * @return  返回读取的 TDLImageHandle 对象, 如果失败返回 NULL
+ */
+TDLImage TDL_ReadImageGray(const char *path);
+
+/**
  * @brief 读取文件内容为 TDLImageHandle 对象
  *
  * @param path 文件路径
@@ -469,6 +477,19 @@ int32_t TDL_SingleObjectTracking(TDLHandle handle, TDLImage image_handle,
  */
 int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
                                TDLBox *box, bool *is_intrusion);
+
+/**
+ * @brief 使用分割模型执行移动侦测任务
+ *
+ * @param handle TDLHandle 对象
+ * @param image_handle TDLImageHandle 对象
+ * @param min_area 最小检测面积
+ * @param obj_meta 输出参数，存储检测结果
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_SegMotionDetection(TDLHandle handle, const TDLModel model_id,
+                               TDLImage image_handle, uint32_t min_area,
+                               TDLObject *obj_meta);
 
 #if defined(__CV181X__) || defined(__CV184X__) || defined(__CV186X__)
 /**
