@@ -48,6 +48,7 @@
           "yolov8n_det_hand_face_person_384_640_INT8.json",
           "yolov8n_det_head_hardhat_576_960_INT8.json",
           "yolov8n_det_ir_person_384_640_INT8.json",
+          "yolov8n_det_ir_person_mbv2_192_320_INT8.json",
           "yolov8n_det_ir_person_mbv2_384_640_INT8.json",
           "yolov8n_det_license_plate_384_640_INT8.json",
           "yolov8n_det_monitor_person_256_448_INT8.json",
@@ -68,7 +69,15 @@
           "yolov8n_det_bicycle_motor_ebicycle_mbv2_384_640_INT8.json",
           "yolov5m_det_coco80_640_640_INT8.json",
           "yolov5s_det_coco80_640_640_INT8.json",
-          "yolov7_tiny_det_coco80_640_640_INT8.json"
+          "yolov7_tiny_det_coco80_640_640_INT8.json",
+          "yolov11n_det_face_head_person_pet_384_640_INT8.json",
+          "yolov11n_det_hand_face_person_384_640_INT8.json",
+          "yolov11n_det_head_person_384_640_INT8.json",
+          "yolov11n_det_ir_person_384_640_INT8.json",
+          "yolov11n_det_person_384_640_INT8.json",
+          "yolov11n_det_person_vehicle_pet_384_640_INT8.json",
+          "yolov11n_det_person_vehicle_384_640_INT8.json",
+          "yolov11n_det_person_vehicle_pet_384_640_INT8.json"
         ],
         "exclude": {
           "CV180X": [

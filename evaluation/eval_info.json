@@ -32,6 +32,13 @@
       }
     },
     {
+      "yolov11n_det_face_head_person_pet_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_FACE_HEAD_PERSON_PET",
+        "file_list": "face_head_person_pet/img_list.txt",
+        "dataset_dir": "face_head_person_pet/images"
+      }
+    },
+    {
       "yolov8n_det_fire_384_640_INT8": {
         "model_id": "YOLOV8N_DET_FIRE",
         "file_list": "fire/fire_detection_list.txt",
@@ -67,6 +74,13 @@
       }
     },
     {
+      "yolov11n_det_hand_face_person_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_HAND_FACE_PERSON",
+        "file_list": "hand_face_person/hand_face_person.txt",
+        "dataset_dir": "hand_face_person/images"
+      }
+    },
+    {
       "yolov8n_det_head_hardhat_576_960_INT8": {
         "model_id": "YOLOV8N_DET_HEAD_HARDHAT",
         "file_list": "hardhat_detection/images_list.txt",
@@ -75,6 +89,13 @@
     },
     {
       "yolov8n_det_head_person_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_HEAD_PERSON",
+        "file_list": "person_head/image_list.txt",
+        "dataset_dir": "person_head/images"
+      }
+    },
+    {
+      "yolov11n_det_head_person_384_640_INT8": {
         "model_id": "YOLOV8N_DET_HEAD_PERSON",
         "file_list": "person_head/image_list.txt",
         "dataset_dir": "person_head/images"
@@ -109,6 +130,20 @@
       }
     },
     {
+      "yolov8n_det_ir_person_mbv2_192_320_INT8": {
+        "model_id": "YOLOV8N_DET_MONITOR_PERSON",
+        "file_list": "ir_person/images_list.txt",
+        "dataset_dir": "ir_person/ir_images"
+      }
+    },
+    {
+      "yolov11n_det_ir_person_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_MONITOR_PERSON",
+        "file_list": "ir_person/images_list.txt",
+        "dataset_dir": "ir_person/ir_images"
+      }
+    },
+    {
       "yolov8n_det_license_plate_384_640_INT8": {
         "model_id": "YOLOV8N_DET_LICENSE_PLATE",
         "file_list": "platedetection/plate_detection/images_list.txt",
@@ -123,6 +158,13 @@
       }
     },
     {
+      "yolov11n_det_person_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_MONITOR_PERSON",
+        "file_list": "coco_val2017/coco_val2017.txt",
+        "dataset_dir": "coco_val2017/coco_val2017"
+      }
+    },
+    {
       "yolov8n_det_overlook_person_256_448_INT8": {
         "model_id": "YOLOV8N_DET_MONITOR_PERSON",
         "file_list": "pedestrian_overlook/file_list.txt",
@@ -134,6 +176,27 @@
         "model_id": "YOLOV8N_DET_PERSON_VEHICLE",
         "file_list": "people_vehicle/img_list.txt",
         "dataset_dir": "people_vehicle/images"
+      }
+    },
+    {
+      "yolov11n_det_person_vehicle_384_640_INT8": {
+        "model_id": "YOLOV8N_DET_PERSON_VEHICLE",
+        "file_list": "people_vehicle/img_list.txt",
+        "dataset_dir": "people_vehicle/images"
+      }
+    },
+    {
+      "yolov11n_det_person_pet_face_hand_384_640_INT8": {
+        "model_id": "YOLOV11N_DET_PERSON_PET_FACE_HAND",
+        "file_list": "person_face_hand_pets/image_list.txt",
+        "dataset_dir": "person_face_hand_pets/images"
+      }
+    },
+    {
+      "yolov11n_det_person_vehicle_pet_384_640_INT8": {
+        "model_id": "YOLOV11N_DET_PERSON_VEHICLE_PET",
+        "file_list": "person_vehicle_pet/file_list.txt",
+        "dataset_dir": "person_vehicle_pet/images"
       }
     },
     {

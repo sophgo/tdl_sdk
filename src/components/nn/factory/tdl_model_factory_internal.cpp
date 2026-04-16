@@ -114,6 +114,8 @@ bool TDLModelFactory::isObjectDetectionModel(const ModelType model_type) {
           model_type == ModelType::YOLOV8N_DET_MONITOR_PERSON ||
           model_type == ModelType::YOLOV11N_DET_MONITOR_PERSON ||
           model_type == ModelType::YOLOV11N_DET_BICYCLE_MOTOR_EBICYCLE ||
+          model_type == ModelType::YOLOV11N_DET_PERSON_PET_FACE_HAND ||
+          model_type == ModelType::YOLOV11N_DET_PERSON_VEHICLE_PET ||
           model_type == ModelType::YOLOV11N_DET_COCO80 ||
           model_type == ModelType::YOLOV8_DET_COCO80 ||
           model_type == ModelType::YOLOV10_DET_COCO80 ||
@@ -250,6 +252,17 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     model_type_mapping[2] = TDLObjectType::OBJECT_TYPE_PERSON;
     model_type_mapping[3] = TDLObjectType::OBJECT_TYPE_PET;
     num_classes = 4;
+  } else if (model_type == ModelType::YOLOV11N_DET_PERSON_PET_FACE_HAND) {
+    model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_PERSON;
+    model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_PET;
+    model_type_mapping[2] = TDLObjectType::OBJECT_TYPE_FACE;
+    model_type_mapping[3] = TDLObjectType::OBJECT_TYPE_HAND;
+    num_classes = 4;
+  } else if (model_type == ModelType::YOLOV11N_DET_PERSON_VEHICLE_PET) {
+    model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_PERSON;
+    model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_VEHICLE;
+    model_type_mapping[2] = TDLObjectType::OBJECT_TYPE_PET;
+    num_classes = 3;
   } else if (model_type == ModelType::YOLOV8N_DET_HEAD_PERSON) {
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_HEAD;
     model_type_mapping[1] = TDLObjectType::OBJECT_TYPE_PERSON;
