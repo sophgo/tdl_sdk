@@ -104,13 +104,14 @@ std::string pack_det_results(
 }
 
 std::string pack_features_attributes(
-    const std::map<uint64_t, std::vector<float>> &face_features,
+    const std::map<uint64_t, std::vector<float>> &features,
     std::vector<ObjectSnapshotInfo> &face_snapshots,
-    std::vector<std::map<TDLObjectAttributeType, float>> &face_attributes) {
+    std::map<uint64_t, std::map<TDLObjectAttributeType, float>>
+        &face_attributes) {
   std::stringstream str_content;
 
   for (int i = 0; i < face_snapshots.size(); i++) {
-    std::vector<float> fea = face_features.at(face_snapshots[i].track_id);
+    std::vector<float> fea = features.at(face_snapshots[i].track_id);
     str_content << face_snapshots[i].track_id << "#"
                 << face_snapshots[i].snapshot_frame_id << "#";
     for (size_t i = 0; i < fea.size(); i++) {
@@ -119,7 +120,7 @@ std::string pack_features_attributes(
 
     str_content << "#";
 
-    auto face_attribute = face_attributes[i];
+    auto face_attribute = face_attributes.at(face_snapshots[i].track_id);
     int pred_gender =
         face_attribute[TDLObjectAttributeType::OBJECT_ATTRIBUTE_HUMAN_GENDER] >
                 0.5
@@ -302,9 +303,9 @@ int main(int argc, char **argv) {
             capobj_to_str(cap_result->face_snapshots, cap_result->frame_width,
                           cap_result->frame_height);
 
-        if (cap_result->face_features.size() > 0) {
+        if (cap_result->features.size() > 0) {
           std::string fea_content = pack_features_attributes(
-              cap_result->face_features, cap_result->face_snapshots,
+              cap_result->features, cap_result->face_snapshots,
               cap_result->face_attributes);
           char sz_fea_name[1024];
           sprintf(sz_fea_name, "%s/feature_%08lu.txt", output_dir.c_str(),

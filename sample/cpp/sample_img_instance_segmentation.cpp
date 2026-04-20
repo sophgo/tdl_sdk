@@ -118,12 +118,13 @@ void visualize_object_detection(
 }
 
 int main(int argc, char **argv) {
-  if (argc != 3) {
-    printf("Usage: %s <model_dir> <image_path> \n", argv[0]);
+  if (argc != 4) {
+    printf("Usage: %s <model_id_name> <model_dir> <image_path> \n", argv[0]);
     return -1;
   }
-  std::string model_dir = argv[1];
-  std::string image_path = argv[2];
+  std::string model_id_name = argv[1];
+  std::string model_dir = argv[2];
+  std::string image_path = argv[3];
 
   std::shared_ptr<BaseImage> image1 = ImageFactory::readImage(image_path);
   if (!image1) {
@@ -134,8 +135,7 @@ int main(int argc, char **argv) {
   TDLModelFactory &model_factory = TDLModelFactory::getInstance();
   model_factory.loadModelConfig();
   model_factory.setModelDir(model_dir);
-  std::shared_ptr<BaseModel> model_od =
-      model_factory.getModel(ModelType::YOLOV8_SEG_COCO80);
+  std::shared_ptr<BaseModel> model_od = model_factory.getModel(model_id_name);
   if (!model_od) {
     printf("Failed to create model_od\n");
     return -1;

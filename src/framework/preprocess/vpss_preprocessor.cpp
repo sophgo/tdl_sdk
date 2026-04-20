@@ -6,6 +6,7 @@
 // #include "core/utils/vpss_helper.h"
 #include "cvi_comm_vb.h"
 #include "image/vpss_image.hpp"
+#include "utils/frame_dump.hpp"
 #include "utils/tdl_log.hpp"
 
 void init_vpss_grp_attr(VPSS_GRP_ATTR_S* pstVpssGrpAttr, CVI_U32 srcWidth,
@@ -408,6 +409,9 @@ int32_t VpssPreprocessor::preprocessToImage(
     LOGE("CVI_VPSS_GetChnFrame failed with %#x\n", ret);
     return ret;
   }
+
+  // dump frame for debugging
+  // FrameDump::saveFrame("./output_frame.bin", output_frame);
 
   vpss_image->restoreVirtualAddress(true);
 

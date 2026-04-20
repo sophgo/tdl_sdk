@@ -36,7 +36,7 @@ BmCVImage::BmCVImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
 
 BmCVImage::BmCVImage(const bm_image& bm_image) {
   bm_image_ = bm_image;
-  memory_pool_ = BaseMemoryPoolFactory::createMemoryPool();
+  memory_pool_ = MemoryPoolFactory::createMemoryPool();
 
   int32_t ret = extractImageInfo(bm_image);
   if (ret != 0) {
@@ -316,21 +316,16 @@ int32_t BmCVImage::setupMemory(uint64_t phy_addr, uint8_t* vir_addr,
   LOGI("setupMemory, phy_addr: %p, vir_addr: %p, length: %d", (void*)phy_addr,
        (void*)vir_addr, length);
 
-  bm_device_mem_t* device_memory;
   if (memory_block_ == nullptr) {
     memory_block_ = std::make_unique<MemoryBlock>();
     memory_block_->physicalAddress = phy_addr;
     memory_block_->virtualAddress = vir_addr;
     memory_block_->size = length;
     memory_block_->own_memory = false;
-    memory_block_->handle = new bm_device_mem_t();
-    device_memory = (bm_device_mem_t*)memory_block_->handle;
-    device_memory->u.device.device_addr = phy_addr;
-    device_memory->size = length;
-  } else {
-    device_memory = (bm_device_mem_t*)memory_block_->handle;
   }
-  bm_status_t ret = bm_image_attach(bm_image_, device_memory);
+  bm_device_mem_t device_memory =
+      bm_mem_from_device(memory_block_->physicalAddress, memory_block_->size);
+  bm_status_t ret = bm_image_attach(bm_image_, &device_memory);
   if (ret != BM_SUCCESS) {
     LOGE("bm_image_attach failed, ret: %d", ret);
     return -1;
@@ -362,7 +357,7 @@ int32_t BmCVImage::extractImageInfo(const bm_image& bm_image) {
   memory_block_->physicalAddress = device_memory->u.device.device_addr;
   memory_block_->virtualAddress = device_memory->u.system.system_addr;
   memory_block_->own_memory = false;
-  memory_block_->handle = device_memory;
+  memory_block_->memory_type = MemoryType::SOC_DEVICE_MEMORY;
 
   return 0;
 }

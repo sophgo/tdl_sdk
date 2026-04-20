@@ -55,6 +55,6 @@ class BasePreprocessor {
 class PreprocessorFactory {
  public:
   static std::shared_ptr<BasePreprocessor> createPreprocessor(
-      InferencePlatform platform);
+      InferencePlatform platform, const int device_id = 0);
 };
 #endif  // BASE_PREPROCESSOR_H

@@ -1,6 +1,7 @@
 #include "memory/bm_memory_pool.hpp"
 
 #include <bmlib_runtime.h>
+#include <cstring>
 
 #include "utils/tdl_log.hpp"
 BMContext::BMContext() {}
@@ -54,8 +55,9 @@ BmMemoryPool::BmMemoryPool(void *bm_handle) {
 BmMemoryPool::~BmMemoryPool() {}
 std::unique_ptr<MemoryBlock> BmMemoryPool::allocate(uint32_t size,
                                                     uint32_t timeout_ms) {
-  bm_device_mem_t *p_dev = new bm_device_mem_t();
-  bm_status_t st = bm_malloc_device_byte(bm_handle_t(bm_handle_), p_dev, size);
+  LOGI("to allocate bm memory block,size:%d", size);
+  bm_device_mem_t dev;
+  bm_status_t st = bm_malloc_device_byte(bm_handle_t(bm_handle_), &dev, size);
   if (st != BM_SUCCESS) {
     return nullptr;
   }
@@ -63,14 +65,13 @@ std::unique_ptr<MemoryBlock> BmMemoryPool::allocate(uint32_t size,
   std::unique_ptr<MemoryBlock> block = std::make_unique<MemoryBlock>();
 
   block->size = size;
-
+  block->memory_type = MemoryType::SOC_DEVICE_MEMORY;
   unsigned long long addr;
-  bm_mem_mmap_device_mem((bm_handle_t)bm_handle_, (bm_device_mem_t *)p_dev,
-                         &addr);
+  bm_mem_mmap_device_mem((bm_handle_t)bm_handle_, &dev, &addr);
   block->virtualAddress = (uint8_t *)addr;
-  block->physicalAddress = bm_mem_get_device_addr(*(bm_device_mem_t *)p_dev);
-  block->id = 0;
-  block->handle = p_dev;
+  block->physicalAddress = bm_mem_get_device_addr(dev);
+  block->id = dev.u.device.dmabuf_fd;
+  block->own_memory = true;
   LOGI("allocate bm memory block,size:%d,phy_addr:%p,virtual_addr:%p", size,
        (void *)block->physicalAddress, (void *)block->virtualAddress);
   return block;
@@ -81,17 +82,20 @@ int32_t BmMemoryPool::release(std::unique_ptr<MemoryBlock> &block) {
   LOGI("start to release bm memory block,size:%d,phy_addr:%p,virtual_addr:%p",
        block->size, (void *)block->physicalAddress,
        (void *)block->virtualAddress);
-  if (block->virtualAddress != nullptr) {
+  if (block->virtualAddress != nullptr && block->own_memory) {
     bm_mem_unmap_device_mem((bm_handle_t)bm_handle_, block->virtualAddress,
                             block->size);
   }
-  bm_device_mem_t *p_dev = (bm_device_mem_t *)block->handle;
 
-  uint64_t phy_addr = bm_mem_get_device_addr(*p_dev);
-  LOGI("release bm memory block,size:%d,phy_addr:%p,block phy_addr:%p",
-       block->size, (void *)phy_addr, (void *)block->physicalAddress);
-  bm_free_device(bm_handle_t(bm_handle_), *p_dev);
-  delete p_dev;
+  LOGI("release bm memory block,size:%d,block phy_addr:%p", block->size,
+       (void *)block->physicalAddress);
+  if (block->own_memory) {
+    bm_device_mem_t dev =
+        bm_mem_from_device(block->physicalAddress, block->size);
+    dev.u.device.dmabuf_fd = block->id;
+    bm_free_device(bm_handle_t(bm_handle_), dev);
+  }
+
   return 0;
 }
 
@@ -107,8 +111,8 @@ int32_t BmMemoryPool::flushCache(std::unique_ptr<MemoryBlock> &block) {
     LOGI("flushCache block->physicalAddress is 0");
     return -1;
   }
-  bm_status_t st = bm_mem_flush_device_mem((bm_handle_t)bm_handle_,
-                                           (bm_device_mem_t *)block->handle);
+  bm_device_mem_t dev = bm_mem_from_device(block->physicalAddress, block->size);
+  bm_status_t st = bm_mem_flush_device_mem((bm_handle_t)bm_handle_, &dev);
   if (st != BM_SUCCESS) {
     return -1;
   }
@@ -126,8 +130,8 @@ int32_t BmMemoryPool::invalidateCache(std::unique_ptr<MemoryBlock> &block) {
     LOGI("invalidateCache block->physicalAddress is 0");
     return -1;
   }
-  bm_status_t st = bm_mem_invalidate_device_mem(
-      (bm_handle_t)bm_handle_, (bm_device_mem_t *)block->handle);
+  bm_device_mem_t dev = bm_mem_from_device(block->physicalAddress, block->size);
+  bm_status_t st = bm_mem_invalidate_device_mem((bm_handle_t)bm_handle_, &dev);
   if (st != BM_SUCCESS) {
     return -1;
   }

@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -23,16 +24,27 @@ std::string replace_file_ext(const std::string& filename,
 }
 
 int main(int argc, char** argv) {
-  if (argc != 4) {
-    printf("Usage: %s <model_id_name> <model_dir> <image_list> <save_dir>\n",
-           argv[0]);
+  if (argc != 6) {
+    printf(
+        "Usage: %s <model_id_name> <model_dir> <image_list> <image_root> "
+        "<save_dir>\n",
+        argv[0]);
     return -1;
   }
   std::string model_id_name = argv[1];
   std::string model_dir = argv[2];
   std::string image_list = argv[3];
-  std::string save_dir = argv[4];
+  std::string image_root = argv[4];
+  std::string save_dir = argv[5];
 
+  struct stat root_stat;
+  if (stat(image_root.c_str(), &root_stat) != 0 ||
+      !S_ISDIR(root_stat.st_mode)) {
+    printf("Error: image_root is not a valid directory: %s\n",
+           image_root.c_str());
+    return -1;
+  }
+  if (image_root.back() != '/') image_root += "/";
   if (save_dir.back() != '/') save_dir += "/";
 
   std::vector<std::string> file_list = read_file_lines(image_list);
@@ -43,9 +55,25 @@ int main(int argc, char** argv) {
 
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();
   model_factory.loadModelConfig();
-  model_factory.setModelDir(model_dir);
 
-  std::shared_ptr<BaseModel> model = model_factory.getModel(model_id_name);
+  std::shared_ptr<BaseModel> model;
+  struct stat path_stat;
+  if (stat(model_dir.c_str(), &path_stat) == 0) {
+    if (S_ISDIR(path_stat.st_mode)) {  // model_dir是文件夹：原有getModel调用
+      model_factory.setModelDir(model_dir);
+      model = model_factory.getModel(model_id_name);
+    } else if (S_ISREG(
+                   path_stat.st_mode)) {  // model_dir是绝对路径：新getModel调用
+      model = model_factory.getModel(model_id_name, model_dir);
+    } else {
+      printf("Error: MODEL_DIR is neither dir nor file\n");
+      return -1;
+    }
+  } else {
+    printf("Error: Cannot access MODEL_DIR: %s\n", model_dir.c_str());
+    return -1;
+  }
+
   if (!model) {
     std::cout << "Failed to create model\n";
     return -1;
@@ -53,7 +81,8 @@ int main(int argc, char** argv) {
   model->setExportFeature(1);
 
   for (size_t i = 0; i < file_list.size(); ++i) {
-    std::string input_image_path = file_list[i];
+    std::string rel_image_path = file_list[i];
+    std::string input_image_path = image_root + rel_image_path;
 
     std::shared_ptr<BaseImage> image =
         ImageFactory::readImage(input_image_path);
@@ -67,7 +96,7 @@ int main(int argc, char** argv) {
     model->inference(input_images, out_datas);
 
     if (out_datas.empty()) {
-      std::cout << "No output for image: " << input_image_path << std::endl;
+      std::cout << "No output for image: " << rel_image_path << std::endl;
       continue;
     }
 
@@ -75,7 +104,7 @@ int main(int argc, char** argv) {
         std::static_pointer_cast<ModelBoxLandmarkInfo>(out_datas[0]);
 
     std::string filename =
-        input_image_path.substr(input_image_path.find_last_of("/\\") + 1);
+        rel_image_path.substr(rel_image_path.find_last_of("/\\") + 1);
     std::string save_path = save_dir + replace_file_ext(filename, "txt");
     std::ofstream outFile(save_path);
     if (!outFile) {
@@ -94,7 +123,7 @@ int main(int argc, char** argv) {
 
     outFile.close();
     std::cout << "processed :" << i + 1 << "/" << file_list.size() << "\t"
-              << input_image_path << std::endl;
+              << rel_image_path << std::endl;
   }
 
   return 0;

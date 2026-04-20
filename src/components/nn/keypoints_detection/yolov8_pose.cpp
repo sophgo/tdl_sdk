@@ -45,7 +45,7 @@ YoloV8Pose::YoloV8Pose(std::tuple<int, int, int> pose_tuple) {
   keep_aspect_ratio_ = true;
 
   num_box_channel_ = std::get<0>(pose_tuple);
-  num_kpts_channel_ = std::get<1>(pose_tuple) * 3;
+  num_kpts_ = std::get<1>(pose_tuple);
   num_cls_ = std::get<2>(pose_tuple);
 }
 
@@ -57,6 +57,18 @@ int32_t YoloV8Pose::onModelOpened() {
   int input_h = input_shape[2];
   int input_w = input_shape[3];
   strides.clear();
+
+  auto &parameters = net_param_.model_config.custom_config_i;
+
+  if (parameters.find("num_kpt") != parameters.end()) {
+    num_kpts_ = static_cast<int>(parameters.at("num_kpt"));
+    LOGI("num_kpts_channel_:%d", num_kpts_channel_);
+  }
+  if (parameters.find("num_cls") != parameters.end()) {
+    num_cls_ = static_cast<int>(parameters.at("num_cls"));
+    LOGI("num_cls_:%d", num_cls_);
+  }
+
   const auto &output_layers = net_->getOutputNames();
   size_t num_output = output_layers.size();
   for (size_t j = 0; j < num_output; j++) {
@@ -78,21 +90,25 @@ int32_t YoloV8Pose::onModelOpened() {
       strides.push_back(stride_h);
       LOGI("parse box branch,name:%s,stride:%d\n", output_layers[j].c_str(),
            stride_h);
-    } else if (channel == num_kpts_channel_) {
-      keypoints_out_names[stride_h] = output_layers[j];
-      LOGI("parse keypoints branch,name:%s,stride:%d\n",
-           output_layers[j].c_str(), stride_h);
     } else if (channel == num_cls_) {
       class_out_names[stride_h] = output_layers[j];
       LOGI("parse class branch,name: %s,stride:%d\n", output_layers[j].c_str(),
            stride_h);
     } else {
-      LOGE("unexpected branch:%s,channel:%d\n", output_layers[j].c_str(),
-           channel);
-      return -1;
+      if (channel % num_kpts_ == 0 &&
+          (channel / num_kpts_ == 2 || channel / num_kpts_ == 3)) {
+        keypoints_out_names[stride_h] = output_layers[j];
+        num_kpts_channel_ = channel;
+        keypoint_dimension_ = channel / num_kpts_;
+        LOGI("parse keypoints branch,name:%s,stride:%d\n",
+             output_layers[j].c_str(), stride_h);
+      } else {
+        LOGE("unexpected branch:%s,channel:%d\n", output_layers[j].c_str(),
+             channel);
+        return -1;
+      }
     }
   }
-
   return 0;
 }
 
@@ -180,12 +196,12 @@ void YoloV8Pose::decodeKeypointsFeatureMap(int batch_idx, int stride,
   if (kpts_info.data_type == TDLDataType::INT8) {
     int8_t *p_kpts_int8 = kpts_tensor->getBatchPtr<int8_t>(batch_idx);
     for (int c = 0; c < num_kpts_channel_; c++) {
-      if (c % 3 == 0) {
+      if (c % keypoint_dimension_ == 0) {
         val =
             (p_kpts_int8[c * num_anchor + anchor_idx] * kpts_info.qscale * 2.0 +
              grid_x - 0.5) *
             (float)stride;
-      } else if (c % 3 == 1) {
+      } else if (c % keypoint_dimension_ == 1) {
         val =
             (p_kpts_int8[c * num_anchor + anchor_idx] * kpts_info.qscale * 2.0 +
              grid_y - 0.5) *
@@ -199,12 +215,12 @@ void YoloV8Pose::decodeKeypointsFeatureMap(int batch_idx, int stride,
   } else if (kpts_info.data_type == TDLDataType::UINT8) {
     uint8_t *p_kpts_uint8 = kpts_tensor->getBatchPtr<uint8_t>(batch_idx);
     for (int c = 0; c < num_kpts_channel_; c++) {
-      if (c % 3 == 0) {
+      if (c % keypoint_dimension_ == 0) {
         val = (p_kpts_uint8[c * num_anchor + anchor_idx] * kpts_info.qscale *
                    2.0 +
                grid_x - 0.5) *
               (float)stride;
-      } else if (c % 3 == 1) {
+      } else if (c % keypoint_dimension_ == 1) {
         val = (p_kpts_uint8[c * num_anchor + anchor_idx] * kpts_info.qscale *
                    2.0 +
                grid_y - 0.5) *
@@ -218,10 +234,10 @@ void YoloV8Pose::decodeKeypointsFeatureMap(int batch_idx, int stride,
   } else if (kpts_info.data_type == TDLDataType::FP32) {
     float *p_kpts_float = kpts_tensor->getBatchPtr<float>(batch_idx);
     for (int c = 0; c < num_kpts_channel_; c++) {
-      if (c % 3 == 0) {
+      if (c % keypoint_dimension_ == 0) {
         val = (p_kpts_float[c * num_anchor + anchor_idx] * 2.0 + grid_x - 0.5) *
               (float)stride;
-      } else if (c % 3 == 1) {
+      } else if (c % keypoint_dimension_ == 1) {
         val = (p_kpts_float[c * num_anchor + anchor_idx] * 2.0 + grid_y - 0.5) *
               (float)stride;
       } else {
@@ -342,12 +358,24 @@ int32_t YoloV8Pose::outputParse(
         decodeKeypointsFeatureMap(b, boxes_temp_info[bboxs.first][i].first,
                                   boxes_temp_info[bboxs.first][i].second,
                                   decode_kpts);
-        int num_keypoints = num_kpts_channel_ / 3;
-        for (int j = 0; j < num_keypoints; j++) {
-          bboxs.second[i].landmarks_x.push_back(decode_kpts[j * 3]);
-          bboxs.second[i].landmarks_y.push_back(decode_kpts[j * 3 + 1]);
-          bboxs.second[i].landmarks_score.push_back(decode_kpts[j * 3 + 2]);
+        int num_keypoints = num_kpts_channel_ / keypoint_dimension_;
+        if (keypoint_dimension_ == 3) {
+          for (int j = 0; j < num_keypoints; j++) {
+            bboxs.second[i].landmarks_x.push_back(decode_kpts[j * 3]);
+            bboxs.second[i].landmarks_y.push_back(decode_kpts[j * 3 + 1]);
+            bboxs.second[i].landmarks_score.push_back(decode_kpts[j * 3 + 2]);
+          }
+        } else if (keypoint_dimension_ == 2) {
+          for (int j = 0; j < num_keypoints; j++) {
+            bboxs.second[i].landmarks_x.push_back(decode_kpts[j * 2]);
+            bboxs.second[i].landmarks_y.push_back(decode_kpts[j * 2 + 1]);
+            bboxs.second[i].landmarks_score.push_back(1.0);
+          }
+        } else {
+          LOGE("unsupported keypoint_dimension_:%d\n", keypoint_dimension_);
+          assert(0);
         }
+
         DetectionHelper::rescaleBbox(bboxs.second[i], scale_params);
         // ss << "bbox:[" << obj_seg->box_seg[i].x1 << "," <<
         // obj_seg->box_seg[i].y1 << "," <<obj_seg->box_seg[i].x2 << "," <<

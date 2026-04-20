@@ -1,6 +1,7 @@
 #include "mot/mot.hpp"
 #include "sot/sot.hpp"
 #include "tracker/tracker_types.hpp"
+
 void Tracker::setImgSize(int width, int height) {
   img_width_ = width;
   img_height_ = height;
@@ -10,13 +11,13 @@ int32_t Tracker::setModel(std::shared_ptr<BaseModel> sot_model) { return 0; }
 
 int32_t Tracker::initialize(const std::shared_ptr<BaseImage>& image,
                             const std::vector<ObjectBoxInfo>& detect_boxes,
-                            const ObjectBoxInfo& bbox) {
+                            const ObjectBoxInfo& bbox, int frame_type) {
   return 0;
 }
 
 int32_t Tracker::initialize(const std::shared_ptr<BaseImage>& image,
                             const std::vector<ObjectBoxInfo>& detect_boxes,
-                            float x, float y) {
+                            float x, float y, int frame_type) {
   return 0;
 }
 

@@ -207,7 +207,7 @@ Lane detection model list
    :widths: 10 9
 
    * - Model Name
-     - Descriptio
+     - Description
 
    * - TDL_MODEL_LSTR_DET_LANE
      - Lane Detection Model
@@ -219,12 +219,45 @@ License plate recognition model list
    :widths: 10 9
 
    * - Model Name
-     - Descriptio
+     - Description
 
    * - TDL_MODEL_RECOGNITION_LICENSE \
        _PLATE
      - License Plate Recognition Model
 
+Speech Recognition Model List
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Description
+
+   * - TDL_MODEL_RECOGNITION_SPEECH \
+       _ZIPFORMER_ENCODER 
+     - zipformer speech recognition encoder model
+
+   * - TDL_MODEL_RECOGNITION_SPEECH \
+       _ZIPFORMER_DECODER
+     - zipformer speech recognition decoder model
+
+   * - TDL_MODEL_RECOGNITION_SPEECH \
+       _ZIPFORMER_JOINER
+     - zipformer speech recognition joiner model
+
+Voice Activity Detection Model List
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :widths: 10 9
+
+   * - Model Name
+     - Description
+
+   * - TDL_MODEL_VAD_FSMN 
+     - FSMN-based voice activity detection model
+  
 Segmentation model list 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -232,7 +265,7 @@ Segmentation model list
    :widths: 12 9
 
    * - Model Name
-     - Descriptio
+     - Description
 
    * - TDL_MODEL_YOLOV8_SEG_COCO80
      - YOLOv8 COCO80 Segmentation Model
@@ -250,7 +283,7 @@ Feature extraction model list
    :widths: 10 9
 
    * - Model Name
-     - Descriptio
+     - Description
 
    * - TDL_MODEL_FEATURE_IMG
      - Image Feature Extraction Model
@@ -1074,7 +1107,7 @@ Tracking data
    * - out_num
      - Number of times target is out of frame
 
-TDLOcr
+TDLText
 ~~~~~~~~~~~~~~~
 
 【Description】
@@ -1088,7 +1121,7 @@ Text recognition data
   typedef struct {
     uint32_t size;
     char* text_info;
-  } TDLOcr;
+  } TDLText;
 
 【Members】
 
@@ -1103,6 +1136,78 @@ Text recognition data
   
    * - text_info
      - Text recognition information
+
+TDLVadSegment
+~~~~~~~~~~~~~~~
+
+【Description】
+
+Voice activity detection (VAD) speech segments.
+
+【Definition】
+
+.. code-block:: c
+
+  typedef struct {
+    int32_t start_ms;
+    int32_t end_ms;
+  } TDLVadSegment;
+
+【Members】
+
+.. list-table::
+   :widths: 1 1
+
+   * - Data Type
+     - Description
+
+   * - start_ms
+     - Start time of the segment in milliseconds.
+  
+   * - end_ms
+     - End time of the segment in milliseconds. A value of `-1` indicates the segment is still ongoing.
+
+TDLVad
+~~~~~~~~~~~~~~
+
+【Definition】
+
+Output structure for voice activity detection (VAD).
+
+【Definition】
+
+.. code-block:: c
+
+  typedef struct {
+    uint32_t size;
+    TDLVadSegment *segments;
+    bool has_speech;
+    bool start_event;
+    bool end_event;
+  } TDLVAD;
+
+【Members】
+
+.. list-table::
+   :widths: 1 1
+
+   * - Data Type
+     - Description
+
+   * - size
+     - Start time of the segment in milliseconds.
+  
+   * - segments
+     - Array of detected speech segments (`TDLVadSegment`).
+
+   * - has_speech
+     - Indicates whether any speech segment was detected (`true` if speech is present, `false` otherwise)
+
+   * - start_event
+     - Indicates whether there is a frame marking the start of a speech segment in streaming detection.
+
+   * - end_event
+     - Indicates whether there is a frame marking the end of a speech segment in streaming detection.
 
 API Reference
 ================
@@ -1340,6 +1445,40 @@ Read file content as a TDLImageHandle object.
      - data_type
      - Input data type
 
+TDL_ReadAudioFrame
+~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  TDLImage TDL_ReadAudioFrame(uint8_t *buffer, int frame_size);
+
+【Description】
+
+Read audio frame as a TDLImageHandle object.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - uint8_t\*
+     - buffer
+     - Audio frame data pointer
+
+   * - Input
+     - int
+     - frame_size
+     - Audio frame data size
+
 TDL_DestroyImage
 ~~~~~~~~~~~~~~~~~~
 
@@ -1376,9 +1515,9 @@ TDL_OpenModel
 
 .. code-block:: c
 
-  int32_t TDL_OpenModel(TDLHandle handle,
-                        const TDLModel model_id,
-                        const char *model_path);
+  int32_t TDL_OpenModel(TDLHandle handle, const TDLModel model_id,
+                        const char *model_path, const char *model_config_json,
+                        const int vpss_dev);
 
 【Description】
 
@@ -1409,6 +1548,74 @@ Load a specified type of model into the TDLHandle object.
      - const char\*
      - model_path
      - Model path
+
+   * - Input
+     - const char\*
+     - model_config_json
+     - Model config JSON path
+
+   * - Input
+     - int
+     - vpss_dev
+     - VPSS device ID
+
+TDL_OpenModelFromBuffer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_OpenModelFromBuffer(TDLHandle handle, const TDLModel model_id,
+                                  const uint8_t *model_buffer,
+                                  uint32_t model_buffer_size,
+                                  const char *model_config_json,
+                                  const int vpss_dev);
+
+【Description】
+
+Load a specified type of model into the TDLHandle object from buffer.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Model type enumeration
+
+   * - Input
+     - const uint8_t\*
+     - model_buffer
+     - Model buffer pointer
+
+   * - Input
+     - uint32_t
+     - model_buffer_size
+     - Model buffer size
+
+   * - Input
+     - const char\*
+     - model_config_json
+     - Model config JSON path
+
+   * - Input
+     - int
+     - vpss_dev
+     - VPSS device ID
 
 TDL_CloseModel
 ~~~~~~~~~~~~~~~~~~
@@ -2134,6 +2341,65 @@ Multi-object tracking, associating detected objects across frames.
      - tracker_meta
      - Output tracker status information
 
+
+TDL_SetSingleObjectTracking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_SetSingleObjectTracking(TDLHandle handle, TDLImage image_handle,
+                                    TDLObject *object_meta, int *set_values,
+                                    int size, TDLTargetSearchTypeE frame_type);
+
+
+【Description】
+
+A monocular tracking method integrating object detection and bounding box selection.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 2 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - TDLImageHandle object
+
+   * - Input/Output
+     - TDLObject\*
+     - object_meta
+     - Input detection results, output tracking IDs
+
+   * - Input
+     - int\*
+     - set_values
+     - Tracking target form
+
+   * - Input
+     - int
+     - size
+     - The number of set_values elements (can only be 1, 2, or 4)
+
+   * - Input
+     - TDLTargetSearchTypeE
+     - frame_type
+     - Method of target search
+
 TDL_CharacterRecognition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2144,7 +2410,7 @@ TDL_CharacterRecognition
   int32_t TDL_CharacterRecognition(TDLHandle handle,
                                    const TDLModel model_id,
                                    TDLImage image_handle,
-                                   TDLOcr *char_meta);
+                                   TDLText *text_meta);
 
 【Description】
 
@@ -2177,9 +2443,109 @@ Character recognition, supporting text detection and recognition.
      - TDLImageHandle object
 
    * - Output
-     - TDLOcr\*
-     - char_meta
+     - TDLText\*
+     - text_meta
      - Output recognition results (text content and position)
+
+TDL_SpeechRecognition_Init
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_SpeechRecognition_Init(TDLHandle handle,
+                                    const TDLModel model_id_encoder,
+                                    const TDLModel model_id_decoder,
+                                    const TDLModel model_id_joiner,
+                                    const char *tokens_path);
+
+【Description】
+
+Speech recognition initialization.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 2 3
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id_encoder
+     - encoder model type enumeration
+
+   * - Input
+     - const TDLModel
+     - model_id_decoder
+     - decoder model type enumeration
+
+   * - Input
+     - const TDLModel
+     - model_id_joiner
+     - joiner model type enumeration
+
+   * - Input
+     - const char\*
+     - tokens_path
+     - tokens file path
+
+TDL_SpeechRecognition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_SpeechRecognition(TDLHandle handle,
+                                const TDLModel model_id_encoder,
+                                TDLImage image_handle,
+                                TDLText *text_meta);
+
+【Description】
+
+Speech recognition.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 2 3
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const TDLModel
+     - model_id_encoder
+     - encoder model type enumeration
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - TDLImageHandle object
+
+   * - Output
+     - TDLText\*
+     - text_meta
+     - Output recognition results
 
 TDL_LoadModelConfig
 ~~~~~~~~~~~~~~~~~~~~~
@@ -2557,6 +2923,60 @@ Execute motion detection task.
      - obj_meta
      - Output detection results
 
+TDL_VoiceActivityDetection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_VoiceActivityDetection(TDLHandle handle,
+                                     const TDLModel model_id,
+                                     TDLImage image_handle, 
+                                     int is_final,
+                                     TDLVAD *vad_meta);
+
+【Description】
+
+Performs streaming voice activity detection (VAD).
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - The TDLHandle object.
+
+   * - Input
+     - const TDLModel
+     - model_id
+     - Enum value specifying the voice activity detection model type.
+
+   * - Input
+     - TDLImage
+     - image_handle
+     - The TDLImage handle object (used to pass audio features or input buffers).
+
+   * - Input
+     - int
+     - is_final
+     - 0 : streaming input not yet finished,
+       1 : final input chunk.
+
+   * - Output
+     - TDLVAD*
+     - vad_meta
+     - Output parameter that stores the VAD result.
+
 TDL_APP_Init
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -2704,22 +3124,61 @@ Execute face capture task.
      - capture_info
      - Capture results
 
-TDL_APP_ConsumerCounting
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+TDL_APP_ObjectCounting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 【Syntax】
 
 .. code-block:: c
 
-  int32_t TDL_APP_ConsumerCounting(TDLHandle handle,
+  int32_t TDL_APP_ObjectCounting(TDLHandle handle,
                                    const char *channel_name,
-                                   TDLObject *object_meta,
-                                   uint32_t *enter_num,
-                                   uint32_t *miss_num);
+                                   TDLObjectCountingInfo *object_counting_info);
 
 【Description】
 
-Execute consumer counting task.
+Execute passenger counting(TDL_APP_Init task is consumer_counting) or cross detection(TDL_APP_Init task is cross_detection) task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
+
+   * - Output
+     - TDLObjectCountingInfo*
+     - object_counting_info
+     - Counting/detection results
+
+TDL_APP_ObjectCountingSetLine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_ObjectCountingSetLine(TDLHandle handle,
+                                          const char *channel_name, int x1,
+                                          int y1, int x2, int y2, int mode);
+
+【Description】
+
+Set line position for passenger counting or cross detection running process.
 
 【Parameters】
 
@@ -2743,19 +3202,111 @@ Execute consumer counting task.
      - Current channel name
 
    * - Input
-     - TDLObject*
-     - object_meta
+     - int
+     - x1
+     - X-coordinate of endpoint 1
+
+   * - Input
+     - int
+     - y1
+     - Y-coordinate of endpoint 1
+
+   * - Input
+     - int
+     - x2
+     - X-coordinate of endpoint 2
+
+   * - Input
+     - int
+     - y2
+     - Y-coordinate of endpoint 2
+
+   * - Input
+     - int
+     - mode
+     - For passenger counting: mode is 0 when the line is vertical, and from left to right is entering. For non-vertical line, from top to bottom is entering. mode is 1 when the opposite direction. For cross detection: mode is 0 when the line is vertical, and from left to right is crossing. For non-vertical line, from top to bottom is crossing. mode is 1 when the opposite direction. mode is 2 for bidirectional detection
+
+TDL_APP_FallDetection
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_FallDetection(TDLHandle handle,
+                          const char *channel_name,
+                          TDLCaptureInfo *capture_info);
+
+【Description】
+
+Execute fall detection task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
+
+   * - Output
+     - TDLCaptureInfo*
+     - capture_info
      - Detection results
 
-   * - Output
-     - uint32_t*
-     - enter_num
-     - Number of people entering
+TDL_APP_HumanPoseSmooth
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_HumanPoseSmooth(TDLHandle handle,
+                          const char *channel_name,
+                          TDLCaptureInfo *capture_info);
+
+【Description】
+
+Execute human pose smooth task.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
 
    * - Output
-     - uint32_t*
-     - miss_num
-     - Number of people leaving
+     - TDLCaptureInfo*
+     - capture_info
+     - Human pose results
 
 TDL_WrapImage
 ~~~~~~~~~~~~~~~~~~~~~

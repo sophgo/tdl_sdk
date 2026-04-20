@@ -1,15 +1,25 @@
 #include "components/snapshot/object_snapshot.hpp"
 #include <cstdio>
 #include "framework/utils/tdl_log.hpp"
-ObjectSnapshot::ObjectSnapshot() {
+
+// #define LOGI printf
+
+ObjectSnapshot::ObjectSnapshot(int vechn, int encoder_mode) {
   preprocessor_ =
       PreprocessorFactory::createPreprocessor(InferencePlatform::AUTOMATIC);
   if (preprocessor_ == nullptr) {
     LOGE("ObjectSnapshot preprocessor is nullptr");
     assert(false);
   }
+
+  if (vechn >= 0 && encoder_mode >= 0) {
+    image_encoder_ = std::make_shared<ImageEncoder>(vechn);
+    image_encoder_->setEncoderMode(encoder_mode);
+  }
+
   config_.update_quality_gap = 0.05f;
   config_.snapshot_quality_threshold = 0.f;
+  config_.snapshot_person_quality_threshold = 0.f;
   config_.crop_square = false;
   config_.max_miss_counter = 20;
   config_.min_matched_times = 25;
@@ -17,6 +27,7 @@ ObjectSnapshot::ObjectSnapshot() {
   config_.crop_size_min = 0;
   config_.crop_size_max = 0;
   config_.min_snapshot_size = 0;
+  config_.jpg_quality = 60;
 }
 
 int32_t ObjectSnapshot::updateConfig(const nlohmann::json& config) {
@@ -37,13 +48,22 @@ int32_t ObjectSnapshot::updateConfig(const nlohmann::json& config) {
     config_.snapshot_quality_threshold =
         config.at("snapshot_quality_threshold");
   }
+  if (config.contains("snapshot_person_quality_threshold")) {
+    config_.snapshot_person_quality_threshold =
+        config.at("snapshot_person_quality_threshold");
+  }
   if (config.contains("crop_square")) {
     config_.crop_square = config.at("crop_square");
   }
   if (config.contains("max_miss_counter")) {
     config_.max_miss_counter = config.at("max_miss_counter");
   }
-
+  if (config.contains("jpg_quality")) {
+    config_.jpg_quality = config.at("jpg_quality");
+  }
+  if (config.contains("capture_person")) {
+    capture_person_ = config.at("capture_person");
+  }
   return 0;
 }
 int32_t ObjectSnapshot::updateSnapshot(
@@ -85,12 +105,16 @@ int32_t ObjectSnapshot::updateSnapshot(
     ObjectBoxInfo box = track_boxes.at(track.track_id_);
     float quality_score = quality_scores.at(track.track_id_);
     bool update_snapshot = false;
+
+    float quality_threshold = box.object_type == OBJECT_TYPE_FACE
+                                  ? config_.snapshot_quality_threshold
+                                  : config_.snapshot_person_quality_threshold;
     if (snapshot_infos_.count(track.track_id_)) {
       snapshot_infos_[track.track_id_].matched_times = track.matched_times_;
       if (quality_score > snapshot_infos_[track.track_id_].quality + 0.05) {
         update_snapshot = true;
       }
-    } else if (quality_score > config_.snapshot_quality_threshold &&
+    } else if (quality_score > quality_threshold &&
                track.status_ == TrackStatus::TRACKED) {
       update_snapshot = true;
       ObjectSnapshotInfo snapshot_info;
@@ -107,6 +131,17 @@ int32_t ObjectSnapshot::updateSnapshot(
       snapshot_info.track_id = track.track_id_;
       snapshot_info.snapshot_frame_id = frame_id;
       snapshot_info.quality = quality_score;
+
+      if (track.pair_track_idx_ > 0) {
+        snapshot_info.pair_track_id = track.pair_track_idx_;
+      }
+
+      if (image_encoder_ != nullptr &&
+          image_encoder_->getEncoderMode() == 1) {  // 更新全景图
+        snapshot_info.encoded_full_image.clear();
+        image_encoder_->encodeFrame(image, snapshot_info.encoded_full_image,
+                                    config_.jpg_quality);
+      }
 
       if (crop_face_imgs.count(track.track_id_)) {
         snapshot_info.object_image = crop_face_imgs.at(track.track_id_);
@@ -141,13 +176,6 @@ int32_t ObjectSnapshot::updateSnapshot(
           }
           snapshot_info.other_info["landmarks"] = Packet::make(landmarks);
         }
-        if (other_info.count("ori_face_meta")) {
-          const std::vector<ObjectBoxLandmarkInfo>& ori_face_meta =
-              other_info.at("ori_face_meta")
-                  .get<std::vector<ObjectBoxLandmarkInfo>>();
-          snapshot_info.other_info["ori_face_meta"] =
-              Packet::make(ori_face_meta[obj_idx]);
-        }
       } else {
         int crop_x = 0;
         int crop_y = 0;
@@ -155,17 +183,32 @@ int32_t ObjectSnapshot::updateSnapshot(
         int crop_height = 0;
         int dst_width = 0;
         int dst_height = 0;
-        getCropBox(box, crop_x, crop_y, crop_width, crop_height, dst_width,
-                   dst_height, image->getWidth(), image->getHeight());
+
+        if (box.object_type == OBJECT_TYPE_FACE) {
+          getCropBox(box, crop_x, crop_y, crop_width, crop_height, dst_width,
+                     dst_height, image->getWidth(), image->getHeight());
+        } else {
+          crop_x = std::max(int(box.x1), 0);
+          crop_y = std::max(int(box.y1), 0);
+          crop_width = int(box.x2 - box.x1);
+          crop_height = int(box.y2 - box.y1);
+          dst_width = std::min(crop_width, config_.crop_size_max);
+          dst_width = dst_width & ~1;  // 奇数预处理的时候会报错
+
+          dst_height =
+              int((float)crop_height * (float)dst_width / (float)crop_width);
+          dst_height = dst_height & ~1;  // 奇数预处理的时候会报错
+        }
+
         LOGI(
             "crop_x: %d, crop_y: %d, crop_width: %d, crop_height: %d, "
             "dst_width: "
             "%d, dst_height: %d,track_id: %lu",
             crop_x, crop_y, crop_width, crop_height, dst_width, dst_height,
             track.track_id_);
-        snapshot_info.object_image =
-            preprocessor_->cropResize(image, crop_x, crop_y, crop_width,
-                                      crop_height, dst_width, dst_height);
+        snapshot_info.object_image = preprocessor_->cropResize(
+            image, crop_x, crop_y, crop_width, crop_height, dst_width,
+            dst_height, ImageFormat::YUV420SP_UV);
         if (snapshot_info.object_image == nullptr) {
           LOGE("ObjectSnapshot updateSnapshot, object_image is nullptr");
           assert(false);
@@ -179,7 +222,8 @@ int32_t ObjectSnapshot::updateSnapshot(
         snapshot_info.object_box_info = box;  // box is updated
 
         // TODO(fuquan.ke):wrap the code below as a callback function
-        if (other_info.count("face_landmark")) {
+        if (other_info.count("face_landmark") &&
+            box.object_type == OBJECT_TYPE_FACE) {
           const std::vector<ObjectBoxLandmarkInfo>& face_landmarks =
               other_info.at("face_landmark")
                   .get<std::vector<ObjectBoxLandmarkInfo>>();
@@ -199,9 +243,6 @@ int32_t ObjectSnapshot::updateSnapshot(
                                 scale_y);
           }
           snapshot_info.other_info["landmarks"] = Packet::make(landmarks);
-
-          snapshot_info.other_info["ori_face_meta"] =
-              Packet::make(face_landmarks[obj_idx]);
         }
       }
     }

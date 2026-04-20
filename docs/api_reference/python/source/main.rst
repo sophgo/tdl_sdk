@@ -273,7 +273,10 @@ TDLDataType
 
    * - KEYPOINT_YOLOV8POSE_PERSON17
      - 人体17个关键点检测模型
-
+     
+   * - KEYPOINT_YOLOV8POSE
+     - 通用关键点检测模型
+     
    * - KEYPOINT_SIMCC_PERSON17
      - SIMCC 17个关键点检测模型
 
@@ -293,11 +296,16 @@ TDLDataType
      - 动作分割模型 (0:静态, 2:过渡, 3:运动)
 
    * - FEATURE_CLIP_IMG
-     - 图像特征提取模型
+     - Clip图像特征提取模型
 
    * - FEATURE_CLIP_TEXT
-     - 文本特征提取模型
+     - Clip文本特征提取模型
 
+   * - FEATURE_MOBILECLIP2_IMG
+     - MobileClip2图像特征提取模型
+
+   * - FEATURE_MOBILECLIP2_TEXT
+     - MobileClip2文本特征提取模型
 
 
 模型创建函数

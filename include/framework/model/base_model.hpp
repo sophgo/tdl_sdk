@@ -11,14 +11,14 @@
 #include "image/base_image.hpp"
 #include "net/base_net.hpp"
 #include "preprocess/base_preprocessor.hpp"
-
+#include "tdl_model_defs.hpp"
 #include "utils/profiler.hpp"
 
 class BaseModel {
  public:
   BaseModel();
   virtual ~BaseModel() = default;
-  int32_t modelOpen();
+  int32_t modelOpen(const int device_id = 0);
 
   NetParam& getNetParam() { return net_param_; }
   void setNetParam(const NetParam& net_param) { net_param_ = net_param; }
@@ -57,9 +57,12 @@ class BaseModel {
       std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas,
       const std::map<std::string, float>& parameters = {});
 
+  virtual int32_t outputParse(const std::shared_ptr<BaseImage>& image,
+                              std::shared_ptr<ModelOutputInfo>& out_data);
+
   virtual int32_t outputParse(
       const std::vector<std::shared_ptr<BaseImage>>& images,
-      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas) = 0;
+      std::vector<std::shared_ptr<ModelOutputInfo>>& out_datas);
 
   virtual int32_t outputParse(
       const std::vector<std::vector<std::shared_ptr<BaseImage>>>& images,
@@ -70,6 +73,9 @@ class BaseModel {
 
   virtual int32_t onModelOpened() { return 0; }
   virtual int32_t onModelClosed() { return 0; }
+
+  ModelType getModelType() const { return model_type_; }
+  void setModelType(ModelType model_type) { model_type_ = model_type; }
 
   void setTypeMapping(const std::map<int, TDLObjectType>& type_mapping);
   virtual void setModelThreshold(float threshold);
@@ -82,6 +88,23 @@ class BaseModel {
   int32_t setPreprocessParameters(const PreprocessParams& pre_param,
                                   const std::string& input_name = "");
   virtual int32_t setupNetwork(NetParam& net_param);
+
+  const std::vector<std::string>& getInputNames() const;
+  const std::vector<std::string>& getOutputNames() const;
+  int32_t getTensorInfo(const std::string& name, TensorInfo& info);
+  uint32_t getIOTensorBytes() { return net_->getIOTensorBytes(); }
+  int32_t setIOTensorMemory(uint64_t phy_addr, uint8_t* sys_mem,
+                            uint32_t size) {
+    return net_->setIOTensorMemory(phy_addr, sys_mem, size);
+  }
+
+  // Set input tensor memory from external image (for TENSOR_FRAME usage).
+  // This allows reusing image memory as input tensor memory to avoid duplicate
+  // memory allocation. The tensor's original memory will be released.
+  int32_t setInputTensorFromImage(const std::string& name,
+                                  const std::shared_ptr<BaseImage>& image) {
+    return net_->setInputTensorFromImage(name, image);
+  }
 
  private:
   int getFitBatchSize(int left_size) const;
@@ -103,6 +126,8 @@ class BaseModel {
   float model_threshold_ = 0.5;
   int export_feature = 0;
 
+  ModelType model_type_;
+
   std::map<std::string, std::vector<std::vector<float>>> batch_rescale_params_;
 
   std::vector<std::shared_ptr<BaseImage>> tmp_preprocess_images_;
@@ -112,3 +137,4 @@ class BaseModel {
 };
 
 #endif  // INCLUDE_BASE_MODEL_H_
+// INCLUDE_BASE_MODEL_H_

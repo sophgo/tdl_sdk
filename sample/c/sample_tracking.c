@@ -127,13 +127,13 @@ int main(int argc, char **argv) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id_face, model1, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id_face, model1, NULL, 0);
   if (ret != 0) {
     printf("open face detection model failed with %#x!\n", ret);
     goto exit0;
   }
 
-  ret = TDL_OpenModel(tdl_handle, model_id_obj, model2, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id_obj, model2, NULL, 0);
   if (ret != 0) {
     printf("open face attribute model failed with %#x!\n", ret);
     goto exit1;
@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
         }
       }
       if (output_file != NULL) {
-        VisualizeRectangle(boxes, track_meta.out_num, outpath, outpath);
+        VisualizeRectangleFromFile(boxes, track_meta.out_num, outpath, outpath);
       }
     }
 

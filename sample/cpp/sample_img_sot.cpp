@@ -133,7 +133,7 @@ ObjectBoxInfo processWaitingInputState(std::shared_ptr<BaseModel> &det_model,
     float y = values[1];
 
     // 初始化跟踪器
-    int ret = tracker->initialize(image, det_result->bboxes, x, y);
+    int ret = tracker->initialize(image, det_result->bboxes, x, y, 0);
     if (ret != 0) {
       return processWaitingInputState(det_model, image, tracker);
     }
@@ -154,7 +154,7 @@ ObjectBoxInfo processWaitingInputState(std::shared_ptr<BaseModel> &det_model,
         std::static_pointer_cast<ModelBoxInfo>(out_datas[0]);
 
     // 初始化跟踪器
-    int ret = tracker->initialize(image, det_result->bboxes, init_bbox);
+    int ret = tracker->initialize(image, det_result->bboxes, init_bbox, 0);
   } else {
     std::cout << "输入格式错误，请重新输入" << std::endl;
     return processWaitingInputState(det_model, image, tracker);

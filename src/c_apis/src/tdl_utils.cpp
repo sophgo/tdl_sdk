@@ -267,21 +267,53 @@ int32_t TDL_ReleaseLaneMeta(TDLLane *lane_meta) {
   return 0;
 }
 
-int32_t TDL_InitCharacterMeta(TDLOcr *char_meta, int length) {
-  if (char_meta->text_info) return 0;
-  char_meta->text_info = (char *)malloc(length * sizeof(char));
-  memset(char_meta->text_info, 0, length * sizeof(char));
-  char_meta->size = length;
+int32_t TDL_InitCharacterMeta(TDLText *text_meta, int length) {
+  if (text_meta->text_info) return 0;
+  text_meta->text_info = (char *)malloc(length * sizeof(char));
+  memset(text_meta->text_info, 0, length * sizeof(char));
+  text_meta->size = length;
   return 0;
 };
 
-int32_t TDL_ReleaseCharacterMeta(TDLOcr *char_meta) {
-  if (char_meta->text_info != NULL) {
-    free(char_meta->text_info);
-    char_meta->text_info = NULL;
+int32_t TDL_ReleaseCharacterMeta(TDLText *text_meta) {
+  if (text_meta->text_info != NULL) {
+    free(text_meta->text_info);
+    text_meta->text_info = NULL;
   }
   return 0;
 };
+
+int32_t TDL_InitVADMeta(TDLVAD *vad_meta, int num_segments) {
+  if (vad_meta == NULL) return -1;
+  if (vad_meta->segments != NULL) {
+    free(vad_meta->segments);
+    vad_meta->segments = NULL;
+  }
+  vad_meta->size = 0;
+  vad_meta->has_speech = false;
+  vad_meta->start_event = false;
+  vad_meta->end_event = false;
+
+  if (num_segments <= 0) return 0;
+
+  vad_meta->segments =
+      (TDLVadSegment *)malloc(num_segments * sizeof(TDLVadSegment));
+  if (!vad_meta->segments) return -1;
+  memset(vad_meta->segments, 0, num_segments * sizeof(TDLVadSegment));
+  vad_meta->size = (uint32_t)num_segments;
+  return 0;
+}
+
+int32_t TDL_ReleaseVADMeta(TDLVAD *vad_meta) {
+  if (vad_meta == NULL) return -1;
+  if (vad_meta->segments != NULL) {
+    free(vad_meta->segments);
+    vad_meta->segments = NULL;
+  }
+  vad_meta->size = 0;
+  vad_meta->has_speech = false;
+  return 0;
+}
 
 int32_t TDL_InitFeatureMeta(TDLFeature *feature_meta) {
   if (feature_meta->ptr != NULL) return 0;
@@ -324,6 +356,12 @@ int32_t TDL_ReleaseCaptureInfo(TDLCaptureInfo *capture_info) {
   for (uint32_t i = 0; i < capture_info->snapshot_size; i++) {
     if (capture_info->snapshot_info[i].object_image) {
       TDL_DestroyImage(capture_info->snapshot_info[i].object_image);
+
+      if (!capture_info->snapshot_info[i].encoded_full_image) {
+        free(capture_info->snapshot_info[i].encoded_full_image);
+        capture_info->snapshot_info[i].encoded_full_image = NULL;
+        capture_info->snapshot_info[i].full_length = 0;
+      }
     }
     TDL_ReleaseFeatureMeta(&capture_info->features[i]);
   }
@@ -605,5 +643,58 @@ int32_t TDL_ClipPostprocess(float *text_features, int text_rows,
     float *row = *result + i * text_rows;  // 获取当前行的起始地址
     softmax_row(row, text_rows);
   }
+  return 0;  // 成功
+}
+int32_t TDL_GetRescaleConfig(const TDLPreprocessParams *params, int image_width,
+                             int image_height, TDLRescaleConfig *out_config) {
+  if (!params || !out_config || image_width <= 0 || image_height <= 0) {
+    return -1;  // 输入非法
+  }
+
+  // 1) 确定裁剪区域（若未指定裁剪，则使用整图）
+  int cx = params->crop_x;
+  int cy = params->crop_y;
+  int cw = (params->crop_width > 0) ? params->crop_width : image_width;
+  int ch = (params->crop_height > 0) ? params->crop_height : image_height;
+
+  // 边界裁剪：确保不越界
+  cx = (cx < 0) ? 0 : ((cx >= image_width) ? image_width - 1 : cx);
+  cy = (cy < 0) ? 0 : ((cy >= image_height) ? image_height - 1 : cy);
+  cw = (cw < 1) ? 1 : ((cx + cw > image_width) ? image_width - cx : cw);
+  ch = (ch < 1) ? 1 : ((cy + ch > image_height) ? image_height - cy : ch);
+
+  // 2) 计算正向缩放比例（裁剪区域 → 目标尺寸）
+  float sx = (float)params->dst_width / (float)cw;
+  float sy = (float)params->dst_height / (float)ch;
+
+  float fwd_sx, fwd_sy, pad_x = 0.0f, pad_y = 0.0f;
+  if (params->keep_aspect_ratio) {
+    float s = (sx < sy) ? sx : sy;  // min(sx, sy)
+    fwd_sx = fwd_sy = s;
+    pad_x = (params->dst_width - cw * s) * 0.5f;
+    pad_y = (params->dst_height - ch * s) * 0.5f;
+  } else {
+    fwd_sx = sx;
+    fwd_sy = sy;
+  }
+
+  // 防止除零
+  if (fwd_sx == 0.0f || fwd_sy == 0.0f) {
+    return -2;  // 无效缩放
+  }
+
+  // 3) 计算逆变换参数：original = infer * inv_scale + inv_offset
+  float inv_sx = 1.0f / fwd_sx;
+  float inv_sy = 1.0f / fwd_sy;
+
+  float off_x = cx - pad_x * inv_sx;
+  float off_y = cy - pad_y * inv_sy;
+
+  // 写入输出结构体
+  out_config->scale_x = inv_sx;
+  out_config->scale_y = inv_sy;
+  out_config->offset_x = off_x;
+  out_config->offset_y = off_y;
+
   return 0;  // 成功
 }

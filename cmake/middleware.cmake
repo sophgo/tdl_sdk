@@ -176,7 +176,8 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MIDDLEWARE_SDK_ROOT}/lib/libaf.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
-        ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.so)
+        ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ive.so)
     set(MIDDLEWARE_LIBS_STATIC
         "-Wl,--whole-archive"
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.a
@@ -196,6 +197,7 @@ if(${CVI_PLATFORM} STREQUAL "SOPHON")
         ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libhdmitx.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ive.a
         "-Wl,--no-whole-archive"
         ${MLIR_SDK_ROOT}/lib/libz.a)
     add_definitions(-DSENSOR_GCORE_GC4653)
@@ -340,10 +342,37 @@ else()
     endif()
 endif()
 
+set(MIDDLEWARE_AUDIO_LIBS
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_dnvqe.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.so
+    ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.so
+    $<$<STREQUAL:${CVI_PLATFORM},CV180X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.so>
+    $<$<STREQUAL:${CVI_PLATFORM},CV181X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.so>)
+
+set(MIDDLEWARE_AUDIO_LIBS_STATIC
+    "-Wl,--whole-archive"
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_audio.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_vqe.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_dnvqe.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_VoiceEngine.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_RES1.a
+    ${MIDDLEWARE_SDK_ROOT}/lib/libtinyalsa.a
+    $<$<STREQUAL:${CVI_PLATFORM},CV180X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.a>
+    $<$<STREQUAL:${CVI_PLATFORM},CV181X>:${MIDDLEWARE_SDK_ROOT}/lib/3rd/libsbc.a>
+    "-Wl,--no-whole-archive")
+
 message("MIDDLEWARE_INCLUDES: ${MIDDLEWARE_INCLUDES}")
 message("KERNEL_ROOT: ${KERNEL_ROOT}")
 message("MIDDLEWARE_LIBS: ${MIDDLEWARE_LIBS}")
 message("MIDDLEWARE_LIBS_STATIC: ${MIDDLEWARE_LIBS_STATIC}")
+message("MIDDLEWARE_AUDIO_LIBS: ${MIDDLEWARE_AUDIO_LIBS}")
+message("MIDDLEWARE_AUDIO_LIBS_STATIC: ${MIDDLEWARE_AUDIO_LIBS_STATIC}")
+
 
 set(MIDDLEWARE_PATH ${CMAKE_INSTALL_PREFIX}/sample/3rd/middleware/${MW_VER})
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")

@@ -12,8 +12,9 @@ class VPSSImage : public BaseImage {
  public:
   VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
             TDLDataType pix_data_type, bool alloc_memory = false,
-            std::shared_ptr<BaseMemoryPool> memory_pool = nullptr);
-  VPSSImage(const VIDEO_FRAME_INFO_S& frame);
+            std::shared_ptr<BaseMemoryPool> memory_pool = nullptr,
+            ImageType imageType = ImageType::UNKOWN);
+  VPSSImage(const VIDEO_FRAME_INFO_S& frame, bool is_preprocessed = false);
   // VPSSImage();
   ~VPSSImage();
 
@@ -55,7 +56,8 @@ class VPSSImage : public BaseImage {
   int32_t checkToSwapRGB();
 
  private:
-  int32_t extractImageInfo(const VIDEO_FRAME_INFO_S& frame);
+  int32_t extractImageInfo(const VIDEO_FRAME_INFO_S& frame,
+                           bool is_preprocessed);
   int32_t initFrameInfo(uint32_t width, uint32_t height,
                         ImageFormat imageFormat, TDLDataType pix_data_type,
                         VIDEO_FRAME_INFO_S* frame);

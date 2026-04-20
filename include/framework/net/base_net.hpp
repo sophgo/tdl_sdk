@@ -10,6 +10,8 @@
 #include "common/common_types.hpp"
 #include "tensor/base_tensor.hpp"
 
+class BaseImage;  // Forward declaration
+
 class BaseNet {
  public:
   explicit BaseNet(const NetParam& net_param);
@@ -40,6 +42,21 @@ class BaseNet {
   int32_t getDeviceId() const;
   const std::vector<std::string>& getInputNames() const;
   const std::vector<std::string>& getOutputNames() const;
+  virtual uint32_t getIOTensorBytes() { return 0; }
+  virtual int32_t setIOTensorMemory(uint64_t phy_addr, uint8_t* sys_mem,
+                                    uint32_t size) {
+    return -1;
+  }
+  bool useRuntimeMemory() { return use_runtime_memory_; }
+
+  // Set input tensor memory from external image (for TENSOR_FRAME usage).
+  // This allows reusing image memory as input tensor memory to avoid duplicate
+  // memory allocation.
+  virtual int32_t setInputTensorFromImage(
+      const std::string& name, const std::shared_ptr<BaseImage>& image);
+
+  // Check if skip_input_alloc is enabled
+  bool skipInputAlloc() const { return net_param_.skip_input_alloc; }
 
  protected:
   NetParam net_param_;
@@ -54,6 +71,7 @@ class BaseNet {
   std::vector<std::string> input_tensor_names_;
   std::vector<std::string> output_tensor_names_;
   int device_id_ = 0;
+  bool use_runtime_memory_ = false;
 
  private:
   BaseNet(const BaseNet&) = delete;
@@ -64,6 +82,17 @@ class NetFactory {
  public:
   static std::shared_ptr<BaseNet> createNet(const NetParam& net_param,
                                             InferencePlatform platform);
+  // memory info
+  // order:instruction_mem,variable_instruction_mem,neuron_mem,coeff_mem
+  static int32_t getModelMemInfo(const std::string& model_file,
+                                 std::vector<uint64_t>& mem_addrs,
+                                 std::vector<uint32_t>& mem_sizes);
+  // memory info
+  // order:instruction_mem,variable_instruction_mem,neuron_mem,coeff_mem
+  static int32_t getModelMemInfo(const void* model_buffer,
+                                 const uint32_t model_buffer_size,
+                                 std::vector<uint64_t>& mem_addrs,
+                                 std::vector<uint32_t>& mem_sizes);
 };
 
 #endif  // INCLUDE_BASE_NET_H_

@@ -18,8 +18,10 @@ class AppTask {
    *
    * @param task_name
    * @param json_config
+   * @param skip_input_alloc 是否跳过输入tensor内存分配
    */
-  AppTask(const std::string &task_name, const std::string &json_config_file);
+  AppTask(const std::string &task_name, const std::string &json_config_file,
+          bool skip_input_alloc = false);
   ~AppTask();
   std::vector<std::string> getChannelNames();
   std::string getChannelNodeName(const std::string &channel_name, size_t index);
@@ -38,16 +40,20 @@ class AppTask {
   int send_interval = 1;
 
  protected:
+  std::shared_ptr<BaseModel> createModel(ModelType model_type);
+
   std::string task_name_;
   // one task could contain multiple pipeline channels
   std::map<std::string, std::shared_ptr<PipelineChannel>> pipeline_channels_;
   nlohmann::json json_config_;
+  bool skip_input_alloc_;  // 是否跳过输入tensor内存分配
 };
 
 class AppFactory {
  public:
   static std::shared_ptr<AppTask> createAppTask(
-      const std::string &task_name, const std::string &json_config_file);
+      const std::string &task_name, const std::string &json_config_file,
+      bool skip_input_alloc = false);
 };
 
 #endif

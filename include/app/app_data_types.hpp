@@ -30,8 +30,8 @@ struct FacePetCaptureResult {
   std::vector<ObjectBoxInfo> pet_boxes;
   std::vector<TrackerInfo> track_results;
   std::vector<ObjectSnapshotInfo> face_snapshots;
-  std::map<uint64_t, std::vector<float>> face_features;
-  std::vector<std::map<TDLObjectAttributeType, float>> face_attributes;
+  std::map<uint64_t, std::vector<float>> features;
+  std::map<uint64_t, std::map<TDLObjectAttributeType, float>> face_attributes;
 };
 
 struct FallDetectionResult {
@@ -57,6 +57,16 @@ struct ConsumerCountingResult {
   std::vector<TrackerInfo> track_results;
   std::vector<uint64_t> cross_id;
   std::vector<int> counting_line;
+};
+
+struct HumanPoseResult {
+ public:
+  uint64_t frame_id;
+  uint32_t frame_width;
+  uint32_t frame_height;
+  std::shared_ptr<BaseImage> image;
+  std::vector<ObjectBoxLandmarkInfo> person_boxes_keypoints;
+  std::vector<TrackerInfo> track_results;
 };
 
 #endif

@@ -176,8 +176,8 @@
       "types":["fist","five","none","two"],
       "file_name":"cls_hand_gesture_128_128_INT8",
       "rgb_order":"rgb",
-      "mean":[0,0,0],
-      "std":[255.0,255.0,255.0]
+      "mean":[123.675, 116.28, 103.52],
+      "std":[58.395, 57.12, 57.375]
     },
     "CLS_KEYPOINT_HAND_GESTURE":{
       "_comment":"output hand gesture(0:fist,1:five,2:four,3:none,4:ok,5:one,6:three,7:three2,8:two)",
@@ -239,7 +239,13 @@
       "file_name":"keypoint_yolov8pose_person17_384_640_INT8",
       "rgb_order":"rgb"
     },
-    
+    "KEYPOINT_YOLOV8POSE":{
+      "_comment":"output object keypoints and box",
+      "file_name":"",
+      "rgb_order":"rgb",
+      "num_kpt":0,
+      "num_cls":0
+    },  
     "KEYPOINT_SIMCC_PERSON17":{
       "_comment":"output 17 person keypoints from cropped image",
       "file_name":"keypoint_simcc_person17_256_192_INT8",
@@ -290,6 +296,16 @@
       "file_name":"feature_clip_text_1_77_W4BF16",
       "rgb_order":"rgb"
     },
+    "FEATURE_MOBILECLIP2_IMG":{
+      "_comment":"mobileclip2 image feature extraction",
+      "file_name":"feature_mobileclip2_B_img_224_224_INT8",
+      "rgb_order":"rgb"
+    },
+    "FEATURE_MOBILECLIP2_TEXT":{
+      "_comment":"mobileclip2 text feature extraction",
+      "file_name":"feature_mobileclip2_B_text_1_77_INT8",
+      "rgb_order":"rgb"
+    },
     "FEATURE_CVIFACE":{
       "_comment":"cviface 256-dimensional feature",
       "file_name":"feature_cviface_112_112_INT8",
@@ -317,7 +333,20 @@
       "rgb_order":"rgb",
       "mean":[123.675,116.28,103.53],
       "std":[58.395,57.12,57.375]
+    },
+
+    "RECOGNITION_SPEECH_ZIPFORMER_ENCODER":{
+      "file_name":"recognition_speech_zipformer_encoder-s_71_80_BF16"
+    },
+    "RECOGNITION_SPEECH_ZIPFORMER_DECODER":{
+      "file_name":"recognition_speech_zipformer_decoder-s_1_2_BF16"
+    },
+    "RECOGNITION_SPEECH_ZIPFORMER_JOINER":{
+      "file_name":"recognition_speech_zipformer_joiner-s_1_512_1_512_BF16"
+    },
+    "VAD_FSMN":{
+      "_comment":"voice activity detection",
+      "file_name":"vad_fsmn_100_400_BF16"
     }
-    
   }
 }

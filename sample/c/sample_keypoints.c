@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL, 0);
   if (ret != 0) {
     printf("open hand keypoint model failed with %#x!\n", ret);
     goto exit0;
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
         point[i].y = obj_meta.info[i].y * obj_meta.height;
       }
       if (output_image != NULL) {
-        VisualizePoint(point, obj_meta.size, input_image, output_image);
+        VisualizePointFromFile(point, obj_meta.size, input_image, output_image);
       }
     }
   }

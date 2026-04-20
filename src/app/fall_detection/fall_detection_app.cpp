@@ -1,8 +1,6 @@
 #include "fall_detection_app.hpp"
 #include <json.hpp>
 #include "app/app_data_types.hpp"
-#include "components/snapshot/object_quality.hpp"
-#include "components/snapshot/object_snapshot.hpp"
 #include "components/tracker/tracker_types.hpp"
 #include "components/video_decoder/video_decoder_type.hpp"
 #include "utils/tdl_log.hpp"
@@ -17,8 +15,9 @@ T getNodeData(const std::string &node_name, PtrFrameInfo &frame_info) {
 }
 
 FallDetectionApp::FallDetectionApp(const std::string &task_name,
-                                   const std::string &json_config)
-    : AppTask(task_name, json_config) {}
+                                   const std::string &json_config,
+                                   bool skip_input_alloc)
+    : AppTask(task_name, json_config, skip_input_alloc) {}
 
 int32_t FallDetectionApp::init() {
   std::string model_dir = json_config_.at("model_dir").get<std::string>();

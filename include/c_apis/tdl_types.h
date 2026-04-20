@@ -26,6 +26,46 @@ typedef enum {
   TDL_TYPE_UNKOWN    /**< Equals to unkown. */
 } TDLDataTypeE;
 
+typedef enum {
+  IMAGE_GRAY = 0,
+  IMAGE_RGB_PLANAR,
+  IMAGE_RGB_PACKED,
+  IMAGE_BGR_PLANAR,
+  IMAGE_BGR_PACKED,
+  IMAGE_YUV420SP_UV,  // NV12,semi-planar,one Y plane,one interleaved UV
+                      // plane,size = width * height * 1.5
+  IMAGE_YUV420SP_VU,  // NV21,semi-planar,one Y plane,one interleaved VU
+                      // plane,size = width * height * 1.5
+  IMAGE_YUV420P_UV,   // I420,planar,one Y plane(w*h),one U
+                      // plane(w/2*h/2),one V plane(w/2*h/2),size = width *
+                      // height * 1.5
+  IMAGE_YUV420P_VU,   // YV12,size = width * height * 1.5
+  IMAGE_YUV422P_UV,   // I422_16,size = width * height * 2
+  IMAGE_YUV422P_VU,   // YV12_16,size = width * height * 2
+  IMAGE_YUV422SP_UV,  // NV16,size = width * height * 2
+  IMAGE_YUV422SP_VU,  // NV61,size = width * height * 2
+
+  IMAGE_UNKOWN
+} ImageFormatE;
+
+typedef struct {
+  float scale_x;
+  float scale_y;
+  float offset_x;
+  float offset_y;
+} TDLRescaleConfig;
+
+typedef enum {
+  TDL_REJECT = 0,
+  TDL_GRABCUT = 1,
+  TDL_COLOR = 2
+} TDLTargetSearchTypeE;
+typedef struct {
+  uint64_t *mem_addrs;
+  uint32_t *mem_sizes;
+  uint32_t size;
+} TDLModelMemInfo;
+
 typedef struct {
   float x1;
   float y1;
@@ -61,9 +101,10 @@ typedef struct {
   char name[128];
   TDLBox box;
   bool is_cross;
+  bool falling;
   float score;
   int class_id;
-  uint64_t track_id;
+  uint64_t track_id;  // track_id为0表示box得分小于跟踪阈值，尚未进行跟踪
   uint32_t landmark_size;
   TDLLandmarkInfo *landmark_properity;
   TDLObjectTypeE obj_type;
@@ -188,17 +229,47 @@ typedef struct {
 typedef struct {
   uint32_t size;
   char *text_info;
-} TDLOcr;
+} TDLText;
+
+/**
+ * @brief VAD 段信息（毫秒）
+ * start_ms: 段起始时间（ms）
+ * end_ms: 段结束时间（ms），若为 -1 表示仍在进行中
+ */
+typedef struct {
+  int32_t start_ms;
+  int32_t end_ms;
+} TDLVadSegment;
+
+/**
+ * @brief VAD 输出元数据
+ * segments: 人声语音段段数组
+ * has_speech: 输出是否检测到人声段
+ * start_event: 是否存在流式检测语音段开始帧
+ * end_event: 是否存在流式检测语音段结束帧
+ */
+typedef struct {
+  uint32_t size;
+  TDLVadSegment *segments;
+  bool has_speech;
+  bool start_event;
+  bool end_event;
+} TDLVAD;
 
 typedef struct {
   float quality;
   uint64_t snapshot_frame_id;
   uint64_t track_id;
+  uint64_t pair_track_id;
+  TDLObjectTypeE object_type;
   bool male;
   bool glass;
   uint8_t age;
   uint8_t emotion;
   TDLImage object_image;
+  TDLBox ori_box;  // 相对于原图的坐标
+  uint8_t *encoded_full_image;
+  uint32_t full_length;
 } TDLSnapshotInfo;
 
 typedef struct {
@@ -243,6 +314,19 @@ typedef struct {
   uint32_t size;
 } TDLBrush;
 
+typedef struct {
+  ImageFormatE dst_image_format;
+  TDLDataTypeE dst_pixdata_type;
+  int dst_width;
+  int dst_height;
+  int crop_x;
+  int crop_y;
+  int crop_width;
+  int crop_height;
+  float mean[3];
+  float scale[3];  // Y=X*scale-mean
+  bool keep_aspect_ratio;
+} TDLPreprocessParams;
 #ifdef __cplusplus
 }
 #endif

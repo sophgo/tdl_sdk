@@ -1,7 +1,8 @@
 #include "sot.hpp"
+#include "cv/target_search/color_segment.hpp"
+#include "cv/target_search/grabcut_segment.hpp"
 #include "utils/mot_box_helper.hpp"
 #include "utils/tdl_log.hpp"
-
 SOT::SOT() {
   preprocessor_ =
       PreprocessorFactory::createPreprocessor(InferencePlatform::AUTOMATIC);
@@ -152,10 +153,45 @@ int32_t SOT::setModel(std::shared_ptr<BaseModel> sot_model) {
 
 int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
                         const std::vector<ObjectBoxInfo>& detect_boxes,
-                        const ObjectBoxInfo& bbox) {
+                        const ObjectBoxInfo& bbox, int frame_type) {
   if (detect_boxes.empty()) {
-    // 如果检测框为空，则直接使用 bbox 初始化
-    initBBox(image, bbox);
+    if (frame_type == 1) {
+      cv::Point seed;
+      cvtdl_grabcut_result_t result;
+      GrabCutSegmentor segmentor;
+      seed.x = (bbox.x2 + bbox.x1) / 2;
+      seed.y = (bbox.y2 + bbox.y1) / 2;
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        initBBox(image, bbox);
+        return 0;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else if (frame_type == 2) {
+      cv::Point seed;
+      cvtdl_color_result_t result;
+      ColorSegmentor segmentor;
+      seed.x = (bbox.x2 + bbox.x1) / 2;
+      seed.y = (bbox.y2 + bbox.y1) / 2;
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        initBBox(image, bbox);
+        return 0;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else {
+      initBBox(image, bbox);
+    }
     return 0;
   }
   ObjectBoxInfo max_area_bbox;
@@ -175,19 +211,93 @@ int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
     // 如果bbox内的最大面积的检测框不为空，则使用 max_area_bbox 初始化
     initBBox(image, max_area_bbox);
   } else {
-    // 如果bbox内的最大面积的检测框为空，则使用 bbox 初始化
-    initBBox(image, bbox);
+    if (frame_type == 1) {
+      cv::Point seed;
+      cvtdl_grabcut_result_t result;
+      GrabCutSegmentor segmentor;
+      seed.x = (bbox.x2 + bbox.x1) / 2;
+      seed.y = (bbox.y2 + bbox.y1) / 2;
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        initBBox(image, bbox);
+        return 0;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else if (frame_type == 2) {
+      cv::Point seed;
+      cvtdl_color_result_t result;
+      ColorSegmentor segmentor;
+      seed.x = (bbox.x2 + bbox.x1) / 2;
+      seed.y = (bbox.y2 + bbox.y1) / 2;
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        initBBox(image, bbox);
+        return 0;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else {
+      initBBox(image, bbox);
+    }
   }
-
   return 0;
 }
 
 int32_t SOT::initialize(const std::shared_ptr<BaseImage>& image,
                         const std::vector<ObjectBoxInfo>& detect_boxes, float x,
-                        float y) {
+                        float y, int frame_type) {
   if (detect_boxes.empty()) {
-    LOGE("该位置无检测框");
-    return -1;
+    if (frame_type == 1) {
+      cv::Point seed;
+      cvtdl_grabcut_result_t result;
+      GrabCutSegmentor segmentor;
+      seed.x = x;
+      seed.y = y;
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        LOGE("该位置无检测框");
+        return -1;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else if (frame_type == 2) {
+      cv::Point seed;
+      cvtdl_color_result_t result;
+      ColorSegmentor segmentor;
+      seed.x = x;
+      seed.y = y;
+      int ret = segmentor.segment(image, seed, &result);
+      if (ret != 0) {
+        LOGE("该位置无检测框");
+        return -1;
+      }
+      ObjectBoxInfo area_bbox;
+      area_bbox.x1 = static_cast<float>(result.bbox.x);
+      area_bbox.y1 = static_cast<float>(result.bbox.y);
+      area_bbox.x2 = static_cast<float>(result.bbox.x + result.bbox.width);
+      area_bbox.y2 = static_cast<float>(result.bbox.y + result.bbox.height);
+      initBBox(image, area_bbox);
+    } else if (frame_type == 0) {
+      LOGE("该位置无检测框");
+      return -1;
+    } else {
+      LOGE("目标框选类型设置错误");
+      return -1;
+    }
+    return 0;
   }
   for (auto& detect_box : detect_boxes) {
     if (detect_box.x1 <= x && detect_box.x2 >= x && detect_box.y1 <= y &&

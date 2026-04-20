@@ -3,6 +3,7 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <fstream>
 #include <functional>
@@ -13,6 +14,48 @@
 #include <vector>
 
 #include "tdl_model_factory.hpp"
+std::string get_result_save_path(const std::string& img_path_or_name,
+                                 const std::string& res_root) {
+  size_t last_slash = img_path_or_name.find_last_of('/');
+  std::string dir_part, filename, filename_no_ext;
+
+  // 拆分文件名和目录（区分两种情况）
+  if (last_slash != std::string::npos) {
+    // 若包含相对路径
+    dir_part = img_path_or_name.substr(0, last_slash);
+    filename = img_path_or_name.substr(last_slash + 1);
+  } else {
+    // 纯文件名
+    dir_part = "";
+    filename = img_path_or_name;
+  }
+
+  // 提取无后缀的文件名（两种情况通用）
+  size_t dot = filename.find_last_of('.');
+  filename_no_ext =
+      (dot == std::string::npos) ? filename : filename.substr(0, dot);
+
+  // 拼接结果路径（根据是否有目录决定是否创建子文件夹）
+  std::string res_dir, res_file;
+  if (!dir_part.empty()) {
+    // 有目录：在res_root下创建对应子文件夹
+    res_dir = res_root + "/" + dir_part;
+    res_file = res_dir + "/" + filename_no_ext + ".txt";
+
+    // 递归创建目录（仅当有目录时才需要创建）
+    std::string mkdir_cmd = "mkdir -p \"" + res_dir + "\"";
+    int ret = system(mkdir_cmd.c_str());
+    if (ret != 0) {
+      std::cerr << "创建目录失败: " << res_dir << "\n";
+      return "";
+    }
+  } else {
+    // 无目录：直接在res_root下保存文件
+    res_file = res_root + "/" + filename_no_ext + ".txt";
+  }
+
+  return res_file;
+}
 
 void save_detection_results(const std::string& save_path,
                             const std::shared_ptr<ModelBoxInfo>& obj_meta) {
@@ -34,9 +77,9 @@ void bench_mark_all(const std::string& bench_path,
     return;
   }
 
-  std::string image_name;
-  while (bench_fstream >> image_name) {
-    const std::string img_path = image_root + image_name;
+  std::string img_rel_path;
+  while (bench_fstream >> img_rel_path) {
+    const std::string img_path = image_root + "/" + img_rel_path;
     std::cout << "Process: " << img_path << "\n"
               << "\n";
     std::shared_ptr<BaseImage> image = ImageFactory::readImage(img_path);
@@ -53,10 +96,10 @@ void bench_mark_all(const std::string& bench_path,
       std::shared_ptr<ModelBoxInfo> obj_meta =
           std::static_pointer_cast<ModelBoxInfo>(out);
 
-      size_t dot = image_name.find_last_of('.');
-      std::string base =
-          (dot == std::string::npos ? image_name : image_name.substr(0, dot));
-      save_detection_results(res_path + base + ".txt", obj_meta);
+      std::string save_path = get_result_save_path(img_rel_path, res_path);
+      if (!save_path.empty()) {
+        save_detection_results(save_path, obj_meta);
+      }
     }
     inputs.clear();
     outputs.clear();
@@ -84,9 +127,9 @@ int main(int argc, char* argv[]) {
         "\t    yolov8n-head-shoulder, yolov8n-license-plate\n"
         "\t    yolov8n-traffic-light, yolov8n-monitor-person\n"
         "\tMODEL_DIR, store cvimodel or bmodel path\n"
-        "\tBENCH_PATH, txt for storing image names\n"
-        "\tIMAGE_ROOT, store images path\n"
-        "\tRES_PATH, save result path\n"
+        "\tBENCH_PATH, txt for storing image names(relative path + file name)\n"
+        "\tIMAGE_ROOT, store images path(root directory)\n"
+        "\tRES_PATH, save result path(automatically create subfolders)\n"
         "\tCONF_THRESHOLD (optional), confidence threshold (default: 0.5)\n",
         argv[0]);
     return -1;
@@ -105,8 +148,25 @@ int main(int argc, char* argv[]) {
 
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();
   model_factory.loadModelConfig();
-  model_factory.setModelDir(model_dir);
-  std::shared_ptr<BaseModel> model = model_factory.getModel(model_name);
+
+  std::shared_ptr<BaseModel> model;
+  struct stat path_stat;
+  if (stat(model_dir.c_str(), &path_stat) == 0) {
+    if (S_ISDIR(path_stat.st_mode)) {  // model_dir是文件夹：原有getModel调用
+      model_factory.setModelDir(model_dir);
+      model = model_factory.getModel(model_name);
+    } else if (S_ISREG(
+                   path_stat.st_mode)) {  // model_dir是绝对路径：新getModel调用
+      model = model_factory.getModel(model_name, model_dir);
+    } else {
+      printf("Error: MODEL_DIR is neither dir nor file\n");
+      return -1;
+    }
+  } else {
+    printf("Error: Cannot access MODEL_DIR: %s\n", model_dir.c_str());
+    return -1;
+  }
+
   if (!model) {
     printf("Failed to create model\n");
     return -1;

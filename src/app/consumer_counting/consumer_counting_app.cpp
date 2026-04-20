@@ -18,8 +18,9 @@ T getNodeData(const std::string &node_name, PtrFrameInfo &frame_info) {
 }
 
 ConsumerCountingAPP::ConsumerCountingAPP(const std::string &task_name,
-                                         const std::string &json_config)
-    : AppTask(task_name, json_config) {}
+                                         const std::string &json_config,
+                                         bool skip_input_alloc)
+    : AppTask(task_name, json_config, skip_input_alloc) {}
 
 int32_t ConsumerCountingAPP::init() {
   std::string model_dir = json_config_.at("model_dir").get<std::string>();
@@ -223,17 +224,32 @@ std::shared_ptr<PipelineNode> ConsumerCountingAPP::getObjectDetectionNode(
   if (model_map_.count(node_config["model"])) {
     object_detection_model = model_map_[node_config["model"]];
   } else {
-    if (node_config.at("model") == "head_person_detection") {
-      object_detection_model = TDLModelFactory::getInstance().getModel(
-          ModelType::YOLOV8N_DET_HEAD_PERSON);
-    } else if (node_config.at("model") == "person_vehicle_detection") {
-      object_detection_model = TDLModelFactory::getInstance().getModel(
-          ModelType::YOLOV8N_DET_PERSON_VEHICLE);
+    if (skip_input_alloc_) {
+      if (node_config.at("model") == "head_person_detection") {
+        object_detection_model =
+            createModel(ModelType::YOLOV8N_DET_HEAD_PERSON);
+      } else if (node_config.at("model") == "person_vehicle_detection") {
+        object_detection_model =
+            createModel(ModelType::YOLOV8N_DET_PERSON_VEHICLE);
+      } else {
+        LOGE("Unsupported model type: %s\n",
+             node_config.at("model").get<std::string>().c_str());
+        return NULL;
+      }
     } else {
-      LOGE("Unsupported model type: %s\n",
-           node_config.at("model").get<std::string>().c_str());
-      return NULL;
+      if (node_config.at("model") == "head_person_detection") {
+        object_detection_model = TDLModelFactory::getInstance().getModel(
+            ModelType::YOLOV8N_DET_HEAD_PERSON);
+      } else if (node_config.at("model") == "person_vehicle_detection") {
+        object_detection_model = TDLModelFactory::getInstance().getModel(
+            ModelType::YOLOV8N_DET_PERSON_VEHICLE);
+      } else {
+        LOGE("Unsupported model type: %s\n",
+             node_config.at("model").get<std::string>().c_str());
+        return NULL;
+      }
     }
+
     model_map_[node_config.at("model")] = object_detection_model;
   }
   std::shared_ptr<PipelineNode> object_detection_node =

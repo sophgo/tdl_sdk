@@ -23,7 +23,7 @@ class CviMemoryPool : public BaseMemoryPool {
 
  private:
   int32_t num_allocated_ = 0;
-  std::string str_mem_pool_name_ = "cvi_mem_pool";
+  std::string str_mem_pool_name_ = "tdl_memory_pool";
 };
 
 #endif  // CVI_MEMORY_POOL_H

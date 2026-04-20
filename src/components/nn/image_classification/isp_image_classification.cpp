@@ -88,14 +88,14 @@ int32_t IspImageClassification::inference(
   if (parameters.count("awb[1]")) awb[1] = parameters.at("awb[1]");
   if (parameters.count("awb[2]")) awb[2] = parameters.at("awb[2]");
   if (parameters.count("ccm[0]")) ccm[0] = parameters.at("ccm[0]");
-  if (parameters.count("ccm[1]")) awb[1] = parameters.at("ccm[1]");
-  if (parameters.count("ccm[2]")) awb[2] = parameters.at("ccm[2]");
+  if (parameters.count("ccm[1]")) ccm[1] = parameters.at("ccm[1]");
+  if (parameters.count("ccm[2]")) ccm[2] = parameters.at("ccm[2]");
   if (parameters.count("ccm[3]")) ccm[3] = parameters.at("ccm[3]");
-  if (parameters.count("ccm[4]")) awb[4] = parameters.at("ccm[4]");
-  if (parameters.count("ccm[5]")) awb[5] = parameters.at("ccm[5]");
+  if (parameters.count("ccm[4]")) ccm[4] = parameters.at("ccm[4]");
+  if (parameters.count("ccm[5]")) ccm[5] = parameters.at("ccm[5]");
   if (parameters.count("ccm[6]")) ccm[6] = parameters.at("ccm[6]");
-  if (parameters.count("ccm[7]")) awb[7] = parameters.at("ccm[7]");
-  if (parameters.count("ccm[8]")) awb[8] = parameters.at("ccm[8]");
+  if (parameters.count("ccm[7]")) ccm[7] = parameters.at("ccm[7]");
+  if (parameters.count("ccm[8]")) ccm[8] = parameters.at("ccm[8]");
   if (parameters.count("blc")) blc[0] = parameters.at("blc");
 
   size_t input_num = net_->getInputNames().size();
