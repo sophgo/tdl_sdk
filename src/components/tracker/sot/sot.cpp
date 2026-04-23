@@ -540,7 +540,9 @@ int32_t SOT::initBBox(const std::shared_ptr<BaseImage>& image,
   last_reliable_template_bbox_ = current_bbox_;
   sot_info_.template_bbox = current_bbox_;
   sot_info_.frame_id = frame_id_;
-  kalman_tracker_ = std::make_shared<KalmanBoxTracker>(current_bbox_);
+  if (use_kalman_filter_) {
+    kalman_tracker_ = std::make_shared<KalmanBoxTracker>(current_bbox_);
+  }
   template_image_ = preprocess(image, current_bbox_, template_bbox_offset_,
                                template_size_, context);
   if (!template_image_) {
@@ -594,14 +596,44 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
 
   std::vector<float> bbox = {x1, y1, w, h};
   float score = track_result->bboxes[0].score;
-  std::vector<float> kalman_bbox;
 
-  kalman_bbox = kalman_tracker_->predict();
-  if (frame_id - frame_id_ > 1) {
-    for (int i = 0; i < frame_id - frame_id_ - 1; i++) {
-      kalman_tracker_->update(kalman_bbox, false);
-      kalman_bbox = kalman_tracker_->predict();
+  std::vector<float> kalman_bbox;
+  if (use_kalman_filter_ && kalman_tracker_) {
+    kalman_bbox = kalman_tracker_->predict();
+    if (frame_id - frame_id_ > 1) {
+      for (int i = 0; i < frame_id - frame_id_ - 1; i++) {
+        kalman_tracker_->update(kalman_bbox, false);
+        kalman_bbox = kalman_tracker_->predict();
+      }
     }
+  }
+
+  // 计算缩放比例
+  float w_scale = context[2] / static_cast<float>(instance_size_);
+  float h_scale = context[3] / static_cast<float>(instance_size_);
+
+  // 创建边界框
+  std::vector<float> scaled_bbox = {x1 * w_scale + context[0],
+                                    y1 * h_scale + context[1], w * w_scale,
+                                    h * h_scale};
+  clampBBox(scaled_bbox, image);
+  // 更新边界框, 用于下一帧跟踪
+  current_bbox_ = scaled_bbox;
+
+  if (!use_kalman_filter_ || !kalman_tracker_) {
+    tracker_info.box_info_.x1 = scaled_bbox[0];
+    tracker_info.box_info_.y1 = scaled_bbox[1];
+    tracker_info.box_info_.x2 = scaled_bbox[0] + scaled_bbox[2];
+    tracker_info.box_info_.y2 = scaled_bbox[1] + scaled_bbox[3];
+    tracker_info.box_info_.score = score;
+    tracker_info.box_info_.class_id = 0;
+    tracker_info.status_ = TrackStatus::TRACKED;
+
+    if (score < 0.1) {
+      tracker_info.status_ = TrackStatus::LOST;
+    }
+    frame_id_ = frame_id;
+    return 0;
   }
 
   float iou;
@@ -621,17 +653,6 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
     kalman_bbox = bbox;
   }
 
-  // 计算缩放比例
-  float w_scale = context[2] / static_cast<float>(instance_size_);
-  float h_scale = context[3] / static_cast<float>(instance_size_);
-
-  // 创建边界框
-  std::vector<float> scaled_bbox = {x1 * w_scale + context[0],
-                                    y1 * h_scale + context[1], w * w_scale,
-                                    h * h_scale};
-  clampBBox(scaled_bbox, image);
-  // 更新边界框, 用于下一帧跟踪
-  current_bbox_ = scaled_bbox;
   updateScoreLst(score);
   float size_ratio;
   float current_w_h_ratio = w / h;

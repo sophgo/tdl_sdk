@@ -1407,6 +1407,25 @@ int32_t TDL_SingleObjectTracking(TDLHandle handle, TDLImage image_handle,
   return 0;
 }
 
+int32_t TDL_SetSingleObjectTrackingUseKalman(TDLHandle handle,
+                                             bool use_kalman) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->tracker == nullptr) {
+    LOGI(" to init context->tracker \n");
+    context->tracker = TrackerFactory::createTracker(TrackerType::TDL_SOT);
+    std::shared_ptr<BaseModel> sot_model =
+        get_model(handle, TDLModel::TDL_MODEL_TRACKING_FEARTRACK);
+    if (sot_model != nullptr) {
+      context->tracker->setModel(sot_model);
+    }
+  }
+  context->tracker->setUseKalmanFilter(use_kalman);
+  return 0;
+}
+
 int32_t TDL_IntrusionDetection(TDLHandle handle, TDLPoints *regions,
                                TDLBox *box, bool *is_intrusion) {
   TDLContext *context = (TDLContext *)handle;

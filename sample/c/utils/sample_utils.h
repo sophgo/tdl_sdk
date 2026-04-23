@@ -140,6 +140,33 @@ int32_t DumpFrame(char *filename, VIDEO_FRAME_INFO_S *pstVideoFrame);
  */
 TDLImage GetVideoFrame(TDLHandle handle, const char *video_path);
 
+/**
+ * @brief 初始化视频保存
+ *
+ * @param filename 视频保存路径
+ * @param image 初始图像帧，用于获取宽度和高度
+ * @param fps 视频帧率
+ * @return 返回视频保存上下文指针，失败返回 NULL
+ */
+void *SaveVideo_Init(const char *filename, TDLImage image, int fps);
+
+/**
+ * @brief 将一帧图像写入视频文件
+ *
+ * @param writer 视频保存上下文指针
+ * @param img 图像数据
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t SaveVideo_WriteFrame(void *writer, TDLImage img);
+
+/**
+ * @brief 释放视频保存资源
+ *
+ * @param writer 视频保存上下文指针
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t SaveVideo_Release(void *writer);
+
 #ifdef __cplusplus
 }
 #endif

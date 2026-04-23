@@ -468,6 +468,15 @@ int32_t TDL_SingleObjectTracking(TDLHandle handle, TDLImage image_handle,
                                  TDLTracker *track_meta, uint64_t frame_id);
 
 /**
+ * @brief 设置单目追踪是否使用卡尔曼滤波辅助逻辑
+ *
+ * @param handle TDLHandle 对象
+ * @param use_kalman 是否使用卡尔曼滤波 (默认 false)
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_SetSingleObjectTrackingUseKalman(TDLHandle handle, bool use_kalman);
+
+/**
  * @brief 执行入侵检测
  *
  * @param regions 背景区域点集数组
