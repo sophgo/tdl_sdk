@@ -67,6 +67,8 @@ class Tracker {
   virtual void setPairConfig(
       std::map<TDLObjectType, TDLObjectType> object_pair_config){};
 
+  virtual void setUseKalmanFilter(bool use) {}
+
   void setTrackConfig(const TrackerConfig& track_config);
 
   TrackerConfig getTrackConfig();

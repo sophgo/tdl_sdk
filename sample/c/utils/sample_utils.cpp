@@ -188,6 +188,66 @@ int32_t DumpFrame(char *filename, VIDEO_FRAME_INFO_S *pstVideoFrame) {
 
 #endif
 
+#ifdef __BM168X__
+void *SaveVideo_Init(const char *filename, TDLImage image, int fps) {
+  if (image == NULL) return NULL;
+  TDLImageContext *image_context = (TDLImageContext *)image;
+  int w = image_context->image->getWidth();
+  int h = image_context->image->getHeight();
+
+  cv::VideoWriter *writer = new cv::VideoWriter();
+  int fourcc = cv::VideoWriter::fourcc('m', 'p', '4', 'v');
+  if (!writer->open(filename, fourcc, fps, cv::Size(w, h))) {
+    LOGE("open video writer failed: %s\n", filename);
+    delete writer;
+    return NULL;
+  }
+  return (void *)writer;
+}
+
+int32_t SaveVideo_WriteFrame(void *writer, TDLImage img) {
+  if (writer == NULL || img == NULL) {
+    return -1;
+  }
+  cv::VideoWriter *vw = (cv::VideoWriter *)writer;
+  TDLImageContext *image_context = (TDLImageContext *)img;
+
+  cv::Mat mat;
+  bool is_rgb;
+  int32_t ret = ImageFactory::convertToMat(image_context->image, mat, is_rgb);
+  if (ret != 0) {
+    LOGE("Failed to convert to mat\n");
+    return -1;
+  }
+
+  if (is_rgb) {
+    cv::Mat bgr_mat;
+    cv::cvtColor(mat, bgr_mat, cv::COLOR_RGB2BGR);
+    vw->write(bgr_mat);
+  } else {
+    vw->write(mat);
+  }
+
+  return 0;
+}
+
+int32_t SaveVideo_Release(void *writer) {
+  if (writer == NULL) {
+    return -1;
+  }
+  cv::VideoWriter *vw = (cv::VideoWriter *)writer;
+  vw->release();
+  delete vw;
+  return 0;
+}
+#else
+void *SaveVideo_Init(const char *filename, TDLImage image, int fps) {
+  return NULL;
+}
+int32_t SaveVideo_WriteFrame(void *writer, TDLImage img) { return -1; }
+int32_t SaveVideo_Release(void *writer) { return -1; }
+#endif
+
 TDLImage GetVideoFrame(TDLHandle handle, const char *video_path) {
   TDLContext *context = (TDLContext *)handle;
 

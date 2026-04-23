@@ -33,6 +33,31 @@ int32_t VisualizeRectangleFromFile(box_t *box, int32_t num, char *input_path,
 
 int32_t VisualizeRectangle(box_t *box, int32_t num, TDLImage image_handle,
                            char *output_path, int *colors) {
+  int32_t ret = DrawRectangle(box, num, image_handle, colors);
+  if (ret != 0) {
+    return ret;
+  }
+
+  cv::Mat mat;
+  bool is_rgb;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+  ImageFactory::convertToMat(image_context->image, mat, is_rgb);
+
+  // If it's RGB, we need to convert it to BGR for imwrite to save correctly
+  // imwrite expects BGR by default for .jpg
+  if (is_rgb) {
+    cv::Mat bgr_mat;
+    cv::cvtColor(mat, bgr_mat, cv::COLOR_RGB2BGR);
+    cv::imwrite(output_path, bgr_mat);
+  } else {
+    cv::imwrite(output_path, mat);
+  }
+
+  return 0;
+}
+
+int32_t DrawRectangle(box_t *box, int32_t num, TDLImage image_handle,
+                      int *colors) {
   cv::Mat mat;
   bool is_rgb;
 
@@ -43,22 +68,31 @@ int32_t VisualizeRectangle(box_t *box, int32_t num, TDLImage image_handle,
     std::cout << "Failed to convert to mat" << std::endl;
     return -1;
   }
-  if (is_rgb) {
-    cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
-  }
 
   for (int32_t i = 0; i < num; i++) {
-    int b = colors[i * 3];
-    int g = colors[i * 3 + 1];
-    int r = colors[i * 3 + 2];
-    cv::rectangle(mat,
-                  cv::Rect(int32_t(box[i].x1), int32_t(box[i].y1),
-                           int32_t(box[i].x2 - box[i].x1),
-                           int32_t(box[i].y2 - box[i].y1)),
-                  cv::Scalar(b, g, r), 2);  // 使用自定义颜色
+    int c1 = colors[i * 3];
+    int c2 = colors[i * 3 + 1];
+    int c3 = colors[i * 3 + 2];
+    // OpenCV scalar order depends on Mat format.
+    // If mat is RGB, Scalar(R, G, B) gives RGB.
+    // If mat is BGR, Scalar(B, G, R) gives BGR.
+    // The user provided colors are assumed to match the Mat format or be BGR.
+    // To be safe and consistent with previous behavior, we assume user provides
+    // BGR and if mat is RGB, we swap them.
+    if (is_rgb) {
+      cv::rectangle(mat,
+                    cv::Rect(int32_t(box[i].x1), int32_t(box[i].y1),
+                             int32_t(box[i].x2 - box[i].x1),
+                             int32_t(box[i].y2 - box[i].y1)),
+                    cv::Scalar(c3, c2, c1), 2);
+    } else {
+      cv::rectangle(mat,
+                    cv::Rect(int32_t(box[i].x1), int32_t(box[i].y1),
+                             int32_t(box[i].x2 - box[i].x1),
+                             int32_t(box[i].y2 - box[i].y1)),
+                    cv::Scalar(c1, c2, c3), 2);
+    }
   }
-
-  cv::imwrite(output_path, mat);
 
   return 0;
 }

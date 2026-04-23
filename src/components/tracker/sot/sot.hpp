@@ -41,7 +41,9 @@ class SOT : public Tracker {
                      uint64_t frame_id,
                      const std::string& model_path = "") override;
   int32_t track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
-                TrackerInfo& tracker_info);
+                TrackerInfo& tracker_info) override;
+
+  void setUseKalmanFilter(bool use) override { use_kalman_filter_ = use; }
 
  private:
   // 预处理图像，提取模板和搜索区域
@@ -116,4 +118,5 @@ class SOT : public Tracker {
 
   // 中间结果
   SOTInfo sot_info_;
+  bool use_kalman_filter_ = false;
 };
