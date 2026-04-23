@@ -37,6 +37,7 @@ class AppTask {
 
   virtual int32_t getResult(const std::string &pipeline_name,
                             Packet &result) = 0;
+  virtual std::string getTaskName() { return task_name_; }
   int send_interval = 1;
 
  protected:
