@@ -5,6 +5,7 @@
 #include "app/app_data_types.hpp"
 #include "common/common_types.hpp"
 #include "consumer_counting/consumer_counting_app.hpp"
+#include "face_capture/face_capture_app.hpp"
 #include "face_pet_capture/face_pet_capture_app.hpp"
 #include "tdl_type_internal.hpp"
 #include "tdl_utils.h"
@@ -1792,14 +1793,24 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
     return -1;
   }
 
+  std::string task_name = context->app_task->getTaskName();
+
   if (context->encoder == nullptr) {
-    context->encoder =
-        (std::dynamic_pointer_cast<FacePetCaptureApp>(context->app_task))
-            ->getImageEncoder(std::string(channel_name));
+    if (task_name == "face_capture") {
+      context->encoder =
+          (std::dynamic_pointer_cast<FaceCaptureApp>(context->app_task))
+              ->getImageEncoder(std::string(channel_name));
+    } else if (task_name == "face_pet_capture") {
+      context->encoder =
+          (std::dynamic_pointer_cast<FacePetCaptureApp>(context->app_task))
+              ->getImageEncoder(std::string(channel_name));
+    } else {
+      LOGE("task_name %s is not supported\n", task_name);
+      return -1;
+    }
 
     if (context->encoder == nullptr) {
-      LOGE("Failed to get image encoder\n");
-      return -1;
+      LOGW("image encoder not init\n");
     }
   }
 
@@ -1809,6 +1820,148 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
     printf("get result failed\n");
     context->app_task->removeChannel(std::string(channel_name));
     return 1;
+  }
+
+  if (task_name == "face_capture") {
+    std::shared_ptr<FaceCaptureResult> ori_capture_info =
+        result.get<std::shared_ptr<FaceCaptureResult>>();
+    if (ori_capture_info == nullptr) {
+      printf("capture_info is nullptr\n");
+      return 1;
+    }
+
+    capture_info->frame_id = ori_capture_info->frame_id;
+    capture_info->frame_width = ori_capture_info->frame_width;
+    capture_info->frame_height = ori_capture_info->frame_height;
+
+    if (ori_capture_info->image) {
+      TDLImageContext *image_context = new TDLImageContext();
+      image_context->image = ori_capture_info->image;
+      capture_info->image = (TDLImage)image_context;
+    }
+
+    if (ori_capture_info->face_boxes.size() >
+        0) {  // face_meta from object detection without landmarks
+      TDL_InitFaceMeta(&capture_info->face_meta,
+                       ori_capture_info->face_boxes.size(), 0);
+      capture_info->face_meta.width = capture_info->frame_width;
+      capture_info->face_meta.height = capture_info->frame_height;
+      for (size_t i = 0; i < ori_capture_info->face_boxes.size(); i++) {
+        capture_info->face_meta.info[i].box.x1 =
+            ori_capture_info->face_boxes[i].x1;
+        capture_info->face_meta.info[i].box.y1 =
+            ori_capture_info->face_boxes[i].y1;
+        capture_info->face_meta.info[i].box.x2 =
+            ori_capture_info->face_boxes[i].x2;
+        capture_info->face_meta.info[i].box.y2 =
+            ori_capture_info->face_boxes[i].y2;
+        capture_info->face_meta.info[i].score =
+            ori_capture_info->face_boxes[i].score;
+      }
+    }
+
+    TDL_InitObjectMeta(&capture_info->person_meta,
+                       ori_capture_info->person_boxes.size(), 0);
+    for (int i = 0; i < ori_capture_info->person_boxes.size(); i++) {
+      capture_info->person_meta.info[i].box.x1 =
+          ori_capture_info->person_boxes[i].x1;
+      capture_info->person_meta.info[i].box.y1 =
+          ori_capture_info->person_boxes[i].y1;
+      capture_info->person_meta.info[i].box.x2 =
+          ori_capture_info->person_boxes[i].x2;
+      capture_info->person_meta.info[i].box.y2 =
+          ori_capture_info->person_boxes[i].y2;
+      capture_info->person_meta.info[i].class_id =
+          ori_capture_info->person_boxes[i].class_id;
+      capture_info->person_meta.info[i].score =
+          ori_capture_info->person_boxes[i].score;
+    }
+
+    TDL_InitTrackMeta(&capture_info->track_meta,
+                      ori_capture_info->track_results.size());
+    for (int i = 0; i < ori_capture_info->track_results.size(); i++) {
+      TrackerInfo track_info = ori_capture_info->track_results[i];
+      capture_info->track_meta.info[i].id = track_info.track_id_;
+      capture_info->track_meta.info[i].bbox.x1 = track_info.box_info_.x1;
+      capture_info->track_meta.info[i].bbox.x2 = track_info.box_info_.x2;
+      capture_info->track_meta.info[i].bbox.y1 = track_info.box_info_.y1;
+      capture_info->track_meta.info[i].bbox.y2 = track_info.box_info_.y2;
+
+      if (track_info.obj_idx_ != -1) {
+        if (track_info.box_info_.object_type ==
+            TDLObjectType::OBJECT_TYPE_FACE) {
+          capture_info->face_meta.info[track_info.obj_idx_].track_id =
+              track_info.track_id_;
+        } else if (track_info.box_info_.object_type ==
+                   TDLObjectType::OBJECT_TYPE_PERSON) {
+          capture_info->person_meta
+              .info[track_info.obj_idx_ - ori_capture_info->face_boxes.size()]
+              .track_id = track_info.track_id_;
+        }
+      }
+    }
+
+    capture_info->snapshot_size = ori_capture_info->face_snapshots.size();
+    if (capture_info->snapshot_size > 0) {
+      capture_info->snapshot_info = (TDLSnapshotInfo *)malloc(
+          capture_info->snapshot_size * sizeof(TDLSnapshotInfo));
+      memset(capture_info->snapshot_info, 0,
+             capture_info->snapshot_size * sizeof(TDLSnapshotInfo));
+      capture_info->features = (TDLFeature *)malloc(
+          capture_info->snapshot_size * sizeof(TDLFeature));
+      memset(capture_info->features, 0,
+             capture_info->snapshot_size * sizeof(TDLFeature));
+
+      for (int i = 0; i < capture_info->snapshot_size; i++) {
+        capture_info->snapshot_info[i].quality =
+            ori_capture_info->face_snapshots[i].quality;
+        capture_info->snapshot_info[i].snapshot_frame_id =
+            ori_capture_info->face_snapshots[i].snapshot_frame_id;
+        capture_info->snapshot_info[i].track_id =
+            ori_capture_info->face_snapshots[i].track_id;
+
+        if (ori_capture_info->face_snapshots[i].object_image) {
+          TDLImageContext *object_image_context = new TDLImageContext();
+          object_image_context->image =
+              ori_capture_info->face_snapshots[i].object_image;
+          capture_info->snapshot_info[i].object_image =
+              (TDLImage)object_image_context;
+
+          capture_info->snapshot_info[i].ori_box.x1 =
+              ori_capture_info->face_snapshots[i].object_box_info.x1;
+          capture_info->snapshot_info[i].ori_box.y1 =
+              ori_capture_info->face_snapshots[i].object_box_info.y1;
+          capture_info->snapshot_info[i].ori_box.x2 =
+              ori_capture_info->face_snapshots[i].object_box_info.x2;
+          capture_info->snapshot_info[i].ori_box.y2 =
+              ori_capture_info->face_snapshots[i].object_box_info.y2;
+
+          if (ori_capture_info->face_snapshots[i].encoded_full_image.size()) {
+            if (!capture_info->snapshot_info[i].encoded_full_image) {
+              capture_info->snapshot_info[i].encoded_full_image =
+                  (uint8_t *)malloc(ori_capture_info->face_snapshots[i]
+                                        .encoded_full_image.size() *
+                                    sizeof(uint8_t));
+            }
+            memcpy(
+                capture_info->snapshot_info[i].encoded_full_image,
+                ori_capture_info->face_snapshots[i].encoded_full_image.data(),
+                ori_capture_info->face_snapshots[i].encoded_full_image.size());
+            capture_info->snapshot_info[i].full_length =
+                ori_capture_info->face_snapshots[i].encoded_full_image.size();
+          }
+
+          capture_info->snapshot_info[i].object_type =
+              TDLObjectTypeE::TDL_OBJECT_TYPE_FACE;
+        }
+      }
+    }
+
+    return 0;
+
+  } else if (task_name != "face_pet_capture") {
+    LOGE(" Invalid task_name: %s!\n", task_name);
+    return -1;
   }
 
   std::shared_ptr<FacePetCaptureResult> ori_capture_info =
