@@ -338,7 +338,7 @@ int main(int argc, char *argv[]) {
     } else if (g_status == TRACKING) {
       ret =
           TDL_SingleObjectTracking(tdl_handle, image, &track_meta, g_frame_id);
-      if (track_meta.info) {
+      if (track_meta.info && track_meta.info[0].score > 0.3) {
 #ifdef ENABLE_RTSP
         TDLBrush brush_track = {{255, 0, 0}, 5};
         track_obj_meta.info[0].box.x1 = track_meta.info[0].bbox.x1;

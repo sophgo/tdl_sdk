@@ -438,7 +438,7 @@ void *run_sot_thread(void *args) {
           }
         }
 
-        if (track_meta.info) {
+        if (track_meta.info && track_meta.info[0].score > 0.5) {
 #ifdef ENABLE_RTSP
           // 绘制跟踪框
           TDLBrush brush_track = {0};

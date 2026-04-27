@@ -81,7 +81,7 @@ class SOT : public Tracker {
   int instance_size_ = 256;           // 实例大小
   int template_size_ = 128;           // 模板大小
   float template_bbox_offset_ = 0.2;  // 模板边界框偏移
-  float search_bbox_offset_ = 2.0;    // 搜索边界框偏移
+  float search_bbox_offset_ = 3.0;    // 搜索边界框偏移
   int kalman_update_count_ = 25;      // 卡尔曼开始更新的帧数
   float size_ratio_threshold_ = 1;    // 宽高比阈值
   float max_expand_ratio_ = 2.0;      // 目标丢失时最大外扩比例
