@@ -1461,6 +1461,7 @@ int32_t TDL_SingleObjectTracking(TDLHandle handle, TDLImage image_handle,
     track_meta->info[0].bbox.y1 = tracker_info.box_info_.y1;
     track_meta->info[0].bbox.x2 = tracker_info.box_info_.x2;
     track_meta->info[0].bbox.y2 = tracker_info.box_info_.y2;
+    track_meta->info[0].score = tracker_info.box_info_.score;
   } else {
     LOGI("tracker_info.status_ is LOST");
   }

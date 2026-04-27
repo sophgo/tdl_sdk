@@ -4,37 +4,23 @@
 template <typename T>
 inline void parse_score_data(T* p_score_ptr, int score_size, float qscale,
                              float* max_score, int* max_i, int* max_j) {
-  float max_avg_score = -1;
+  float best_score = -1;
   int best_i = -1, best_j = -1;
 
-  // 遍历score map (16x16)
-  for (int i = 2; i < score_size - 2; i++) {
-    for (int j = 2; j < score_size - 2; j++) {
-      float center_score =
+  // 遍历整个score map (16x16)，使用argmax与Python对齐
+  for (int i = 0; i < score_size; i++) {
+    for (int j = 0; j < score_size; j++) {
+      float score =
           static_cast<float>(p_score_ptr[i * score_size + j]) * qscale;
-      if (center_score > 0.2f) {
-        // 计算5x5区域的平均分数
-        float avg_score = 0;
-        for (int di = 0; di < 5; di++) {
-          for (int dj = 0; dj < 5; dj++) {
-            avg_score +=
-                static_cast<float>(
-                    p_score_ptr[(i - 2 + di) * score_size + (j - 2 + dj)]) *
-                qscale;
-          }
-        }
-        avg_score /= 25.0f;
-
-        if (avg_score > max_avg_score) {
-          max_avg_score = avg_score;
-          best_i = i;
-          best_j = j;
-        }
+      if (score > best_score) {
+        best_score = score;
+        best_i = i;
+        best_j = j;
       }
     }
   }
 
-  *max_score = max_avg_score;
+  *max_score = best_score;
   *max_i = best_i;
   *max_j = best_j;
 }

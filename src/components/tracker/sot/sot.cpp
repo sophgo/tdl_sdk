@@ -617,6 +617,46 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
                                     y1 * h_scale + context[1], w * w_scale,
                                     h * h_scale};
   clampBBox(scaled_bbox, image);
+
+  // 几何异常检测：中心点位移、面积比、宽高比
+  float prev_cx = current_bbox_[0] + current_bbox_[2] / 2;
+  float prev_cy = current_bbox_[1] + current_bbox_[3] / 2;
+  float new_cx = scaled_bbox[0] + scaled_bbox[2] / 2;
+  float new_cy = scaled_bbox[1] + scaled_bbox[3] / 2;
+  float center_displacement =
+      std::sqrt((new_cx - prev_cx) * (new_cx - prev_cx) +
+                (new_cy - prev_cy) * (new_cy - prev_cy));
+
+  float prev_area = current_bbox_[2] * current_bbox_[3];
+  float new_area = scaled_bbox[2] * scaled_bbox[3];
+  float area_ratio = prev_area > 0 ? new_area / prev_area : 1.0f;
+
+  float prev_aspect =
+      current_bbox_[3] > 0 ? current_bbox_[2] / current_bbox_[3] : 1.0f;
+  float new_aspect =
+      scaled_bbox[3] > 0 ? scaled_bbox[2] / scaled_bbox[3] : 1.0f;
+  float aspect_ratio = prev_aspect > 0 ? new_aspect / prev_aspect : 1.0f;
+
+  bool geom_anomaly = (center_displacement > 2.0f * current_bbox_[2]) ||
+                      (area_ratio > 1.25f || area_ratio < 0.8f) ||
+                      (aspect_ratio > 1.25f || aspect_ratio < 0.8f);
+
+  if (geom_anomaly) {
+    LOGI(
+        "geom_anomaly: displacement=%.2f, ori_width=%.2f, area_ratio=%.2f, "
+        "aspect_ratio=%.2f\n",
+        center_displacement, current_bbox_[2], area_ratio, aspect_ratio);
+    tracker_info.status_ = TrackStatus::LOST;
+    tracker_info.box_info_.x1 = current_bbox_[0];
+    tracker_info.box_info_.y1 = current_bbox_[1];
+    tracker_info.box_info_.x2 = current_bbox_[0] + current_bbox_[2];
+    tracker_info.box_info_.y2 = current_bbox_[1] + current_bbox_[3];
+    tracker_info.box_info_.score = score;
+    tracker_info.box_info_.class_id = 0;
+    frame_id_ = frame_id;
+    return 0;
+  }
+
   // 更新边界框, 用于下一帧跟踪
   current_bbox_ = scaled_bbox;
 
@@ -629,7 +669,7 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
     tracker_info.box_info_.class_id = 0;
     tracker_info.status_ = TrackStatus::TRACKED;
 
-    if (score < 0.1) {
+    if (score < 0.5) {
       tracker_info.status_ = TrackStatus::LOST;
     }
     frame_id_ = frame_id;

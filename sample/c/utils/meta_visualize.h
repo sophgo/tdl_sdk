@@ -41,6 +41,9 @@ int32_t VisualizeRectangle(box_t *box, int32_t num, TDLImage image_handle,
 int32_t DrawRectangle(box_t *box, int32_t num, TDLImage image_handle,
                       int *colors);
 
+int32_t DrawText(TDLImage image_handle, int32_t x, int32_t y, const char *text,
+                 int *colors);
+
 int32_t VisualizePointFromFile(point_t *point, int32_t num, char *input_path,
                                char *output_path);
 

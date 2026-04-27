@@ -464,7 +464,8 @@ void *run_sot_thread(void *args) {
           }
         }
 
-        if (track_meta.info) {
+        if (track_meta.info && track_meta.info[0].score > 0.5) {
+#ifdef ENABLE_RTSP
           // 绘制跟踪框
           TDLBrush brush_track = {0};
           brush_track.size = 5;
@@ -483,6 +484,7 @@ void *run_sot_thread(void *args) {
           draw_selection_rect(frame, brush_yellow);
           // 绘制中心+号
           draw_center_cross(frame, brush_yellow);
+#endif
 
           g_lost_timer_started = false;
         } else {
@@ -505,14 +507,18 @@ void *run_sot_thread(void *args) {
             }
           }
           // 即使目标丢失，也绘制预选区实线框和+号
+#ifdef ENABLE_RTSP
           draw_selection_rect(frame, brush_yellow);
           draw_center_cross(frame, brush_yellow);
+#endif
         }
+#ifdef ENABLE_RTSP
         ret = SendFrameRTSP(frame, &rtsp_context);
         if (ret != 0) {
           printf("SendFrameRTSP failed with %#x!\n", ret);
           continue;
         }
+#endif
 
         TDL_DestroyImage(image);
         ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);

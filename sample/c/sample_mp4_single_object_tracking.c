@@ -206,6 +206,8 @@ int main(int argc, char *argv[]) {
         return -1;
       }
 
+      int colors[3] = {255, 0, 0};  // 蓝色
+
       if (track_meta.info) {
         box_t boxes[1];
         boxes[0].x1 = track_meta.info[0].bbox.x1;
@@ -213,10 +215,13 @@ int main(int argc, char *argv[]) {
         boxes[0].x2 = track_meta.info[0].bbox.x2;
         boxes[0].y2 = track_meta.info[0].bbox.y2;
 
-        int colors[3] = {255, 0, 0};  // 蓝色
-
 #ifdef __BM168X__
         DrawRectangle(boxes, 1, image, colors);
+        char score_text[32];
+        snprintf(score_text, sizeof(score_text), "%.2f",
+                 track_meta.info[0].score);
+        DrawText(image, (int32_t)track_meta.info[0].bbox.x1,
+                 (int32_t)track_meta.info[0].bbox.y1 - 5, score_text, colors);
         if (video_writer == NULL) {
           video_writer = SaveVideo_Init(mp4_path, image, 25);
         }
@@ -229,8 +234,23 @@ int main(int argc, char *argv[]) {
           return -1;
         }
 #endif
+      } else {
+#ifdef __BM168X__
+        if (video_writer == NULL) {
+          video_writer = SaveVideo_Init(mp4_path, image, 25);
+        }
+        SaveVideo_WriteFrame(video_writer, image);
+#else
+        char outpath[128];
+        snprintf(outpath, 128, "%s/%07d.jpg", save_dir, g_frame_id);
+        if (VisualizeRectangle(NULL, 0, image, outpath, colors) != 0) {
+          printf("VisualizeRectangle failed with %#x!\n", ret);
+          return -1;
+        }
+#endif
       }
 
+      TDL_ReleaseTrackMeta(&track_meta);
       TDL_DestroyImage(image);
 
     } else {

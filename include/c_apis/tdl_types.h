@@ -219,6 +219,7 @@ typedef struct {
 
 typedef struct {
   uint64_t id;
+  float score;
   TDLBox bbox;
 } TDLTrackerInfo;
 typedef struct {

@@ -97,6 +97,26 @@ int32_t DrawRectangle(box_t *box, int32_t num, TDLImage image_handle,
   return 0;
 }
 
+int32_t DrawText(TDLImage image_handle, int32_t x, int32_t y, const char *text,
+                 int *colors) {
+  cv::Mat mat;
+  bool is_rgb;
+
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+
+  int32_t ret = ImageFactory::convertToMat(image_context->image, mat, is_rgb);
+  if (ret != 0) {
+    std::cout << "Failed to convert to mat" << std::endl;
+    return -1;
+  }
+
+  cv::Scalar color(colors[2], colors[1], colors[0]);
+  cv::putText(mat, text, cv::Point(x, y), cv::FONT_HERSHEY_SIMPLEX, 0.6, color,
+              2);
+
+  return 0;
+}
+
 int32_t VisualizePointFromFile(point_t *point, int32_t num, char *input_path,
                                char *output_path) {
   cv::Mat image = cv::imread(input_path);
