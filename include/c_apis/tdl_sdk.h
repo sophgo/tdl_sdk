@@ -579,6 +579,15 @@ int32_t TDL_APP_SetFrame(TDLHandle handle, const char *channel_name,
                          int buffer_size);
 
 /**
+ * @brief 获取已注册的人员ID
+ *
+ * @param handle TDLHandle 对象
+ * @param track_id 跟踪ID
+ * @return 已注册的人员ID，未找到则返回 -1
+ */
+int32_t TDL_APP_GetRegisteredID(TDLHandle handle, uint64_t track_id);
+
+/**
  * @brief 执行人脸抓拍任务
  *
  * @param handle TDLHandle 对象
@@ -593,12 +602,14 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
  *
  * @param handle TDLHandle 对象
  * @param channel_name 当前channel的名称
+ * @param face_track_id 人脸追踪ID
  * @param person_track_id 人物追踪ID
  * @param registered_id 注册ID
  * @return 成功返回 0，失败返回-1
  */
 int32_t TDL_APP_SetFaceID(TDLHandle handle, const char *channel_name,
-                          uint64_t person_track_id, int registered_id);
+                          uint64_t face_track_id, uint64_t person_track_id,
+                          int registered_id);
 
 /**
  * @brief 执行客流统计(TDL_APP_Init task

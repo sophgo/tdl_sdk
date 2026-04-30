@@ -6,6 +6,7 @@ include_directories(${REPO_DIR}/include
                     ${REPO_DIR}/include/c_apis
                     ${REPO_DIR}/src/app
                     ${REPO_DIR}/src/components/nn
+                    ${REPO_DIR}/src/components
                     ${CMAKE_CURRENT_SOURCE_DIR}/include
                     ${FBANK_INCLUDES}
                 )

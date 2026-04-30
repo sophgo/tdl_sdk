@@ -430,43 +430,14 @@ int32_t ObjectSnapshot::updateSnapshot(
       // check snapshot interval
       if (frame_id - iter->second.export_frame_id >
           static_cast<uint64_t>(config_.snapshot_interval)) {
-        // Identity confirmation for person before export
-        if (config_.use_reid &&
-            iter->second.object_box_info.object_type == OBJECT_TYPE_PERSON &&
-            valid_face_ids_.find(iter->second.pair_track_id) ==
-                valid_face_ids_.end()) {
-          uint64_t initial_id = iter->first;
-          if (person_id_map_.count(iter->first)) {
-            initial_id = person_id_map_[iter->first];
-          }
-          if (person_faceID_map_.count(initial_id)) {
-            iter->second.registered_id = person_faceID_map_[initial_id];
-          } else {
-            iter->second.registered_id =
-                -1;  // 自始至抓拍人形过程中未出现人脸或为陌生人
-            if (reid_feature_map_.count(iter->first)) {
-              reid_feature_map_.erase(iter->first);
-              LOGI("erase reid_feature_map_, track_id: %" PRIu64 "\n",
-                   iter->first);
-            }
-          }
-          LOGI("person track_id: %" PRIu64 ", initial_id: %" PRIu64
-               "registered_id : %d\n",
-               iter->first, initial_id, iter->second.registered_id);
-        }
-        if (config_.use_reid &&
-            valid_face_ids_.find(iter->second.pair_track_id) !=
-                valid_face_ids_.end()) {
-          valid_face_ids_.erase(iter->second.pair_track_id);  // 避免越来越大
-        }
-
         if (iter->second.object_image != nullptr) {
           LOGI(" to export ObjectSnapshotInfo\n");
 
           // Identity confirmation for person before periodic export
           if (config_.use_reid &&
               iter->second.object_box_info.object_type == OBJECT_TYPE_PERSON &&
-              iter->second.pair_track_id == 0) {
+              valid_face_ids_.find(iter->second.pair_track_id) ==
+                  valid_face_ids_.end()) {
             uint64_t initial_id = iter->first;
             if (person_id_map_.count(iter->first)) {
               initial_id = person_id_map_[iter->first];
@@ -477,6 +448,9 @@ int32_t ObjectSnapshot::updateSnapshot(
               iter->second.registered_id =
                   -1;  // 自始至抓拍人形过程中未出现人脸或为陌生人
             }
+            LOGI("person track_id: %" PRIu64 ", initial_id: %" PRIu64
+                 "registered_id : %d\n",
+                 iter->first, initial_id, iter->second.registered_id);
           }
 
           export_snapshots_.push_back(iter->second);
@@ -509,7 +483,8 @@ int32_t ObjectSnapshot::getSnapshotData(
   return 0;
 }
 
-void ObjectSnapshot::setFaceID(uint64_t person_track_id, int registered_id) {
+void ObjectSnapshot::setFaceID(uint64_t face_track_id, uint64_t person_track_id,
+                               int registered_id) {
   uint64_t initial_person_id = person_track_id;
   if (person_id_map_.count(person_track_id)) {
     initial_person_id = person_id_map_[person_track_id];
@@ -517,9 +492,24 @@ void ObjectSnapshot::setFaceID(uint64_t person_track_id, int registered_id) {
 
   person_faceID_map_[initial_person_id] = registered_id;
 
+  RegisteredID_map_[face_track_id] = registered_id;
+  RegisteredID_map_[person_track_id] = registered_id;
+
   LOGI("ObjectSnapshot setFaceID, person_track_id: %" PRIu64
        ", registered_id: %d\n",
        person_track_id, registered_id);
+}
+
+int ObjectSnapshot::getRegisteredID(uint64_t track_id) {
+  int registered_id = -1;
+  if (RegisteredID_map_.count(track_id)) {
+    registered_id = RegisteredID_map_[track_id];
+  }
+  LOGI("ObjectSnapshot getRegisteredID, track_id: %" PRIu64
+       ", registered_id: %d\n",
+       track_id, registered_id);
+
+  return registered_id;
 }
 
 void ObjectSnapshot::resetSnapshotInfo(ObjectSnapshotInfo& info,

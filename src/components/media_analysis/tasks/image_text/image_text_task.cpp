@@ -18,8 +18,8 @@ void ImageTextTask::parse_person_info(const std::string& image_path,
                                       nlohmann::json& item) {
   try {
     std::string filename = fs::path(image_path).filename().string();
-    // 修改正则表达式以匹配新的文件名格式
-    std::regex pattern(R"((\d{8}_\d{6}).*personID_(\d+))");
+    // 修改正则表达式以匹配新的文件名格式 (兼容 personID_ 和 faceID_)
+    std::regex pattern(R"((\d{8}_\d{6}).*(?:personID_|faceID_)(\d+))");
     std::smatch matches;
 
     if (std::regex_search(filename, matches, pattern) && matches.size() == 3) {
@@ -120,11 +120,23 @@ void ImageTextTask::get_gallery_features(
       std::string image_path = entry.path().string();
       size_t pos = image_path.find("image_feature");
       if (pos != std::string::npos) {
-        image_path.replace(pos, 13, "person");
-      }
-      pos = image_path.rfind(".bin");
-      if (pos != std::string::npos) {
-        image_path.replace(pos, 4, ".jpg");
+        // 先尝试替换为 identity (sample_app_identity_recognition 结构)
+        std::string temp_path = image_path;
+        temp_path.replace(pos, 13, "identity");
+        pos = temp_path.rfind(".bin");
+        if (pos != std::string::npos) {
+          temp_path.replace(pos, 4, ".jpg");
+        }
+        if (fs::exists(temp_path)) {
+          image_path = temp_path;
+        } else {
+          // 退回到 person (sample_app_media_analysis 结构)
+          image_path.replace(pos, 13, "person");
+          pos = image_path.rfind(".bin");
+          if (pos != std::string::npos) {
+            image_path.replace(pos, 4, ".jpg");
+          }
+        }
       }
       image_paths.push_back(image_path);
       bin_file.close();

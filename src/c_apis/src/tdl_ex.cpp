@@ -11,7 +11,9 @@
 
 #if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
 
+#include "media_analysis/media_analysis_event_manager.hpp"
 #include "media_analysis/media_analysis_server.hpp"
+#include "media_analysis/tasks/face/face_matching_task.hpp"
 
 TDLHandleEx TDL_CreateHandleEx(const int32_t tpu_device_id) {
   TDLContextEx *context = new TDLContextEx();
@@ -96,14 +98,33 @@ int32_t TDL_MediaAnalysisServer_Stop() {
 
 int32_t TDL_MediaAnalysisServer_SendImage(const uint8_t *image_data,
                                           size_t size, uint64_t timestamp,
-                                          int channel_id, uint64_t frame_id) {
+                                          int channel_id, uint64_t frame_id,
+                                          const char *metadata_json) {
   if (image_data == nullptr || size == 0) {
     LOGE("Invalid image data");
     return -1;
   }
   std::vector<uint8_t> data(image_data, image_data + size);
+  std::string metadata_str = (metadata_json != nullptr) ? metadata_json : "";
   MediaAnalysisServer::GetInstance()->send_image_to_web_client(
-      data, timestamp, channel_id, frame_id);
+      data, timestamp, channel_id, frame_id, metadata_str);
+  return 0;
+}
+
+int32_t TDL_MediaAnalysisServer_AddFaceInfo(int registered_id,
+                                            int face_track_id) {
+  auto task =
+      MediaAnalysisEventManager::GetInstance()->GetTask("face_matching");
+  if (!task) {
+    LOGE("face_matching task not found");
+    return -1;
+  }
+  auto face_task = std::dynamic_pointer_cast<FaceMatchingTask>(task);
+  if (!face_task) {
+    LOGE("face_matching task cast failed");
+    return -1;
+  }
+  face_task->add_face_info(registered_id, face_track_id);
   return 0;
 }
 #endif

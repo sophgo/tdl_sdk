@@ -138,6 +138,18 @@ int32_t FacePetCaptureApp::getResult(const std::string &pipeline_name,
   face_pet_capture_result->frame_id = frame_info->frame_id_;
   face_pet_capture_result->frame_width = frame_info->frame_width;
   face_pet_capture_result->frame_height = frame_info->frame_height;
+
+  if (frame_info->node_data_.find("source_width") !=
+      frame_info->node_data_.end()) {
+    face_pet_capture_result->source_width =
+        frame_info->node_data_["source_width"].get<uint32_t>();
+    face_pet_capture_result->source_height =
+        frame_info->node_data_["source_height"].get<uint32_t>();
+  } else {
+    face_pet_capture_result->source_width = frame_info->frame_width;
+    face_pet_capture_result->source_height = frame_info->frame_height;
+  }
+
   face_pet_capture_result->face_snapshots =
       getNodeData<std::vector<ObjectSnapshotInfo>>("snapshots", frame_info);
   face_pet_capture_result->features =
@@ -1009,6 +1021,8 @@ std::shared_ptr<PipelineNode> FacePetCaptureApp::getResizeImageNode(
 
     // 更新frame_info中的图像
     frame_info->node_data_["image"] = Packet::make(resized_image);
+    frame_info->node_data_["source_width"] = Packet::make(image->getWidth());
+    frame_info->node_data_["source_height"] = Packet::make(image->getHeight());
     frame_info->frame_width = resize_width;
     frame_info->frame_height = resize_height;
 

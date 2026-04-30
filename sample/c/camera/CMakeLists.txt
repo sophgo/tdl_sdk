@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.16.3)
 project(sample_c_camera)
 
+if(BUILD_SHARED)
+    set(EX_LIBS tdl_ex ${LIBWEBSOCKETS_LIBS} ${OPENSSL_LIBRARY} ${ZLIB_LIBRARY})
+else()
+    set(EX_LIBS tdl_ex-static)
+endif()
+
 set(CAMERA_INCLUDES
     ${UTILS_INCLUDES}
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -34,7 +40,7 @@ else()
 endif()
 
 set(app_samples sample_vi_consumer_counting sample_vi_cross_detection sample_vi_face_pet_cap sample_vi_face_cap
-    sample_vi_fall_detection sample_vi_human_pose_smooth sample_vi_identity_recognition)
+    sample_vi_fall_detection sample_vi_human_pose_smooth sample_vi_identity_recognition sample_vi_media_analysis)
 
 foreach(fname ${CAMERA_SRC_FILES})
     get_filename_component(name ${fname} NAME_WE)
@@ -44,7 +50,11 @@ foreach(fname ${CAMERA_SRC_FILES})
     endif()
 
     add_executable(${name} ${fname})
-    target_link_libraries(${name} ${CAMERA_LIBS} dl rt atomic m)
+    set(TARGET_LIBS ${CAMERA_LIBS})
+    if(name MATCHES "media_analysis")
+      set(TARGET_LIBS ${EX_LIBS} ${CAMERA_LIBS})
+    endif()
+    target_link_libraries(${name} ${TARGET_LIBS} dl rt atomic m)
     
     if(NOT BUILD_SHARED)
         add_custom_command(TARGET ${name} POST_BUILD

@@ -143,6 +143,17 @@ std::shared_ptr<ImageEncoder> FaceCaptureApp::getImageEncoder(
       ->getImageEncoder();
 }
 
+std::shared_ptr<ObjectSnapshot> FaceCaptureApp::getSnapshot(
+    const std::string &pipeline_name) {
+  if (pipeline_channels_.find(pipeline_name) == pipeline_channels_.end()) {
+    return nullptr;
+  }
+  return pipeline_channels_[pipeline_name]
+      ->getNode("snapshot_node")
+      ->getWorker()
+      ->get<std::shared_ptr<ObjectSnapshot>>();
+}
+
 #ifdef VIDEO_ENABLE
 std::shared_ptr<PipelineNode> FaceCaptureApp::getVideoNode(
     const nlohmann::json &node_config) {

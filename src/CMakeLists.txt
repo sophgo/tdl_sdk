@@ -118,7 +118,7 @@ else()
 endif()
 
 add_library(tdl_ex-static STATIC ${EX_SRCS})
-target_link_libraries(tdl_ex-static ${LIBWEBSOCKETS_LIBS_STATIC} ${CURL_LIBRARY_STATIC} ${OPENSSL_LIBRARY_STATIC} ${ZLIB_LIBRARY_STATIC} ${MIDDLEWARE_AUDIO_LIBS_STATIC})
+target_link_libraries(tdl_ex-static ${LIBWEBSOCKETS_LIBS_STATIC} ${CURL_LIBRARY_STATIC} ${OPENSSL_LIBRARY_STATIC} ${ZLIB_LIBRARY_STATIC} ${MIDDLEWARE_AUDIO_LIBS_STATIC} stdc++fs)
 
 if(EXISTS ${REPO_DIR}/dependency/${CVI_PLATFORM}/python_depends)
     add_subdirectory(python)

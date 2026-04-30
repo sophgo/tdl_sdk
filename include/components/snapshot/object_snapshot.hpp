@@ -66,7 +66,9 @@ class ObjectSnapshot {
 
   bool isCapturePerson() { return capture_person_; }
   void setReidModel(std::shared_ptr<BaseModel> model) { reid_model_ = model; }
-  void setFaceID(uint64_t person_track_id, int registered_id);
+  void setFaceID(uint64_t face_track_id, uint64_t person_track_id,
+                 int registered_id);
+  int getRegisteredID(uint64_t track_id);
 
  private:
   int32_t getCropBox(ObjectBoxInfo& box, int& x, int& y, int& width,
@@ -88,8 +90,10 @@ class ObjectSnapshot {
   std::map<uint64_t, std::vector<float>>
       reid_feature_map_;                        // Initial ID -> Feature
   std::map<uint64_t, uint64_t> person_id_map_;  // New ID -> Initial ID
-  std::map<uint64_t, uint64_t>
-      person_faceID_map_;  // Initial ID -> Registered Face ID
+  std::map<uint64_t, int>
+      person_faceID_map_;  // Initial person ID -> Registered Face ID
+  std::map<uint64_t, int>
+      RegisteredID_map_;  // Initial face ID -> Registered Face ID
   std::unordered_set<uint64_t> valid_face_ids_;
 };
 

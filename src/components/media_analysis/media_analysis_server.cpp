@@ -6,6 +6,7 @@
 
 // Include task headers
 #include "tasks/face/face_matching_task.hpp"
+#include "tasks/identity/identity_browse_task.hpp"
 #include "tasks/image_analysis/image_analysis_task.hpp"
 #include "tasks/image_text/image_text_task.hpp"
 
@@ -61,8 +62,20 @@ static std::string base64_encode(unsigned char const* bytes_to_encode,
   return ret;
 }
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <map>
+#include <sstream>
+
 // Protocol list
 static struct lws_protocols protocols[] = {
+    {
+        "http",
+        MediaAnalysisServer::callback_http,
+        0,
+        RX_BUFFER_BYTES,
+    },
     {
         "media-analysis-protocol",
         MediaAnalysisServer::callback_media_analysis,
@@ -71,6 +84,70 @@ static struct lws_protocols protocols[] = {
     },
     {NULL, NULL, 0, 0}  // terminator
 };
+
+int MediaAnalysisServer::callback_http(struct lws* wsi,
+                                       enum lws_callback_reasons reason,
+                                       void* user, void* in, size_t len) {
+  if (reason == LWS_CALLBACK_HTTP) {
+    char* uri = (char*)in;
+    std::string uri_str(uri);
+    std::cout << "HTTP Request: " << uri_str << std::endl;
+
+    if (uri_str.find("/api/image_proxy") == 0) {
+      std::string path_param = "";
+      char buf[1024];
+      const char* val = lws_get_urlarg_by_name(wsi, "path=", buf, sizeof(buf));
+      if (val) {
+        path_param = val;
+        // Decode URL encoding (minimal)
+        std::string decoded = "";
+        for (size_t i = 0; i < path_param.length(); ++i) {
+          if (path_param[i] == '%' && i + 2 < path_param.length()) {
+            int value = 0;
+            std::stringstream ss;
+            ss << std::hex << path_param.substr(i + 1, 2);
+            ss >> value;
+            decoded += (char)value;
+            i += 2;
+          } else if (path_param[i] == '+') {
+            decoded += ' ';
+          } else {
+            decoded += path_param[i];
+          }
+        }
+        path_param = decoded;
+      }
+
+      if (path_param.empty()) {
+        lws_return_http_status(wsi, HTTP_STATUS_BAD_REQUEST, NULL);
+        return -1;
+      }
+
+      // Check file exists
+      struct stat st;
+      if (stat(path_param.c_str(), &st) != 0 || !S_ISREG(st.st_mode)) {
+        lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL);
+        return -1;
+      }
+
+      // Serve file
+      const char* cors_header = "Access-Control-Allow-Origin: *\r\n";
+      if (lws_serve_http_file(wsi, path_param.c_str(), "image/jpeg",
+                              cors_header, strlen(cors_header)) < 0) {
+        return -1;
+      }
+      return 0;
+    }
+    lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL);
+    return -1;
+  } else if (reason == LWS_CALLBACK_HTTP_FILE_COMPLETION) {
+    if (lws_http_transaction_completed(wsi)) {
+      return -1;
+    }
+    return 0;
+  }
+  return 0;
+}
 
 MediaAnalysisServer* MediaAnalysisServer::GetInstance() {
   static MediaAnalysisServer instance;
@@ -98,6 +175,10 @@ void MediaAnalysisServer::init() {
   }
 
   is_running_ = true;
+
+  // Register identity browse task (always available)
+  auto browse_task = std::make_shared<IdentityBrowseTask>();
+  MediaAnalysisEventManager::GetInstance()->RegisterTask(browse_task);
 
   // Start service thread
   service_thread_ = std::thread([this]() {
@@ -145,6 +226,7 @@ void MediaAnalysisServer::parse_config(const std::string& config_path) {
 
     // Parse paths
     std::string data_path = config.value("data_path", "");
+    data_path_ = data_path;
     std::string model_dir = config.value("model_dir", "");
     if (model_dir.empty()) model_dir = config.value("model_dir_", "");
 
@@ -340,9 +422,20 @@ int MediaAnalysisServer::callback_media_analysis(
       if (wsi == server->web_client_wsi_) {
         server->web_client_wsi_ = nullptr;
         std::cout << "Web Client disconnected" << std::endl;
+
+        // 清理旧的待发送队列
+        std::lock_guard<std::mutex> queue_lock(server->queue_mutex_);
+        std::queue<std::string> empty_queue;
+        std::swap(server->web_client_outbox_, empty_queue);
+
       } else if (wsi == server->cloud_client_wsi_) {
         server->cloud_client_wsi_ = nullptr;
         std::cout << "Cloud Client disconnected" << std::endl;
+
+        // 清理旧的待发送队列
+        std::lock_guard<std::mutex> queue_lock(server->queue_mutex_);
+        std::queue<std::string> empty_queue;
+        std::swap(server->cloud_client_outbox_, empty_queue);
       }
       break;
     }
@@ -375,7 +468,7 @@ void MediaAnalysisServer::image_analysis_loop() {
 
 void MediaAnalysisServer::send_image_to_web_client(
     const std::vector<uint8_t>& image_data, uint64_t timestamp, int channel_id,
-    uint64_t frame_id) {
+    uint64_t frame_id, const std::string& metadata_json) {
   // Optimize: if no client, don't encode
   {
     std::lock_guard<std::mutex> lock(conn_mutex_);
@@ -395,6 +488,20 @@ void MediaAnalysisServer::send_image_to_web_client(
   j["camera_channel"] = std::to_string(channel_id);
   j["payload"] = {
       {"event", "frame"}, {"frame_id", frame_id_str}, {"image", base64_img}};
+
+  if (!metadata_json.empty()) {
+    try {
+      json metadata = json::parse(metadata_json);
+      j["payload"]["metadata"] = metadata;
+
+      if (metadata.contains("width") && metadata.contains("height")) {
+        j["payload"]["width"] = metadata["width"];
+        j["payload"]["height"] = metadata["height"];
+      }
+    } catch (const std::exception& e) {
+      std::cerr << "Failed to parse metadata JSON: " << e.what() << std::endl;
+    }
+  }
 
   send_to_web_client(j.dump());
 }

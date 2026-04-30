@@ -63,6 +63,24 @@ std::vector<std::string> FaceMatchingTask::get_face_images(
   }
 
   if (face_track_id != -1) {
+    // 支持 sample_app_identity_recognition (存放在 identity/registered_id 目录)
+    std::string identity_path =
+        data_path_ + "/identity/" + std::to_string(registered_id);
+    if (fs::exists(identity_path)) {
+      for (const auto& img_entry : fs::directory_iterator(identity_path)) {
+        if (fs::is_regular_file(img_entry.status())) {
+          std::string filename = img_entry.path().filename().string();
+          // 返回该 registered_id 下所有人脸/人形图片
+          if (filename.find(".jpg") != std::string::npos) {
+            image_paths.push_back(img_entry.path().string());
+          }
+        }
+      }
+      printf("matched face size from identity: %lu\n", image_paths.size());
+      return image_paths;
+    }
+
+    // 回退到 sample_app_media_analysis (存放在 face/track_id_xxx 目录)
     std::string capture_path = data_path_ + "/face";
     if (!fs::exists(capture_path)) {
       return image_paths;
@@ -143,7 +161,7 @@ void FaceMatchingTask::parse_face_info(const std::string& image_path,
                                        nlohmann::json& item) {
   try {
     std::string filename = fs::path(image_path).filename().string();
-    std::regex pattern(R"((\d{8}_\d{6}).*faceID_(\d+))");
+    std::regex pattern(R"((\d{8}_\d{6}).*(?:faceID_|personID_)(\d+))");
     std::smatch matches;
 
     if (std::regex_search(filename, matches, pattern) && matches.size() == 3) {

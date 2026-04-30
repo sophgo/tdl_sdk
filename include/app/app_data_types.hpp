@@ -24,6 +24,8 @@ struct FacePetCaptureResult {
   uint64_t frame_id;
   uint32_t frame_width;
   uint32_t frame_height;
+  uint32_t source_width = 0;
+  uint32_t source_height = 0;
   std::shared_ptr<BaseImage> image;
   std::vector<ObjectBoxLandmarkInfo> face_boxes;
   std::vector<ObjectBoxInfo> person_boxes;

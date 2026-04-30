@@ -1848,6 +1848,39 @@ int32_t TDL_APP_SetFrame(TDLHandle handle, const char *channel_name,
   }
 }
 
+int32_t TDL_APP_GetRegisteredID(TDLHandle handle, uint64_t track_id) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr || context->app_task == nullptr) {
+    return -1;
+  }
+
+  std::string task_name = context->app_task->getTaskName();
+  std::vector<std::string> channel_names = context->app_task->getChannelNames();
+
+  for (const auto &channel_name : channel_names) {
+    std::shared_ptr<ObjectSnapshot> snapshot_comp = nullptr;
+
+    if (task_name == "face_capture") {
+      snapshot_comp =
+          (std::dynamic_pointer_cast<FaceCaptureApp>(context->app_task))
+              ->getSnapshot(channel_name);
+    } else if (task_name == "face_pet_capture") {
+      snapshot_comp =
+          (std::dynamic_pointer_cast<FacePetCaptureApp>(context->app_task))
+              ->getSnapshot(channel_name);
+    }
+
+    if (snapshot_comp) {
+      int registered_id = snapshot_comp->getRegisteredID(track_id);
+      if (registered_id != -1) {
+        return registered_id;
+      }
+    }
+  }
+
+  return -1;
+}
+
 int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
                         TDLCaptureInfo *capture_info) {
   TDLContext *context = (TDLContext *)handle;
@@ -1912,6 +1945,10 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
     capture_info->frame_id = ori_capture_info->frame_id;
     capture_info->frame_width = ori_capture_info->frame_width;
     capture_info->frame_height = ori_capture_info->frame_height;
+    capture_info->source_width =
+        ori_capture_info->frame_width;  // Fallback for face_capture
+    capture_info->source_height =
+        ori_capture_info->frame_height;  // Fallback for face_capture
 
     if (ori_capture_info->image) {
       TDLImageContext *image_context = new TDLImageContext();
@@ -2053,6 +2090,8 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
   capture_info->frame_id = ori_capture_info->frame_id;
   capture_info->frame_width = ori_capture_info->frame_width;
   capture_info->frame_height = ori_capture_info->frame_height;
+  capture_info->source_width = ori_capture_info->source_width;
+  capture_info->source_height = ori_capture_info->source_height;
 
   if (ori_capture_info->image) {
     TDLImageContext *image_context = new TDLImageContext();
@@ -2260,7 +2299,8 @@ int32_t TDL_APP_Capture(TDLHandle handle, const char *channel_name,
 }
 
 int32_t TDL_APP_SetFaceID(TDLHandle handle, const char *channel_name,
-                          uint64_t person_track_id, int registered_id) {
+                          uint64_t face_track_id, uint64_t person_track_id,
+                          int registered_id) {
   TDLContext *context = (TDLContext *)handle;
   if (context == nullptr) {
     return -1;
@@ -2275,7 +2315,8 @@ int32_t TDL_APP_SetFaceID(TDLHandle handle, const char *channel_name,
       return -1;
     }
   }
-  context->snapshot_comp->setFaceID(person_track_id, registered_id);
+  context->snapshot_comp->setFaceID(face_track_id, person_track_id,
+                                    registered_id);
   return 0;
 }
 

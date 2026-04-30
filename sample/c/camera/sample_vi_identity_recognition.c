@@ -314,9 +314,9 @@ void *run_tdl_thread(void *args) {
 
           if (match_id >= 0) {
             // Set face ID for ReID tracking
-            ret = TDL_APP_SetFaceID(pstArgs->tdl_handle,
-                                    pstArgs->channel_names[0],
-                                    snapshot->pair_track_id, match_id);
+            ret = TDL_APP_SetFaceID(
+                pstArgs->tdl_handle, pstArgs->channel_names[0],
+                snapshot->track_id, snapshot->pair_track_id, match_id);
             printf("TDL_APP_SetFaceID: person_id %" PRIu64
                    " registered_id:%d\n",
                    snapshot->pair_track_id, match_id);

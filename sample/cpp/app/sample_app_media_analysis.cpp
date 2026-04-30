@@ -456,8 +456,8 @@ int main(int argc, char **argv) {
                 int face_track_id = face_track_ids[i];
                 match_id = face_feature_id;
 
-                snapshot_comp->setFaceID(snapshot.pair_track_id,
-                                         face_feature_id);
+                snapshot_comp->setFaceID(
+                    snapshot.track_id, snapshot.pair_track_id, face_feature_id);
 
                 auto task = MediaAnalysisEventManager::GetInstance()->GetTask(
                     "face_matching");

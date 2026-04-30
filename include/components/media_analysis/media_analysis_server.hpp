@@ -25,9 +25,15 @@ class MediaAnalysisServer {
   // Send image to web client
   void send_image_to_web_client(const std::vector<uint8_t>& image_data,
                                 uint64_t timestamp, int channel_id,
-                                uint64_t frame_id);
+                                uint64_t frame_id,
+                                const std::string& metadata_json = "");
+
+  std::string get_data_path() const { return data_path_; }
 
   // LWS Callback (must be public or static friend)
+  static int callback_http(struct lws* wsi, enum lws_callback_reasons reason,
+                           void* user, void* in, size_t len);
+
   static int callback_media_analysis(struct lws* wsi,
                                      enum lws_callback_reasons reason,
                                      void* user, void* in, size_t len);
@@ -47,6 +53,7 @@ class MediaAnalysisServer {
   std::thread service_thread_;
   std::thread analysis_thread_;
   bool is_running_ = false;
+  std::string data_path_;
 
   // Connections
   std::mutex conn_mutex_;

@@ -279,6 +279,8 @@ typedef struct {
   uint64_t frame_id;
   uint32_t frame_width;
   uint32_t frame_height;
+  uint32_t source_width;
+  uint32_t source_height;
   TDLFace face_meta;
   TDLObject person_meta;
   TDLObject pet_meta;

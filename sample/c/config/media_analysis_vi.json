@@ -1,0 +1,41 @@
+{
+  "server_port": 8000,
+  "data_path": "/data",
+  "model_dir": "/models",
+
+  "frame_buffer_size": 1,
+  "pipelines": [
+    {
+      "name": "vi",
+      "nodes": {
+
+        "object_detection_node": {
+          "config_thresh": 0.5
+        },
+        "track_node": {
+          "fuse_track": true
+        },
+        "snapshot_node": {
+          "snapshot_interval": 50,
+          "min_snapshot_size": 40,
+          "crop_size_min": 128,
+          "crop_size_max": 256,
+          "snapshot_quality_threshold": 0.4,
+          "snapshot_person_quality_threshold": 0,
+          "crop_square": true,
+          "capture_person": true,
+
+          "encoder_mode": 0,
+          "vechn": 1,
+          "jpg_quality": 50,
+
+          "use_reid": true
+        },
+        "resize_image_node": {
+          "resize_width": 960,
+          "resize_height": 540
+        }
+      }
+    }
+  ]
+}

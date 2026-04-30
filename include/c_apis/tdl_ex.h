@@ -63,11 +63,24 @@ int32_t TDL_MediaAnalysisServer_Stop();
  * @param timestamp 时间戳
  * @param channel_id 通道ID
  * @param frame_id 帧ID
+ * @param metadata_json 附加的元数据 JSON
+ * 字符串，可以包含检测框等信息，无则传NULL
  * @return 0成功，非0失败
  */
 int32_t TDL_MediaAnalysisServer_SendImage(const uint8_t *image_data,
                                           size_t size, uint64_t timestamp,
-                                          int channel_id, uint64_t frame_id);
+                                          int channel_id, uint64_t frame_id,
+                                          const char *metadata_json);
+
+/**
+ * @brief 向face_matching任务注入registered_id与face_track_id映射
+ *
+ * @param registered_id 注册ID
+ * @param face_track_id 人脸track_id
+ * @return 0成功，非0失败
+ */
+int32_t TDL_MediaAnalysisServer_AddFaceInfo(int registered_id,
+                                            int face_track_id);
 
 #endif
 
