@@ -209,6 +209,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libawb.so
@@ -226,6 +227,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
         ${MIDDLEWARE_SDK_ROOT}/lib/libvpss.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvo.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libisp.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvdec.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libvenc.a
         ${MIDDLEWARE_SDK_ROOT}/lib/libawb.a
@@ -239,12 +241,10 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
     if(${CONFIG_DUAL_OS} STREQUAL "OFF")
         set(MIDDLEWARE_LIBS
           ${MIDDLEWARE_LIBS}
-          ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.so
           ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.so
           ${MIDDLEWARE_SDK_ROOT}/lib/libsensor_i2c.so)
         set(MIDDLEWARE_LIBS_STATIC
           ${MIDDLEWARE_LIBS_STATIC}
-          ${MIDDLEWARE_SDK_ROOT}/lib/libisp_algo.a
           ${MIDDLEWARE_SDK_ROOT}/lib/libsns_full.a
           ${MIDDLEWARE_SDK_ROOT}/lib/libsensor_i2c.a)
     endif()
