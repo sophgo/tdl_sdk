@@ -418,17 +418,30 @@ int32_t TDL_DepthStereo(TDLHandle handle, const TDLModel model_id,
                         TDLDepthLogits *depth_logist);
 
 /**
- * @brief 执行目标跟踪任务
+ * @brief 执行目标跟踪任务（仅目标检测跟踪，不做人脸-行人协同跟踪）
  *
  * @param handle TDLHandle 对象
- * @param model_id 指定跟踪模型类型枚举值
- * @param image_handle TDLImageHandle 对象
+ * @param frame_id 帧 ID
  * @param obj_meta 输入/输出参数，包含待跟踪目标信息并更新跟踪状态
  * @param tracker_meta 输出参数，存储跟踪器状态信息
  * @return 成功返回 0，失败返回-1
  */
-int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
-                     TDLObject *obj_meta, TDLTracker *track_meta);
+int32_t TDL_Tracking(TDLHandle handle, uint64_t frame_id, TDLObject *obj_meta,
+                     TDLTracker *track_meta);
+
+/**
+ * @brief 执行协同跟踪任务（人脸-行人协同跟踪）
+ *
+ * @param handle TDLHandle 对象
+ * @param frame_id 帧 ID
+ * @param face_meta 输入/输出参数，包含待跟踪人脸信息并更新跟踪状态
+ * @param obj_meta 输入/输出参数，包含待跟踪目标信息并更新跟踪状态
+ * @param tracker_meta 输出参数，存储跟踪器状态信息
+ * @return 成功返回 0，失败返回-1
+ */
+int32_t TDL_Tracking_Fuse(TDLHandle handle, uint64_t frame_id,
+                          TDLFace *face_meta, TDLObject *obj_meta,
+                          TDLTracker *track_meta);
 
 /**
  * @brief 单目追踪设置追踪目标

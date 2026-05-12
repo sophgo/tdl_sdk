@@ -14,82 +14,31 @@
 
 void print_usage(const char *prog_name) {
   printf("Usage:\n");
-  printf("  %s -m <model_path> -i <input_image> [-o <output_dir>]\n",
-         prog_name);
-  printf("  %s --model_path <path> --input <image> [--output <dir>]\n\n",
+  printf("  %s -m <model_path_face>,<model_path_obj> -i <input_image>\n",
          prog_name);
   printf("Options:\n");
   printf(
-      "  -m, --model_path  Path to object detection model\n"
-      "                    "
-      "<yolov8n_det_person_vehicle|mbv2_det_person|yolov8n_det_coco80|yolov10n_"
-      "det_coco80|...>\n");
+      "  -m, --model_path  Path to model"
+      "<scrfd_det_face_xxx>,<mbv2_det_person_xxx>\n");
   printf(
       "  -i, --input       Path to input images dir, such as \"-i input\",\n"
       "  The images in the folder must be named in the format of xxx_d.xxx, "
       "  such as image_0.jpg, image_1.jpg......\n"
       "  such as input_0.jpg, input_1.jpg......\n"
       "  MAX_FILE_COUNT is 1000\n");
-  printf("  -o, --output      Path to output image dir\n");
   printf("  -h, --help        Show this help message\n");
-  printf("\n  (Uses TDL_Tracking: object-only tracking, no face fusion)\n");
-}
-
-int get_model_info(char *model_path, TDLModel *model_index) {
-  int ret = 0;
-  if (strstr(model_path, "yolov8n_det_person_vehicle") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_PERSON_VEHICLE;
-  } else if (strstr(model_path, "yolov8n_det_head_hardhat") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT;
-  } else if (strstr(model_path, "yolov10n_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV10_DET_COCO80;
-  } else if (strstr(model_path, "yolov6n_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV6_DET_COCO80;
-  } else if (strstr(model_path, "yolov8n_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8_DET_COCO80;
-  } else if (strstr(model_path, "ppyoloe_det_coco80") != NULL) {
-    *model_index = TDL_MODEL_PPYOLOE_DET_COCO80;
-  } else if (strstr(model_path, "yolov8n_det_fire") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_FIRE;
-  } else if (strstr(model_path, "yolov8n_det_fire_smoke") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_FIRE_SMOKE;
-  } else if (strstr(model_path, "yolov8n_det_hand_384_640") != NULL ||
-             strstr(model_path, "yolov8n_det_hand_mv3") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_HAND;
-  } else if (strstr(model_path, "yolov8n_det_hand_face_person") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_HAND_FACE_PERSON;
-  } else if (strstr(model_path, "yolov8n_det_head_hardhat") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_HEAD_HARDHAT;
-  } else if (strstr(model_path, "yolov8n_det_head_shoulder") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_HEAD_SHOULDER;
-  } else if (strstr(model_path, "yolov8n_det_ir_person") != NULL ||
-             strstr(model_path, "yolov8n_det_monitor_person") != NULL ||
-             strstr(model_path, "yolov8n_det_overlook_person") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_MONITOR_PERSON;
-  } else if (strstr(model_path, "yolov8n_det_license_plate") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_LICENSE_PLATE;
-  } else if (strstr(model_path, "yolov8n_det_pet_person") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_PET_PERSON;
-  } else if (strstr(model_path, "yolov8n_det_bicycle_motor_ebicycle") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE;
-  } else if (strstr(model_path, "yolov8n_det_traffic_light") != NULL) {
-    *model_index = TDL_MODEL_YOLOV8N_DET_TRAFFIC_LIGHT;
-  } else if (strstr(model_path, "mbv2_det_person") != NULL) {
-    *model_index = TDL_MODEL_MBV2_DET_PERSON;
-  } else {
-    ret = -1;
-  }
-  return ret;
+  printf("\n  (Uses TDL_Tracking_Fuse: face-person cooperative tracking)\n");
 }
 
 int extractNumber(const char *str) {
   const char *p = strrchr(str, '_');
   if (p != NULL) {
-    p++;
+    p++;  // 跳过下划线
     if (isdigit(*p)) {
       return atoi(p);
     }
   }
+  // 如果没有下划线数字模式，则扫描整个字符串找第一个数字
   p = str;
   while (*p) {
     if (isdigit(*p)) {
@@ -114,7 +63,9 @@ int compareFileNames(const void *a, const void *b) {
 }
 
 int main(int argc, char **argv) {
-  char *model_path = NULL;
+  char *models = NULL;
+  char *model1 = NULL;
+  char *model2 = NULL;
   char *video_file = NULL;
   char *output_file = NULL;
   struct dirent *entry;
@@ -131,7 +82,7 @@ int main(int argc, char **argv) {
   while ((opt = getopt_long(argc, argv, "m:i:o:h", long_options, NULL)) != -1) {
     switch (opt) {
       case 'm':
-        model_path = optarg;
+        models = optarg;
         break;
       case 'i':
         video_file = optarg;
@@ -151,37 +102,49 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (!model_path || !video_file) {
+  if (!models || !video_file) {
     fprintf(stderr, "Error: All arguments are required\n");
     print_usage(argv[0]);
     return -1;
   }
 
+  char *comma = strchr(models, ',');
+  if (!comma || comma == models || !*(comma + 1)) {
+    fprintf(stderr, "Error: Models must be in format '<face>,<obj>'\n");
+    return -1;
+  }
+  model1 = models;
+  *comma = '\0';
+  model2 = comma + 1;
+
   printf("Running with:\n");
-  printf("  Model path:    %s\n", model_path);
+  printf("  Model path:    %s\n", models);
   printf("  Input image:   %s\n", video_file);
   printf("  Output image:  %s\n", output_file);
 
-  TDLModel model_id_obj;
-  if (get_model_info(model_path, &model_id_obj) == -1) {
-    printf("unsupported model: %s\n", model_path);
-    return -1;
-  }
+  TDLModel model_id_face = TDL_MODEL_SCRFD_DET_FACE;
+  TDLModel model_id_obj = TDL_MODEL_MBV2_DET_PERSON;
   int ret = 0;
   char *files[MAX_FILE_COUNT];
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id_obj, model_path, NULL, 0);
+  ret = TDL_OpenModel(tdl_handle, model_id_face, model1, NULL, 0);
   if (ret != 0) {
-    printf("open object detection model failed with %#x!\n", ret);
+    printf("open face detection model failed with %#x!\n", ret);
     goto exit0;
+  }
+
+  ret = TDL_OpenModel(tdl_handle, model_id_obj, model2, NULL, 0);
+  if (ret != 0) {
+    printf("open face attribute model failed with %#x!\n", ret);
+    goto exit1;
   }
 
   DIR *dir = opendir(video_file);
   if (dir == NULL) {
     printf("open dir fail\n");
-    goto exit1;
+    goto exit2;
   }
 
   while ((entry = readdir(dir)) != NULL) {
@@ -214,6 +177,11 @@ int main(int argc, char **argv) {
   for (int i = 0; i < image_num; i++) {
     printf("file path is %s\n", files[i]);
     image = TDL_ReadImage(files[i]);
+    TDLFace face_meta = {0};
+    ret = TDL_FaceDetection(tdl_handle, model_id_face, image, &face_meta);
+    if (ret != 0) {
+      printf("face detection failed with %#x!\n", ret);
+    }
 
     TDLObject obj_meta = {0};
     ret = TDL_Detection(tdl_handle, model_id_obj, image, &obj_meta);
@@ -221,11 +189,17 @@ int main(int argc, char **argv) {
       printf("TDL_Detection failed with %#x!\n", ret);
     }
 
-    TDLTracker track_meta = {0};
-    ret = TDL_Tracking(tdl_handle, i, &obj_meta, &track_meta);
-    if (obj_meta.size <= 0) {
+    if (face_meta.size <= 0 && obj_meta.size <= 0) {
       printf("none to detect\n");
+      TDL_DestroyImage(image);
+      TDL_ReleaseFaceMeta(&face_meta);
+      TDL_ReleaseObjectMeta(&obj_meta);
+      free(files[i]);
+      files[i] = NULL;
     }
+
+    TDLTracker track_meta = {0};
+    ret = TDL_Tracking_Fuse(tdl_handle, i, &face_meta, &obj_meta, &track_meta);
     if (track_meta.out_num > 0) {
       box_t boxes[track_meta.out_num];
       char outpath[128];
@@ -268,13 +242,17 @@ int main(int argc, char **argv) {
 
     TDL_DestroyImage(image);
     TDL_ReleaseTrackMeta(&track_meta);
+    TDL_ReleaseFaceMeta(&face_meta);
     TDL_ReleaseObjectMeta(&obj_meta);
     free(files[i]);
     files[i] = NULL;
   }
 
-exit1:
+exit2:
   TDL_CloseModel(tdl_handle, model_id_obj);
+
+exit1:
+  TDL_CloseModel(tdl_handle, model_id_face);
 
 exit0:
   TDL_DestroyHandle(tdl_handle);
