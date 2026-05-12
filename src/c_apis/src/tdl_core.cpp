@@ -368,6 +368,8 @@ int32_t TDL_Detection(TDLHandle handle, const TDLModel model_id,
       object_meta->info[i].class_id =
           object_detection_output->bboxes[i].class_id;
       object_meta->info[i].score = object_detection_output->bboxes[i].score;
+      object_meta->info[i].obj_type = static_cast<TDLObjectTypeE>(
+          object_detection_output->bboxes[i].object_type);
     }
   } else {
     LOGE("Unsupported model output type: %d",
@@ -1256,19 +1258,74 @@ int32_t TDL_SpeechRecognition(TDLHandle handle, const TDLModel model_id_encoder,
 }
 #endif
 
-int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
-                     TDLObject *obj_meta, TDLTracker *track_meta) {
-  std::shared_ptr<Tracker> tracker =
-      TrackerFactory::createTracker(TrackerType::TDL_MOT_SORT);
-  if (tracker == nullptr) {
-    LOGE("Failed to create tracker\n");
+int32_t TDL_Tracking(TDLHandle handle, uint64_t frame_id, TDLObject *obj_meta,
+                     TDLTracker *track_meta) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
     return -1;
   }
+  if (context->tracker == nullptr) {
+    context->tracker = TrackerFactory::createTracker(TrackerType::TDL_MOT_SORT);
+    if (context->tracker == nullptr) {
+      LOGE("Failed to create tracker\n");
+      return -1;
+    }
+  }
 
-  std::map<TDLObjectType, TDLObjectType> object_pair_config;
-  object_pair_config[TDLObjectType::OBJECT_TYPE_FACE] =
-      TDLObjectType::OBJECT_TYPE_PERSON;
-  tracker->setPairConfig(object_pair_config);
+  std::shared_ptr<Tracker> tracker = context->tracker;
+
+  std::vector<ObjectBoxInfo> det_results;
+  std::vector<TrackerInfo> track_results;
+
+  if (obj_meta != nullptr && obj_meta->info != nullptr) {
+    for (uint32_t i = 0; i < obj_meta->size; i++) {
+      ObjectBoxInfo box;
+      box.x1 = obj_meta->info[i].box.x1;
+      box.y1 = obj_meta->info[i].box.y1;
+      box.x2 = obj_meta->info[i].box.x2;
+      box.y2 = obj_meta->info[i].box.y2;
+      box.score = obj_meta->info[i].score;
+      box.class_id = obj_meta->info[i].class_id;
+      box.object_type = static_cast<TDLObjectType>(obj_meta->info[i].obj_type);
+      det_results.push_back(box);
+    }
+    tracker->setImgSize(obj_meta->width, obj_meta->height);
+  }
+
+  tracker->track(det_results, frame_id, track_results);
+
+  TDL_InitTrackMeta(track_meta, track_results.size());
+  for (size_t i = 0; i < track_results.size(); i++) {
+    TrackerInfo track_info = track_results[i];
+    track_meta->info[i].id = track_info.track_id_;
+    track_meta->info[i].bbox.x1 = track_info.box_info_.x1;
+    track_meta->info[i].bbox.x2 = track_info.box_info_.x2;
+    track_meta->info[i].bbox.y1 = track_info.box_info_.y1;
+    track_meta->info[i].bbox.y2 = track_info.box_info_.y2;
+  }
+  return 0;
+}
+
+int32_t TDL_Tracking_Fuse(TDLHandle handle, uint64_t frame_id,
+                          TDLFace *face_meta, TDLObject *obj_meta,
+                          TDLTracker *track_meta) {
+  TDLContext *context = (TDLContext *)handle;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->tracker == nullptr) {
+    context->tracker = TrackerFactory::createTracker(TrackerType::TDL_MOT_SORT);
+    if (context->tracker == nullptr) {
+      LOGE("Failed to create tracker\n");
+      return -1;
+    }
+    std::map<TDLObjectType, TDLObjectType> object_pair_config;
+    object_pair_config[TDLObjectType::OBJECT_TYPE_FACE] =
+        TDLObjectType::OBJECT_TYPE_PERSON;
+    context->tracker->setPairConfig(object_pair_config);
+  }
+
+  std::shared_ptr<Tracker> tracker = context->tracker;
   std::vector<ObjectBoxInfo> det_results;
   std::vector<TrackerInfo> track_results;
 
@@ -1281,6 +1338,8 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
       box.y2 = face_meta->info[i].box.y2;
       box.score = face_meta->info[i].score;
       box.class_id = 0;
+      box.object_type = TDLObjectType::OBJECT_TYPE_FACE;
+
       det_results.push_back(box);
     }
     tracker->setImgSize(face_meta->width, face_meta->height);
@@ -1295,6 +1354,7 @@ int32_t TDL_Tracking(TDLHandle handle, int frame_id, TDLFace *face_meta,
       box.y2 = obj_meta->info[i].box.y2;
       box.score = obj_meta->info[i].score;
       box.class_id = obj_meta->info[i].class_id;
+      box.object_type = TDLObjectType::OBJECT_TYPE_PERSON;
       det_results.push_back(box);
     }
     tracker->setImgSize(obj_meta->width, obj_meta->height);

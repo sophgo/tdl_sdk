@@ -1072,6 +1072,40 @@ Depth estimation data
    * - int_logits
      - Depth estimation information
   
+TDLTrackerInfo
+~~~~~~~~~~~~~~~~~~~~~~
+
+【Description】
+
+Tracking target information
+
+【Definition】
+
+.. code-block:: c
+
+  typedef struct {
+    uint64_t id;
+    float score;
+    TDLBox bbox;
+  } TDLTrackerInfo;
+
+【Members】
+
+.. list-table::
+   :widths: 1 1
+
+   * - Data Type
+     - Description
+
+   * - id
+     - Tracking target ID
+
+   * - score
+     - Tracking target score
+
+   * - bbox
+     - Tracking target bounding box
+
 TDLTracker
 ~~~~~~~~~~~~~~~
 
@@ -1085,9 +1119,8 @@ Tracking data
 
   typedef struct {
     uint32_t size;
-    uint64_t id;
-    TDLBox bbox;
     int out_num;
+    TDLTrackerInfo *info;
   } TDLTracker;
 
 【Members】
@@ -1100,15 +1133,12 @@ Tracking data
 
    * - size
      - Number of tracked targets
-  
-   * - id
-     - Tracking target ID
-
-   * - bbox
-     - Tracking target bounding box
 
    * - out_num
-     - Number of times target is out of frame
+     - Number of tracked target outputs
+
+   * - info
+     - Tracking target information
 
 TDLText
 ~~~~~~~~~~~~~~~
@@ -2298,8 +2328,7 @@ TDL_Tracking
 .. code-block:: c
 
   int32_t TDL_Tracking(TDLHandle handle,
-                       const TDLModel model_id,
-                       TDLImage image_handle,
+                       uint64_t frame_id,
                        TDLObject *object_meta,
                        TDLTracker *tracker_meta);
 
@@ -2325,14 +2354,9 @@ Multi-object tracking, associating detected objects across frames.
      - TDLHandle object
 
    * - Input
-     - const TDLModel
-     - model_id
-     - Model type enumeration
-
-   * - Input
-     - TDLImage
-     - image_handle
-     - TDLImageHandle object
+     - uint64_t
+     - frame_id
+     - Frame ID
 
    * - Input/Output
      - TDLObject\*
@@ -2342,6 +2366,61 @@ Multi-object tracking, associating detected objects across frames.
    * - Output
      - TDLTracker\*
      - tracker_meta
+     - Output tracker status information
+
+
+TDL_Tracking_Fuse
+~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_Tracking_Fuse(TDLHandle handle,
+                            uint64_t frame_id,
+                            TDLFace *face_meta,
+                            TDLObject *obj_meta,
+                            TDLTracker *track_meta);
+
+
+【Description】
+
+Cooperative tracking (face-person cooperative tracking), associating detected faces and objects across frames for cooperative multi-object tracking.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 3 2 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - uint64_t
+     - frame_id
+     - Frame ID
+
+   * - Input/Output
+     - TDLFace\*
+     - face_meta
+     - Input face detection results, output tracking IDs
+
+   * - Input/Output
+     - TDLObject\*
+     - obj_meta
+     - Input object detection results, output tracking IDs
+
+   * - Output
+     - TDLTracker\*
+     - track_meta
      - Output tracker status information
 
 

@@ -1090,6 +1090,40 @@ TDLDepthLogits
    * - int_logits
      - 深度估计信息
   
+TDLTrackerInfo
+~~~~~~~~~~~~~~~~~~~~~~
+
+【说明】
+
+追踪目标信息
+
+【定义】
+
+.. code-block:: c
+
+  typedef struct {
+    uint64_t id;
+    float score;
+    TDLBox bbox;
+  } TDLTrackerInfo;
+
+【成员】
+
+.. list-table::
+   :widths: 1 1
+
+   * - 数据类型枚举类
+     - 注释
+
+   * - id
+     - 追踪目标的id
+
+   * - score
+     - 追踪目标的分数
+
+   * - bbox
+     - 追踪目标的box
+
 TDLTracker
 ~~~~~~~~~~~~~~~
 
@@ -1103,9 +1137,8 @@ TDLTracker
 
   typedef struct {
     uint32_t size;
-    uint64_t id;
-    TDLBox bbox;
     int out_num;
+    TDLTrackerInfo *info;
   } TDLTracker;
 
 【成员】
@@ -1118,15 +1151,12 @@ TDLTracker
 
    * - size
      - 追踪目标的个数
-  
-   * - id
-     - 追踪目标的id
-
-   * - bbox
-     - 追踪目标的box
 
    * - out_num
-     - 追踪目标的小时次数
+     - 追踪目标输出的个数
+
+   * - info
+     - 追踪目标信息
 
 TDLText
 ~~~~~~~~~~~~~~~
@@ -2317,8 +2347,7 @@ TDL_Tracking
 .. code-block:: c
 
   int32_t TDL_Tracking(TDLHandle handle,
-                       const TDLModel model_id,
-                       TDLImage image_handle,
+                       uint64_t frame_id,
                        TDLObject *object_meta,
                        TDLTracker *tracker_meta);
 
@@ -2344,14 +2373,9 @@ TDL_Tracking
      - TDLHandle 对象
 
    * - 输入
-     - const TDLModel
-     - model_id
-     - 模型类型枚举
-
-   * - 输入
-     - TDLImage
-     - image_handle
-     - TDLImageHandle 对象
+     - uint64_t
+     - frame_id
+     - 帧 ID
 
    * - 输入/输出
      - TDLObject\*
@@ -2361,6 +2385,60 @@ TDL_Tracking
    * - 输出
      - TDLTracker\*
      - tracker_meta
+     - 输出跟踪器状态信息
+
+TDL_Tracking_Fuse
+~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_Tracking_Fuse(TDLHandle handle,
+                            uint64_t frame_id,
+                            TDLFace *face_meta,
+                            TDLObject *obj_meta,
+                            TDLTracker *track_meta);
+
+
+【描述】
+
+协同跟踪（人脸-行人协同跟踪），基于人脸检测和目标检测结果进行跨帧协同目标关联。
+
+【参数】
+
+.. list-table::
+   :widths: 1 3 2 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - uint64_t
+     - frame_id
+     - 帧 ID
+
+   * - 输入/输出
+     - TDLFace\*
+     - face_meta
+     - 输入人脸检测结果，输出补充跟踪ID
+
+   * - 输入/输出
+     - TDLObject\*
+     - obj_meta
+     - 输入目标检测结果，输出补充跟踪ID
+
+   * - 输出
+     - TDLTracker\*
+     - track_meta
      - 输出跟踪器状态信息
 
 TDL_SetSingleObjectTracking
