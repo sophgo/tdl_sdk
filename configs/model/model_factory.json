@@ -219,7 +219,14 @@
       "rgb_order":"gray",
       "hop_len":128,
       "fix":1
-    },    
+    }, 
+    "CLS_SOUND_COMMAND":{
+      "_comment":"single channel,TODO:add types",
+      "file_name":"cls_sound_hiciwa_126_40_INT8",
+      "rgb_order":"gray",
+      "hop_len":128,
+      "fix":1
+    },     
     "CLS_IMG":{
       "_comment":"custom classification, set types,file_name,specify rgb order and mean/std",
       "types":["custom"],

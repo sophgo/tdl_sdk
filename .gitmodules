@@ -1,0 +1,4 @@
+[submodule "docs/design_docs"]
+	path = docs/design_docs
+	url = ssh://gerrit-ai.sophgo.vip:29418/AIALG/design_docs.git
+	branch = master

@@ -15,6 +15,7 @@ int get_model_info(char *model_path, TDLModel *model_index) {
   } else if (strstr(model_path, "cls_rgbliveness") != NULL) {
     *model_index = TDL_MODEL_CLS_RGBLIVENESS;
   } else if (strstr(model_path, "cls_sound_dakaiqianlu") != NULL ||
+             strstr(model_path, "cls_sound_hiciwa") != NULL ||
              strstr(model_path, "cls_sound_nihaoshiyun") != NULL ||
              strstr(model_path, "cls_sound_xiaoaixiaoai") != NULL) {
     *model_index = TDL_MODEL_CLS_SOUND_COMMAND;
@@ -55,6 +56,7 @@ void print_usage(const char *prog_name) {
   printf("  -r, --sample-rate    Sample rate in Hz (bin mode)\n");
   printf("  -s, --seconds        Duration in seconds (bin mode)\n");
   printf("  -c, --count          Data count (bin mode)\n");
+  printf("  -j, --json_config    Path to model_factory.json\n");
   printf("  -h, --help           Display this help message\n");
 }
 
@@ -65,6 +67,7 @@ int main(int argc, char *argv[]) {
   char *sample_rate = NULL;
   char *seconds = NULL;
   char *data_count = NULL;
+  char *json_config = NULL;
 
   struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
                                   {"input", required_argument, 0, 'i'},
@@ -72,12 +75,13 @@ int main(int argc, char *argv[]) {
                                   {"sample-rate", required_argument, 0, 'r'},
                                   {"seconds", required_argument, 0, 's'},
                                   {"count", required_argument, 0, 'c'},
+                                  {"json_config", required_argument, 0, 'j'},
                                   {"help", no_argument, 0, 'h'},
                                   {0, 0, 0, 0}};
 
   int opt;
   int option_index = 0;
-  while ((opt = getopt_long(argc, argv, "m:i:b:r:s:c:h", long_options,
+  while ((opt = getopt_long(argc, argv, "m:i:b:r:s:c:j:h", long_options,
                             &option_index)) != -1) {
     switch (opt) {
       case 'm':
@@ -97,6 +101,9 @@ int main(int argc, char *argv[]) {
         break;
       case 'c':
         data_count = optarg;
+        break;
+      case 'j':
+        json_config = optarg;
         break;
       case 'h':
         print_usage(argv[0]);
@@ -144,7 +151,7 @@ int main(int argc, char *argv[]) {
 
   TDLHandle tdl_handle = TDL_CreateHandle(0);
 
-  ret = TDL_OpenModel(tdl_handle, model_id, model_path, NULL, 0);
+  ret = TDL_OpenModel(tdl_handle, model_id, model_path, json_config, 0);
   if (ret != 0) {
     printf("open model failed with %#x!\n", ret);
     goto exit0;
