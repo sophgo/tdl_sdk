@@ -199,7 +199,7 @@
       "std":[1.0,1.0,1.0]
     },
     "CLS_SOUND_BABAY_CRY":{
-      "_comment":"output 0:background or 1:cry,single channel",
+      "_comment":"output 0:background or 1:cry,single channel, 16k",
       "types":["background","cry"],
       "file_name":"cls_sound_babay_cry_188_40_INT8",
       "rgb_order":"gray"
@@ -229,7 +229,7 @@
       "fix":1
     }, 
     "CLS_SOUND_COMMAND":{
-      "_comment":"single channel,TODO:add types",
+      "_comment":"single channel,TODO:add types, for 8k/16k common order or 8k baby cry",
       "file_name":"cls_sound_hiciwa_126_40_INT8",
       "rgb_order":"gray",
       "hop_len":128,

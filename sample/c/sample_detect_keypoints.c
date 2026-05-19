@@ -201,6 +201,22 @@ int main(int argc, char *argv[]) {
           point[j].y = obj_meta.info[i].landmark_properity[j].y;
         }
       }
+
+      // save keypoints, for the input of sample_classification
+      // cls_keypoint_hand_gesture
+
+      // char kp_bin_file[256] = "";
+      // snprintf(kp_bin_file, sizeof(kp_bin_file), "%s_%d_keypoints.bin",
+      // basename, i); FILE *fp_bin = fopen(kp_bin_file, "wb"); if (fp_bin !=
+      // NULL) {
+      //   for (int j = 0; j < obj_meta.info[i].landmark_size; j++) {
+      //     float xy[2] = {point[j].x, point[j].y};
+      //     fwrite(xy, sizeof(float), 2, fp_bin);
+      //   }
+      //   fclose(fp_bin);
+      //   printf("saved keypoints to %s\n", kp_bin_file);
+      // }
+
       if (output_image2 != NULL) {
         if (i == 0) {
           VisualizeRectangleFromFile(boxes, obj_meta.size, input_image,

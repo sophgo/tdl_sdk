@@ -17,7 +17,7 @@
           "min_snapshot_size": 40,
           "crop_size_min": 128,
           "crop_size_max": 256,
-          "snapshot_quality_threshold": 0,
+          "snapshot_quality_threshold": 0.45,
           "crop_square": true,
 
           "encoder_mode": 1,

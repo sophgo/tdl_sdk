@@ -23,6 +23,7 @@
 #define VI_WIDTH 960
 #define VI_HEIGHT 540
 #define FEATURE_SIZE 256
+#define APP_FRAME_BUFFER_SIZE 10
 
 static volatile bool to_exit = false;
 static ImageQueue image_queue;
@@ -76,7 +77,15 @@ void *send_frame_thread(void *args) {
 
   uint64_t *channel_frame_id = malloc(pstArgs->channel_size * sizeof(uint64_t));
   int ret = 0;
-  memset(channel_frame_id, 0, pstArgs->channel_size * sizeof(uint64_t));
+  if (pstArgs->channel_size > 0 && channel_frame_id == NULL) {
+    printf("malloc channel_frame_id failed\n");
+    to_exit = true;
+    ExitQueue(&image_queue);
+    return NULL;
+  }
+  if (channel_frame_id && pstArgs->channel_size > 0) {
+    memset(channel_frame_id, 0, pstArgs->channel_size * sizeof(uint64_t));
+  }
 
   while (to_exit == false) {
     // 检查键盘输入
@@ -87,18 +96,33 @@ void *send_frame_thread(void *args) {
     int key_pressed = select(STDIN_FILENO + 1, &rfds, NULL, NULL, &tv);
     if (key_pressed > 0 && FD_ISSET(STDIN_FILENO, &rfds)) {
       to_exit = true;
+      ExitQueue(&image_queue);
       break;  // 有键盘输入，退出循环
     }
 
     for (size_t i = 0; i < pstArgs->channel_size; i++) {
       TDLImage image = NULL;
 
-      image =
-          GetCameraFrame(pstArgs->tdl_handle,
-                         pstArgs->vi_chn);  // if channel_size > 1, image should
-                                            // be taken from different vi_chn
+      if (Image_GetQueueSize(&image_queue) == 0) {
+        image = GetCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+      } else {
+        usleep(10000);
+        continue;
+      }  // if channel_size > 1, image should
+         // be taken from different vi_chn
       if (image == NULL) {
         printf("GetCameraFrame falied\n");
+        continue;
+      }
+
+      channel_frame_id[i] += 1;
+
+      ret = TDL_APP_SetFrame(pstArgs->tdl_handle, pstArgs->channel_names[i],
+                             image, channel_frame_id[i], APP_FRAME_BUFFER_SIZE);
+      if (ret != 0) {
+        printf("TDL_APP_SetFrame failed with %d\n", ret);
+        ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+        TDL_DestroyImage(image);
         continue;
       }
 
@@ -109,18 +133,11 @@ void *send_frame_thread(void *args) {
         TDL_DestroyImage(image);
         continue;
       }
-      channel_frame_id[i] += 1;
-
-      ret = TDL_APP_SetFrame(pstArgs->tdl_handle, pstArgs->channel_names[i],
-                             image, channel_frame_id[i], 3);
-      if (ret != 0) {
-        printf("TDL_APP_SetFrame failed with %d\n", ret);
-        continue;
-      }
     }
   }
 
   free(channel_frame_id);
+  return NULL;
 }
 
 void *run_tdl_thread(void *args) {
@@ -165,13 +182,23 @@ void *run_tdl_thread(void *args) {
                                 &capture_info);
 
       if (ret == 1) {
+        usleep(1000);
         continue;
       } else if (ret == 2) {
         to_exit = true;
+        ExitQueue(&image_queue);
         break;
       } else if (ret != 0) {
         printf("TDL_APP_Capture failed with %#x!\n", ret);
-        goto exit0;
+        TDL_ReleaseCaptureInfo(&capture_info);
+        ReleaseCameraFrame(pstArgs->tdl_handle, pstArgs->vi_chn);
+        TDLImage img = Image_Dequeue(&image_queue);
+        if (img) {
+          TDL_DestroyImage(img);
+        }
+        to_exit = true;
+        ExitQueue(&image_queue);
+        return NULL;
       }
 
       if (frm_diff > 30) {
@@ -180,25 +207,29 @@ void *run_tdl_thread(void *args) {
       }
 
       for (uint32_t j = 0; j < capture_info.snapshot_size; j++) {
+        const char *emotion = "Unknown";
+        if (capture_info.snapshot_info[j].emotion >= 0 &&
+            capture_info.snapshot_info[j].emotion <
+                (int)(sizeof(emotionStr) / sizeof(emotionStr[0]))) {
+          emotion = emotionStr[capture_info.snapshot_info[j].emotion];
+        }
         printf("snapshot[%d]: male:%d,glass:%d,age:%d,emotion:%s\n", j,
                capture_info.snapshot_info[j].male,
                capture_info.snapshot_info[j].glass,
-               capture_info.snapshot_info[j].age,
-               emotionStr[capture_info.snapshot_info[j].emotion]);
+               capture_info.snapshot_info[j].age, emotion);
 
         if (capture_info.snapshot_info[j].object_image) {  // save snapshot
           char filename[512];
-          sprintf(filename,
-                  "%s/%" PRIu64 "_face_%" PRIu64
-                  "_qua_%.3f_male[%d]_glass[%d]_age[%d]_emotion[%s].jpg",
-                  pstArgs->output_dir,
-                  capture_info.snapshot_info[j].snapshot_frame_id,
-                  capture_info.snapshot_info[j].track_id,
-                  capture_info.snapshot_info[j].quality,
-                  capture_info.snapshot_info[j].male,
-                  capture_info.snapshot_info[j].glass,
-                  capture_info.snapshot_info[j].age,
-                  emotionStr[capture_info.snapshot_info[j].emotion]);
+          snprintf(filename, sizeof(filename),
+                   "%s/%" PRIu64 "_face_%" PRIu64
+                   "_qua_%.3f_male[%d]_glass[%d]_age[%d]_emotion[%s].jpg",
+                   pstArgs->output_dir ? pstArgs->output_dir : ".",
+                   capture_info.snapshot_info[j].snapshot_frame_id,
+                   capture_info.snapshot_info[j].track_id,
+                   capture_info.snapshot_info[j].quality,
+                   capture_info.snapshot_info[j].male,
+                   capture_info.snapshot_info[j].glass,
+                   capture_info.snapshot_info[j].age, emotion);
 
           ret = TDL_EncodeFrame(pstArgs->tdl_handle,
                                 capture_info.snapshot_info[j].object_image,
@@ -210,16 +241,16 @@ void *run_tdl_thread(void *args) {
 
           if (capture_info.snapshot_info[j]
                   .encoded_full_image) {  // save full image
-            sprintf(filename,
-                    "%s/%" PRIu64 "_face_%" PRIu64
-                    "_box[%.2f,%.2f,%.2f,%.2f]_full_image.jpg",
-                    pstArgs->output_dir,
-                    capture_info.snapshot_info[j].snapshot_frame_id,
-                    capture_info.snapshot_info[j].track_id,
-                    capture_info.snapshot_info[j].ori_box.x1,
-                    capture_info.snapshot_info[j].ori_box.y1,
-                    capture_info.snapshot_info[j].ori_box.x2,
-                    capture_info.snapshot_info[j].ori_box.y2);
+            snprintf(filename, sizeof(filename),
+                     "%s/%" PRIu64 "_face_%" PRIu64
+                     "_box[%.2f,%.2f,%.2f,%.2f]_full_image.jpg",
+                     pstArgs->output_dir ? pstArgs->output_dir : ".",
+                     capture_info.snapshot_info[j].snapshot_frame_id,
+                     capture_info.snapshot_info[j].track_id,
+                     capture_info.snapshot_info[j].ori_box.x1,
+                     capture_info.snapshot_info[j].ori_box.y1,
+                     capture_info.snapshot_info[j].ori_box.x2,
+                     capture_info.snapshot_info[j].ori_box.y2);
 
             FILE *f;
             f = fopen(filename, "wb");
@@ -228,12 +259,12 @@ void *run_tdl_thread(void *args) {
             } else {
               fwrite(capture_info.snapshot_info[j].encoded_full_image, 1,
                      capture_info.snapshot_info[j].full_length, f);
+              fclose(f);
             }
-            fclose(f);
           }
         }
 
-        printf("to do TDL_CaculateSimilarity\n");
+        printf("to do TDL_CaculateSimilarity: \n");
 
         float max_similarity = 0;
         float similarity = 0;
@@ -248,8 +279,9 @@ void *run_tdl_thread(void *args) {
         }
 
         if (max_similarity > 0.4) {
-          printf("match feature %d.bin, track id: %ld, similarity: %.2f\n",
-                 top_index, capture_info.snapshot_info[i].track_id,
+          printf("match feature %u.bin, track id: %" PRIu64
+                 ", similarity: %.2f\n",
+                 (unsigned)top_index, capture_info.snapshot_info[j].track_id,
                  max_similarity);
         }
       }
@@ -317,10 +349,6 @@ void *run_tdl_thread(void *args) {
   }
 
   return NULL;
-
-exit0:
-  DestoryCamera(pstArgs->tdl_handle);
-  TDL_DestroyHandle(pstArgs->tdl_handle);
 }
 
 int main(int argc, char *argv[]) {
@@ -329,12 +357,14 @@ int main(int argc, char *argv[]) {
   char *output_dir = NULL;
   char *vi_chn = NULL;
   int chn = 0;
+  bool termios_changed = false;
+  TDLHandle tdl_handle = NULL;
 
   struct option long_options[] = {
       {"config_file", required_argument, 0, 'c'},
       {"gallery_dir", required_argument, 0, 'g'},
       {"output_dir", required_argument, 0, 'o'},
-      {"vi_chn", no_argument, 0, 'v'},
+      {"vi_chn", required_argument, 0, 'v'},
       {"help", no_argument, 0, 'h'},
   };
 
@@ -365,9 +395,20 @@ int main(int argc, char *argv[]) {
         return -1;
     }
   }
+  int ret = 0;
 
   if (!config_file) {
     fprintf(stderr, "Error: config_file are required\n");
+    print_usage(argv[0]);
+    return -1;
+  }
+  if (!gallery_dir) {
+    fprintf(stderr, "Error: gallery_dir are required\n");
+    print_usage(argv[0]);
+    return -1;
+  }
+  if (!output_dir) {
+    fprintf(stderr, "Error: output_dir are required\n");
     print_usage(argv[0]);
     return -1;
   }
@@ -385,15 +426,19 @@ int main(int argc, char *argv[]) {
 
   InitQueue(&image_queue);
 
+  tdl_handle = TDL_CreateHandle(0);
+  if (tdl_handle == NULL) {
+    ret = -1;
+    printf("TDL_CreateHandle failed\n");
+    goto exit0;
+  }
+
   TDLFeatureInfo gallery_feature = {0};
-  int ret = TDL_GetGalleryFeature(gallery_dir, &gallery_feature, FEATURE_SIZE);
+  ret = TDL_GetGalleryFeature(gallery_dir, &gallery_feature, FEATURE_SIZE);
   if (ret != 0) {
     printf("get gallery feature from %s failed with %#x!\n", gallery_dir, ret);
     goto exit0;
   }
-
-  TDLImage image = NULL;
-  TDLHandle tdl_handle = TDL_CreateHandle(0);
 
   char **channel_names = NULL;
   uint8_t channel_size = 0;
@@ -401,7 +446,7 @@ int main(int argc, char *argv[]) {
   ret = InitCamera(tdl_handle, VI_WIDTH, VI_HEIGHT, IMAGE_YUV420SP_UV, 3);
   if (ret != 0) {
     printf("InitCamera %#x!\n", ret);
-    return ret;
+    goto exit0;
   }
 
   ret = TDL_APP_Init(tdl_handle, "face_pet_capture", config_file,
@@ -417,10 +462,13 @@ int main(int argc, char *argv[]) {
   newt = oldt;
   newt.c_lflag &= ~(ICANON | ECHO);
   tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+  termios_changed = true;
 
   printf("按任意键退出...\n");
 
   pthread_t stFrameThread, stTDLThread;
+  bool frame_thread_created = false;
+  bool tdl_thread_created = false;
 
   SEND_FRAME_THREAD_ARG_S frame_args = {.tdl_handle = tdl_handle,
                                         .vi_chn = chn,
@@ -434,14 +482,32 @@ int main(int argc, char *argv[]) {
                                    .gallery_feature = &gallery_feature,
                                    .output_dir = output_dir};
 
-  pthread_create(&stFrameThread, NULL, send_frame_thread, &frame_args);
-  pthread_create(&stTDLThread, NULL, run_tdl_thread, &tdl_args);
+  ret = pthread_create(&stFrameThread, NULL, send_frame_thread, &frame_args);
+  if (ret != 0) {
+    printf("pthread_create send_frame_thread failed with %d\n", ret);
+    goto exit2;
+  }
+  frame_thread_created = true;
 
-  pthread_join(stFrameThread, NULL);
-  pthread_join(stTDLThread, NULL);
+  ret = pthread_create(&stTDLThread, NULL, run_tdl_thread, &tdl_args);
+  if (ret != 0) {
+    printf("pthread_create run_tdl_thread failed with %d\n", ret);
+    to_exit = true;
+    ExitQueue(&image_queue);
+    goto exit2;
+  }
+  tdl_thread_created = true;
 
-  // 恢复终端设置
-  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+exit2:
+  if (frame_thread_created) {
+    pthread_join(stFrameThread, NULL);
+  }
+  if (tdl_thread_created) {
+    pthread_join(stTDLThread, NULL);
+  }
+  if (termios_changed) {
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+  }
 
 exit1:
   for (int i = 0; i < channel_size; i++) {
@@ -454,8 +520,10 @@ exit0:
   for (int i = 0; i < gallery_feature.size; i++) {
     TDL_ReleaseFeatureMeta(&gallery_feature.feature[i]);
   }
-  DestoryCamera(tdl_handle);
-  TDL_DestroyHandle(tdl_handle);
+  if (tdl_handle) {
+    DestoryCamera(tdl_handle);
+    TDL_DestroyHandle(tdl_handle);
+  }
 
   return ret;
 }

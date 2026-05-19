@@ -73,6 +73,14 @@ TDLImage Image_Dequeue(ImageQueue *q);
  */
 int Image_Enqueue(ImageQueue *q, TDLImage img);
 
+/**
+ * @brief 获取图像队列中当前的图像数量
+ *
+ * @param q 图像队列
+ * @return 返回队列中的图像数量
+ */
+int Image_GetQueueSize(ImageQueue *q);
+
 #if !defined(__BM168X__) && !defined(__CMODEL_CV181X__)
 /**
  * @brief 初始化Camera，板端的/mnt/data路径下需要有sensor_cfg.ini
