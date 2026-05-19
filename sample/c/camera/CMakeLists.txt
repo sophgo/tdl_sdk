@@ -34,7 +34,8 @@ else()
 endif()
 
 set(app_samples sample_vi_consumer_counting sample_vi_cross_detection sample_vi_face_pet_cap sample_vi_face_cap
-    sample_vi_fall_detection sample_vi_human_pose_smooth sample_vi_identity_recognition)
+    sample_vi_fall_detection sample_vi_human_pose_smooth sample_vi_identity_recognition sample_vi_media_analysis
+    sample_vi_face_pet_cap_single_thread)
 
 foreach(fname ${CAMERA_SRC_FILES})
     get_filename_component(name ${fname} NAME_WE)

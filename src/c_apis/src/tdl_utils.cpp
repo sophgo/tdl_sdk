@@ -361,7 +361,7 @@ int32_t TDL_ReleaseCaptureInfo(TDLCaptureInfo *capture_info) {
     if (capture_info->snapshot_info[i].object_image) {
       TDL_DestroyImage(capture_info->snapshot_info[i].object_image);
 
-      if (!capture_info->snapshot_info[i].encoded_full_image) {
+      if (capture_info->snapshot_info[i].encoded_full_image) {
         free(capture_info->snapshot_info[i].encoded_full_image);
         capture_info->snapshot_info[i].encoded_full_image = NULL;
         capture_info->snapshot_info[i].full_length = 0;

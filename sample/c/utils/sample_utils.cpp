@@ -82,6 +82,13 @@ int Image_Enqueue(ImageQueue *q, TDLImage img) {
   return ret;
 }
 
+int Image_GetQueueSize(ImageQueue *q) {
+  pthread_mutex_lock(&q->mutex);
+  int size = q->count;
+  pthread_mutex_unlock(&q->mutex);
+  return size;
+}
+
 TDLImage Image_Dequeue(ImageQueue *q) {
   TDLImage img = NULL;
   pthread_mutex_lock(&q->mutex);
