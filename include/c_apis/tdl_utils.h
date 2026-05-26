@@ -82,6 +82,11 @@ int32_t TDL_EncodeFrame(TDLHandle handle, TDLImage image, const char *img_path,
 int32_t TDL_EncodeFrameRaw(TDLHandle handle, TDLImage image, int vechn,
                            uint8_t **encoded_data, uint32_t *encoded_size);
 
+int32_t TDL_EncodeH264FrameRaw(TDLHandle handle, TDLImage image, int vechn,
+                               int width, int height, int fps, int bitrate,
+                               int gop, uint8_t **encoded_data,
+                               uint32_t *encoded_size);
+
 int32_t TDL_SaveTDLImage(TDLImage image, const char *img_save_path);
 
 int32_t TDL_ClipPostprocess(float *text_features, int text_rows,

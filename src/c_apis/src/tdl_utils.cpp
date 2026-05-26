@@ -7,6 +7,7 @@
 #include <cstring>
 #include <fstream>
 #include "encoder/image_encoder/image_encoder.hpp"
+#include "encoder/vi_encoder/vi_encoder.hpp"
 #include "tdl_sdk.h"
 #include "tdl_type_internal.hpp"
 #include "utils/tdl_log.hpp"
@@ -573,6 +574,53 @@ int32_t TDL_EncodeFrameRaw(TDLHandle handle, TDLImage image, int vechn,
   }
 
   // 分配内存并复制数据
+  *encoded_data = (uint8_t *)malloc(encoded_data_vec.size());
+  if (*encoded_data == nullptr) {
+    std::cerr << "Memory allocation failed.\n";
+    return -1;
+  }
+
+  memcpy(*encoded_data, encoded_data_vec.data(), encoded_data_vec.size());
+  *encoded_size = encoded_data_vec.size();
+
+  return 0;
+}
+
+int32_t TDL_EncodeH264FrameRaw(TDLHandle handle, TDLImage image, int vechn,
+                               int width, int height, int fps, int bitrate,
+                               int gop, uint8_t **encoded_data,
+                               uint32_t *encoded_size) {
+  TDLContext *context = (TDLContext *)handle;
+
+  if (width <= 0 || height <= 0) {
+    TDLImageContext *image_context = (TDLImageContext *)image;
+    if (image_context && image_context->image) {
+      width = image_context->image->getWidth();
+      height = image_context->image->getHeight();
+    }
+  }
+  if (fps <= 0) fps = 30;
+  if (bitrate <= 0) bitrate = 4096;
+  if (gop <= 0) gop = 60;
+
+  if (!context->vi_encoder || context->vi_encoder->getEncoderMode() != vechn) {
+    LOGI("ViEncoder init: ch=%d %dx%d@%dfps %dkbps gop=%d\n", vechn, width,
+         height, fps, bitrate, gop);
+    context->vi_encoder =
+        std::make_shared<ViEncoder>(vechn, width, height, fps, bitrate, gop);
+    context->vi_encoder->setEncoderMode(vechn);
+  }
+
+  std::vector<uint8_t> encoded_data_vec;
+  TDLImageContext *image_context = (TDLImageContext *)image;
+
+  bool ret =
+      context->vi_encoder->encodeFrame(image_context->image, encoded_data_vec);
+  if (!ret) {
+    std::cerr << "H264 encoding failed.\n";
+    return -1;
+  }
+
   *encoded_data = (uint8_t *)malloc(encoded_data_vec.size());
   if (*encoded_data == nullptr) {
     std::cerr << "Memory allocation failed.\n";
