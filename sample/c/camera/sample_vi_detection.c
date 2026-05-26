@@ -12,6 +12,10 @@
 #include "sample_utils.h"
 #include "tdl_sdk.h"
 
+#ifndef __CV184X__
+#define ENABLE_RTSP
+#endif
+
 #define WIDTH 1280
 #define HEIGHT 720
 
@@ -20,16 +24,20 @@ static ImageQueue image_queue;
 MUTEXAUTOLOCK_INIT(ResultMutex);
 
 // --- Threading Structures ---
+#ifdef ENABLE_RTSP
 RtspContext rtsp_context = {.chn = 0,
                             .pay_load_type = PT_H264,
                             .frame_width = WIDTH,
                             .frame_height = HEIGHT};
+#endif
 
 typedef struct {
   TDLHandle tdl_handle;
   int vi_chn;
   TDLModel model_id;
+#ifdef ENABLE_RTSP
   RtspContext *rtsp_context;
+#endif
 } ProcessArgs;
 
 int get_model_info(char *model_path, TDLModel *model_index) {
@@ -167,11 +175,13 @@ void *process_thread(void *arg) {
     }
     DrawObjRect(&obj_meta, frame, true, brush);
 
+#ifdef ENABLE_RTSP
     // Send RTSP Frame
     ret = SendFrameRTSP(frame, args->rtsp_context);
     if (ret != 0) {
       fprintf(stderr, "Error: SendFrameRTSP failed!\n");
     }
+#endif
 
     // Cleanup
     TDL_ReleaseObjectMeta(&obj_meta);
@@ -184,7 +194,9 @@ void *process_thread(void *arg) {
 int main(int argc, char *argv[]) {
   int ret = 0;
   char *model_path = NULL;
+#ifdef ENABLE_RTSP
   int rtsp_chn = 0;
+#endif
   int vi_chn = 0;
 
   struct option long_options[] = {{"model_path", required_argument, 0, 'm'},
@@ -218,7 +230,9 @@ int main(int argc, char *argv[]) {
   printf("Running with:\n");
   printf("  Model path:    %s\n", model_path);
   printf("  vi_chn:        %d\n", vi_chn);
+#ifdef ENABLE_RTSP
   printf("  rtsp_chn:      %d\n", rtsp_chn);
+#endif
 
   TDLModel model_id;
   TDLHandle tdl_handle = TDL_CreateHandle(0);
@@ -247,7 +261,9 @@ int main(int argc, char *argv[]) {
   process_args.tdl_handle = tdl_handle;
   process_args.vi_chn = vi_chn;
   process_args.model_id = model_id;
+#ifdef ENABLE_RTSP
   process_args.rtsp_context = &rtsp_context;
+#endif
 
   InitQueue(&image_queue);
 
