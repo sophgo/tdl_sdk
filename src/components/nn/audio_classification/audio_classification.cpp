@@ -51,6 +51,10 @@ int32_t AudioClassification::onModelOpened() {
   if (image_width == 251 && hop_len_ == 128) {  // sr16k * 2s, hop_len = 128
     sample_rate_ = 16000;
     time_len_ = 2;
+  } else if (image_width == 188 &&
+             hop_len_ == 128) {  // sr8k * 3s, hop_len = 128
+    sample_rate_ = 8000;
+    time_len_ = 3;
   } else if (image_width == 63 || hop_len_ == 128) {  // sr8k * 2s
     sample_rate_ = 8000;
     time_len_ = 2;
@@ -64,6 +68,8 @@ int32_t AudioClassification::onModelOpened() {
     sample_rate_ = 16000;
     time_len_ = 3;
   }
+
+  LOGI("sample_rate:%d,time_len:%d\n", sample_rate_, time_len_);
 
   fmax_ = sample_rate_ / 2;
   int num_frames = time_len_ * sample_rate_;
