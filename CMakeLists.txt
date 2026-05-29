@@ -246,7 +246,7 @@ set(GENERATED_CMAKE_CONFIG "${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_config.cmake
 
 # 调用 Python 脚本生成配置
 execute_process(
-    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/parse_build_config.py"
+    COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/parse_build_config.py"
         "${BUILD_CONFIG_PATH}"
         "${GENERATED_CMAKE_CONFIG}"
     RESULT_VARIABLE PARSE_RESULT
