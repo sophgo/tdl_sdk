@@ -307,6 +307,56 @@ if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X" AND NOT "${CVI_PLATFORM}" STRE
   # ===============zlib===============
 endif()
 
+# ===============SQLite3===============
+# CMODEL platforms skip SQLite3 (no FTP access to download source)
+if(NOT "${CVI_PLATFORM}" STREQUAL "CMODEL_CV181X")
+  # SQLite amalgamation is pure source code (not architecture-specific).
+  # Always prefer the local file, only fall back to FTP for CI environments.
+  if(EXISTS "${OSS_TARBALL_PATH}/sqlite.tar.gz")
+    set(SQLITE3_URL ${OSS_TARBALL_PATH}/sqlite.tar.gz)
+  elseif(EXISTS "${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/sqlite.tar.gz")
+    set(SQLITE3_URL ${TOP_DIR}/oss/oss_release_tarball/${ARCHITECTURE}/sqlite.tar.gz)
+  elseif(IS_LOCAL)
+    set(SQLITE3_URL ${3RD_PARTY_URL_PREFIX}/${ARCHITECTURE}/sqlite.tar.gz)
+  else()
+    set(SQLITE3_URL ${TOP_DIR}/tdl_sdk/dependency/thirdparty/sqlite.tar.gz)
+  endif()
+
+  if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/sqlite3-src")
+    FetchContent_Declare(
+      sqlite3
+      URL ${SQLITE3_URL}
+      SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/sqlite3-src
+    )
+    FetchContent_Populate(sqlite3)
+    message("SQLite extracted to ${BUILD_DOWNLOAD_DIR}/sqlite3-src")
+  endif()
+
+  add_library(sqlite3 STATIC
+      ${BUILD_DOWNLOAD_DIR}/sqlite3-src/sqlite3.c
+  )
+  target_include_directories(sqlite3 PUBLIC ${BUILD_DOWNLOAD_DIR}/sqlite3-src)
+  target_compile_definitions(sqlite3 PRIVATE
+      SQLITE_THREADSAFE=1
+      SQLITE_DEFAULT_MEMSTATUS=0
+      SQLITE_OMIT_DEPRECATED
+      SQLITE_OMIT_PROGRESS_CALLBACK
+      SQLITE_DEFAULT_WAL_SYNCHRONOUS=1
+      SQLITE_USE_ALLOCA
+      SQLITE_ENABLE_FTS5
+      SQLITE_DQS=0
+  )
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(sqlite3 PRIVATE -fPIC -w)
+  endif()
+  target_link_libraries(sqlite3 PUBLIC ${CMAKE_DL_LIBS})
+  set(SQLITE3_INCLUDES ${BUILD_DOWNLOAD_DIR}/sqlite3-src)
+  include_directories(${SQLITE3_INCLUDES})
+  set(SQLITE3_LIBRARY sqlite3)
+  set(SQLITE3_LIBRARY_STATIC sqlite3)
+endif()
+# ===============SQLite3===============
+
 if(${CVI_PLATFORM} STREQUAL "BM1688")
   return()
 endif()
@@ -331,4 +381,5 @@ if(NOT IS_DIRECTORY "${BUILD_DOWNLOAD_DIR}/stb-src")
 endif()
 set(stb_SOURCE_DIR ${BUILD_DOWNLOAD_DIR}/stb-src)
 include_directories(${stb_SOURCE_DIR})
+
 

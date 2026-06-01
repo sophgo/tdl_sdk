@@ -82,6 +82,22 @@ int32_t TDL_MediaAnalysisServer_SendImage(const uint8_t *image_data,
 int32_t TDL_MediaAnalysisServer_AddFaceInfo(int registered_id,
                                             int face_track_id);
 
+/**
+ * @brief 提交行为分析视频到cloud_client进行LLM分析
+ *
+ * @param video_path 视频文件路径 (.h264)
+ * @param person_name 人员名称
+ * @param person_id 人员ID
+ * @param appearance_id appearance ID
+ * @param duration_sec 视频片段时长(秒)
+ * @return 0成功，非0失败
+ */
+int32_t TDL_MediaAnalysisServer_SubmitBehaviorVideo(const char *video_path,
+                                                    const char *person_name,
+                                                    int person_id,
+                                                    uint64_t appearance_id,
+                                                    uint32_t duration_sec);
+
 #endif
 
 #ifdef __cplusplus

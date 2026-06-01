@@ -13,6 +13,7 @@
 
 #include "media_analysis/media_analysis_event_manager.hpp"
 #include "media_analysis/media_analysis_server.hpp"
+#include "media_analysis/tasks/behavior_analysis/behavior_analysis_task.hpp"
 #include "media_analysis/tasks/face/face_matching_task.hpp"
 
 TDLHandleEx TDL_CreateHandleEx(const int32_t tpu_device_id) {
@@ -125,6 +126,35 @@ int32_t TDL_MediaAnalysisServer_AddFaceInfo(int registered_id,
     return -1;
   }
   face_task->add_face_info(registered_id, face_track_id);
+  return 0;
+}
+
+int32_t TDL_MediaAnalysisServer_SubmitBehaviorVideo(const char *video_path,
+                                                    const char *person_name,
+                                                    int person_id,
+                                                    uint64_t appearance_id,
+                                                    uint32_t duration_sec) {
+  if (video_path == nullptr) {
+    LOGE("video_path is null");
+    return -1;
+  }
+  auto task =
+      MediaAnalysisEventManager::GetInstance()->GetTask("behavior_analysis");
+  if (!task) {
+    LOGE("behavior_analysis task not found");
+    return -1;
+  }
+  auto behavior_task = std::dynamic_pointer_cast<BehaviorAnalysisTask>(task);
+  if (!behavior_task) {
+    LOGE("behavior_analysis task cast failed");
+    return -1;
+  }
+  std::string name_str = (person_name != nullptr) ? person_name : "";
+  std::string person_id_str = (person_id > 0) ? std::to_string(person_id) : "";
+  std::string appearance_id_str =
+      (appearance_id > 0) ? std::to_string(appearance_id) : "";
+  behavior_task->submitBehaviorVideo(video_path, name_str, person_id_str,
+                                     appearance_id_str, duration_sec);
   return 0;
 }
 #endif

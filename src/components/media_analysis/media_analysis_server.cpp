@@ -5,12 +5,17 @@
 #include <json.hpp>
 
 // Include task headers
+#include "tasks/behavior_analysis/behavior_analysis_task.hpp"
 #include "tasks/face/face_matching_task.hpp"
+#include "tasks/face/face_registration_task.hpp"
 #include "tasks/identity/identity_browse_task.hpp"
 #include "tasks/image_analysis/image_analysis_task.hpp"
 #include "tasks/image_text/image_text_task.hpp"
+#include "tasks/reports/reports_task.hpp"
+#include "tasks/statistics/statistics_task.hpp"
 
 #include "components/media_analysis/media_analysis_event_manager.hpp"
+#include "smart_home_db.hpp"
 
 using json = nlohmann::json;
 
@@ -88,63 +93,259 @@ static struct lws_protocols protocols[] = {
 int MediaAnalysisServer::callback_http(struct lws* wsi,
                                        enum lws_callback_reasons reason,
                                        void* user, void* in, size_t len) {
-  if (reason == LWS_CALLBACK_HTTP) {
-    char* uri = (char*)in;
-    std::string uri_str(uri);
-    std::cout << "HTTP Request: " << uri_str << std::endl;
+  MediaAnalysisServer* server = MediaAnalysisServer::GetInstance();
 
-    if (uri_str.find("/api/image_proxy") == 0) {
-      std::string path_param = "";
-      char buf[1024];
-      const char* val = lws_get_urlarg_by_name(wsi, "path=", buf, sizeof(buf));
-      if (val) {
-        path_param = val;
-        // Decode URL encoding (minimal)
-        std::string decoded = "";
-        for (size_t i = 0; i < path_param.length(); ++i) {
-          if (path_param[i] == '%' && i + 2 < path_param.length()) {
-            int value = 0;
-            std::stringstream ss;
-            ss << std::hex << path_param.substr(i + 1, 2);
-            ss >> value;
-            decoded += (char)value;
-            i += 2;
-          } else if (path_param[i] == '+') {
-            decoded += ' ';
-          } else {
-            decoded += path_param[i];
+  switch (reason) {
+    case LWS_CALLBACK_HTTP: {
+      char* uri = (char*)in;
+      std::string uri_str(uri);
+      std::cout << "HTTP Request: " << uri_str << std::endl;
+
+      if (uri_str.find("/api/image_proxy") == 0) {
+        std::string path_param = "";
+        char buf[1024];
+        const char* val =
+            lws_get_urlarg_by_name(wsi, "path=", buf, sizeof(buf));
+        if (val) {
+          path_param = val;
+          // Decode URL encoding (minimal)
+          std::string decoded = "";
+          for (size_t i = 0; i < path_param.length(); ++i) {
+            if (path_param[i] == '%' && i + 2 < path_param.length()) {
+              int value = 0;
+              std::stringstream ss;
+              ss << std::hex << path_param.substr(i + 1, 2);
+              ss >> value;
+              decoded += (char)value;
+              i += 2;
+            } else if (path_param[i] == '+') {
+              decoded += ' ';
+            } else {
+              decoded += path_param[i];
+            }
           }
+          path_param = decoded;
         }
-        path_param = decoded;
+
+        if (path_param.empty()) {
+          lws_return_http_status(wsi, HTTP_STATUS_BAD_REQUEST, NULL);
+          return -1;
+        }
+
+        // Check file exists
+        struct stat st;
+        if (stat(path_param.c_str(), &st) != 0 || !S_ISREG(st.st_mode)) {
+          lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL);
+          return -1;
+        }
+
+        // Serve file
+        const char* cors_header = "Access-Control-Allow-Origin: *\r\n";
+        if (lws_serve_http_file(wsi, path_param.c_str(), "image/jpeg",
+                                cors_header, strlen(cors_header)) < 0) {
+          return -1;
+        }
+        return 0;
       }
 
-      if (path_param.empty()) {
-        lws_return_http_status(wsi, HTTP_STATUS_BAD_REQUEST, NULL);
-        return -1;
+      if (uri_str.find("/api/video_proxy") == 0) {
+        std::string path_param = "";
+        char buf[1024];
+        const char* val =
+            lws_get_urlarg_by_name(wsi, "path=", buf, sizeof(buf));
+        if (val) {
+          path_param = val;
+          std::string decoded = "";
+          for (size_t i = 0; i < path_param.length(); ++i) {
+            if (path_param[i] == '%' && i + 2 < path_param.length()) {
+              int value = 0;
+              std::stringstream ss;
+              ss << std::hex << path_param.substr(i + 1, 2);
+              ss >> value;
+              decoded += (char)value;
+              i += 2;
+            } else if (path_param[i] == '+') {
+              decoded += ' ';
+            } else {
+              decoded += path_param[i];
+            }
+          }
+          path_param = decoded;
+        }
+
+        if (path_param.empty()) {
+          lws_return_http_status(wsi, HTTP_STATUS_BAD_REQUEST, NULL);
+          return -1;
+        }
+
+        struct stat st;
+        if (stat(path_param.c_str(), &st) != 0 || !S_ISREG(st.st_mode)) {
+          lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL);
+          return -1;
+        }
+
+        const char* cors_header = "Access-Control-Allow-Origin: *\r\n";
+        if (lws_serve_http_file(wsi, path_param.c_str(),
+                                "application/octet-stream", cors_header,
+                                strlen(cors_header)) < 0) {
+          return -1;
+        }
+        return 0;
       }
 
-      // Check file exists
-      struct stat st;
-      if (stat(path_param.c_str(), &st) != 0 || !S_ISREG(st.st_mode)) {
-        lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL);
-        return -1;
+      if (uri_str.find("/api/register_face") == 0) {
+        // Check if CORS preflight (OPTIONS request)
+        int options_len = lws_hdr_total_length(wsi, WSI_TOKEN_OPTIONS_URI);
+        if (options_len > 0) {
+          // Respond with CORS headers
+          unsigned char buf[512];
+          unsigned char* p = buf;
+          p += snprintf((char*)p, sizeof(buf) - (p - buf),
+                        "HTTP/1.1 200 OK\r\n"
+                        "Access-Control-Allow-Origin: *\r\n"
+                        "Access-Control-Allow-Methods: POST, GET, OPTIONS\r\n"
+                        "Access-Control-Allow-Headers: Content-Type\r\n"
+                        "Content-Length: 0\r\n"
+                        "\r\n");
+          unsigned char* out_buf = (unsigned char*)malloc(LWS_PRE + (p - buf));
+          if (out_buf) {
+            memcpy(out_buf + LWS_PRE, buf, p - buf);
+            lws_write(wsi, out_buf + LWS_PRE, p - buf, LWS_WRITE_HTTP_HEADERS);
+            free(out_buf);
+          }
+          if (lws_http_transaction_completed(wsi)) return -1;
+          return 0;
+        }
+
+        // POST request: initialize body buffer
+        {
+          std::lock_guard<std::mutex> lock(server->http_mutex_);
+          server->http_post_bodies_[wsi] = "";
+        }
+        // Return 0 to continue receiving body
+        return 0;
       }
 
-      // Serve file
-      const char* cors_header = "Access-Control-Allow-Origin: *\r\n";
-      if (lws_serve_http_file(wsi, path_param.c_str(), "image/jpeg",
-                              cors_header, strlen(cors_header)) < 0) {
+      lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL);
+      return -1;
+    }
+
+    case LWS_CALLBACK_HTTP_BODY: {
+      if (!in || len == 0) break;
+      std::lock_guard<std::mutex> lock(server->http_mutex_);
+      auto it = server->http_post_bodies_.find(wsi);
+      if (it != server->http_post_bodies_.end()) {
+        it->second.append((char*)in, len);
+      }
+      break;
+    }
+
+    case LWS_CALLBACK_HTTP_BODY_COMPLETION: {
+      std::string body;
+      {
+        std::lock_guard<std::mutex> lock(server->http_mutex_);
+        auto it = server->http_post_bodies_.find(wsi);
+        if (it != server->http_post_bodies_.end()) {
+          body = std::move(it->second);
+          server->http_post_bodies_.erase(it);
+        }
+      }
+
+      if (!body.empty()) {
+        std::string response_json;
+        try {
+          json j = json::parse(body);
+          std::string image_b64 = j.value("image", "");
+          std::string name = j.value("name", "");
+          bool force = j.value("force", false);
+
+          if (server->face_registration_task_) {
+            json result = server->face_registration_task_->registerFace(
+                image_b64, name, force);
+            response_json = result.dump();
+          } else {
+            json err;
+            err["success"] = false;
+            err["error_code"] = "INTERNAL_ERROR";
+            err["error_message"] = "Face registration service not available";
+            response_json = err.dump();
+          }
+        } catch (const std::exception& e) {
+          json err;
+          err["success"] = false;
+          err["error_code"] = "INTERNAL_ERROR";
+          err["error_message"] = std::string("Invalid request: ") + e.what();
+          response_json = err.dump();
+        }
+
+        {
+          std::lock_guard<std::mutex> lock(server->http_mutex_);
+          server->http_post_responses_[wsi] = response_json;
+        }
+        lws_callback_on_writable(wsi);
+      }
+      break;
+    }
+
+    case LWS_CALLBACK_HTTP_WRITEABLE: {
+      std::string response_json;
+      {
+        std::lock_guard<std::mutex> lock(server->http_mutex_);
+        auto it = server->http_post_responses_.find(wsi);
+        if (it != server->http_post_responses_.end()) {
+          response_json = std::move(it->second);
+          server->http_post_responses_.erase(it);
+        }
+      }
+
+      if (!response_json.empty()) {
+        unsigned char header_buf[512];
+        unsigned char* p = header_buf;
+        unsigned char* end = header_buf + sizeof(header_buf);
+        if (lws_add_http_common_headers(wsi, HTTP_STATUS_OK, "application/json",
+                                        response_json.size(), &p, end) < 0) {
+          if (lws_http_transaction_completed(wsi)) return -1;
+          return 0;
+        }
+        int ret = lws_add_http_header_by_name(
+            wsi,
+            (unsigned char*)"Access-Control-Allow-Origin:", (unsigned char*)"*",
+            1, &p, end);
+        (void)ret;
+
+        int header_len = p - header_buf;
+        int total_len = header_len + response_json.size();
+        unsigned char* out_buf = (unsigned char*)malloc(LWS_PRE + total_len);
+        if (out_buf) {
+          memcpy(out_buf + LWS_PRE, header_buf, header_len);
+          memcpy(out_buf + LWS_PRE + header_len, response_json.c_str(),
+                 response_json.size());
+          lws_write(wsi, out_buf + LWS_PRE, total_len,
+                    LWS_WRITE_HTTP_HEADERS_CONTINUATION);
+          free(out_buf);
+        }
+
+        if (lws_http_transaction_completed(wsi)) return -1;
+      }
+      return 0;
+    }
+
+    case LWS_CALLBACK_HTTP_FILE_COMPLETION: {
+      if (lws_http_transaction_completed(wsi)) {
         return -1;
       }
       return 0;
     }
-    lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL);
-    return -1;
-  } else if (reason == LWS_CALLBACK_HTTP_FILE_COMPLETION) {
-    if (lws_http_transaction_completed(wsi)) {
-      return -1;
+
+    case LWS_CALLBACK_CLOSED_HTTP: {
+      std::lock_guard<std::mutex> lock(server->http_mutex_);
+      server->http_post_bodies_.erase(wsi);
+      server->http_post_responses_.erase(wsi);
+      break;
     }
-    return 0;
+
+    default:
+      break;
   }
   return 0;
 }
@@ -193,10 +394,6 @@ void MediaAnalysisServer::init() {
 void MediaAnalysisServer::stop() {
   is_running_ = false;
 
-  if (analysis_thread_.joinable()) {
-    analysis_thread_.join();
-  }
-
   if (service_thread_.joinable()) {
     service_thread_.join();
   }
@@ -229,6 +426,7 @@ void MediaAnalysisServer::parse_config(const std::string& config_path) {
     data_path_ = data_path;
     std::string model_dir = config.value("model_dir", "");
     if (model_dir.empty()) model_dir = config.value("model_dir_", "");
+    model_dir_ = model_dir;
 
     std::string txt_dir = config.value("txt_dir", "");
     if (txt_dir.empty()) txt_dir = config.value("txt_dir_", "");
@@ -239,6 +437,20 @@ void MediaAnalysisServer::parse_config(const std::string& config_path) {
       MediaAnalysisEventManager::GetInstance()->RegisterTask(face_task);
       std::cout << "Face Matching Task registered." << std::endl;
     }
+
+    // Register Face Registration Task
+    if (!data_path.empty() && !model_dir.empty()) {
+      face_registration_task_ =
+          std::make_shared<FaceRegistrationTask>(model_dir, data_path);
+      MediaAnalysisEventManager::GetInstance()->RegisterTask(
+          face_registration_task_);
+      std::cout << "Face Registration Task registered." << std::endl;
+    }
+
+    // Register Behavior Analysis Task
+    auto behavior_task = std::make_shared<BehaviorAnalysisTask>();
+    MediaAnalysisEventManager::GetInstance()->RegisterTask(behavior_task);
+    std::cout << "Behavior Analysis Task registered." << std::endl;
 
     // Register Image Text Task
     if (!data_path.empty() && !model_dir.empty() && !txt_dir.empty()) {
@@ -252,6 +464,26 @@ void MediaAnalysisServer::parse_config(const std::string& config_path) {
     auto analysis_task = std::make_shared<ImageAnalysisTask>(data_path);
     MediaAnalysisEventManager::GetInstance()->RegisterTask(analysis_task);
     std::cout << "Image Analysis Task registered." << std::endl;
+
+    // Initialize SmartHomeDB
+    if (!data_path.empty()) {
+      std::string db_path = data_path + "/smart_home.db";
+      if (SmartHomeDB::GetInstance()->init(db_path)) {
+        std::cout << "SmartHomeDB initialized at " << db_path << std::endl;
+
+        // Register Statistics Task (Feat-1)
+        auto stats_task = std::make_shared<StatisticsTask>();
+        MediaAnalysisEventManager::GetInstance()->RegisterTask(stats_task);
+        std::cout << "Statistics Task registered." << std::endl;
+
+        // Register Reports Task (Feat-11)
+        auto reports_task = std::make_shared<ReportsTask>();
+        MediaAnalysisEventManager::GetInstance()->RegisterTask(reports_task);
+        std::cout << "Reports Task registered." << std::endl;
+      } else {
+        std::cerr << "Failed to initialize SmartHomeDB" << std::endl;
+      }
+    }
 
   } catch (const std::exception& e) {
     std::cerr << "Config file parsing error: " << e.what() << std::endl;
@@ -334,11 +566,8 @@ int MediaAnalysisServer::callback_media_analysis(
             server->cloud_client_wsi_ = wsi;
             std::cout << "Cloud Client registered (type: " << type << ")"
                       << std::endl;
-            // Start cyclic task
-            if (!server->analysis_thread_.joinable()) {
-              server->analysis_thread_ = std::thread(
-                  &MediaAnalysisServer::image_analysis_loop, server);
-            }
+            // Image analysis loop disabled — replaced by event-driven
+            // BehaviorAnalysisTask
             return 0;
           }
         }
@@ -445,25 +674,6 @@ int MediaAnalysisServer::callback_media_analysis(
   }
 
   return 0;
-}
-
-void MediaAnalysisServer::image_analysis_loop() {
-  while (is_running_) {
-    // Check if cloud client is connected (loose check, safe enough for loop)
-    auto task_ptr =
-        MediaAnalysisEventManager::GetInstance()->GetImageAnalysisTask();
-    if (cloud_client_wsi_ && task_ptr) {
-      auto task = std::dynamic_pointer_cast<ImageAnalysisTask>(task_ptr);
-      if (task) {
-        json result = task->run_analysis_step();
-        if (!result.is_null() && !result.empty()) {
-          // LOGI("image_analysis_loop: result: %s", result.dump().c_str());
-          send_to_cloud_client(result.dump());
-        }
-      }
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(60));
-  }
 }
 
 void MediaAnalysisServer::send_image_to_web_client(

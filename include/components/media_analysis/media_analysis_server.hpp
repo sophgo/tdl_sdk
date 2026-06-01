@@ -13,6 +13,8 @@
 
 #include "media_analysis_task.hpp"
 
+class FaceRegistrationTask;
+
 class MediaAnalysisServer {
  public:
   static MediaAnalysisServer* GetInstance();
@@ -29,6 +31,13 @@ class MediaAnalysisServer {
                                 const std::string& metadata_json = "");
 
   std::string get_data_path() const { return data_path_; }
+  std::string get_model_dir() const { return model_dir_; }
+
+  // Send message to cloud client (exposed for BehaviorAnalysisTask)
+  void send_to_cloud_client(const std::string& msg);
+
+  // Send message to web client (exposed for task push events)
+  void send_to_web_client(const std::string& msg);
 
   // LWS Callback (must be public or static friend)
   static int callback_http(struct lws* wsi, enum lws_callback_reasons reason,
@@ -42,18 +51,12 @@ class MediaAnalysisServer {
   MediaAnalysisServer();
   ~MediaAnalysisServer();
 
-  void image_analysis_loop();
-
-  // Helper to queue message for sending
-  void send_to_web_client(const std::string& msg);
-  void send_to_cloud_client(const std::string& msg);
-
   struct lws_context* context_ = nullptr;
   int port_;
   std::thread service_thread_;
-  std::thread analysis_thread_;
   bool is_running_ = false;
   std::string data_path_;
+  std::string model_dir_;
 
   // Connections
   std::mutex conn_mutex_;
@@ -68,6 +71,14 @@ class MediaAnalysisServer {
   // Message buffers for fragmented WebSocket messages
   std::map<struct lws*, std::string> message_buffers_;
   std::mutex buffer_mutex_;
+
+  // HTTP POST body accumulation
+  std::map<struct lws*, std::string> http_post_bodies_;
+  std::map<struct lws*, std::string> http_post_responses_;
+  std::mutex http_mutex_;
+
+  // Face registration task
+  std::shared_ptr<FaceRegistrationTask> face_registration_task_;
 };
 
 #endif  // MEDIA_ANALYSIS_SERVER_HPP

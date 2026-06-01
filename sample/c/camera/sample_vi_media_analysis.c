@@ -30,6 +30,15 @@
 #define SIMILARITY_THRESHOLD 0.45f
 #define MAX_REGISTERED_FACES 256
 
+// H.264 behavior video recording
+#define BEHAVIOR_VIDEO_MAX_SEC 3
+#define BEHAVIOR_VIDEO_FPS 5
+#define BEHAVIOR_VIDEO_MAX_FRAMES (BEHAVIOR_VIDEO_FPS * BEHAVIOR_VIDEO_MAX_SEC)
+#define BEHAVIOR_VENC_CHN 1
+#define BEHAVIOR_FRAME_INTERVAL 5  // encode every 5th frame
+#define BEHAVIOR_TIMEOUT_FRAMES \
+  25  // ~1 second at 25fps, person disappeared timeout
+
 static const char *emotion_str[] = {"Anger",   "Disgust", "Fear",    "Happy",
                                     "Neutral", "Sad",     "Surprise"};
 
@@ -55,6 +64,26 @@ typedef struct {
   char data_dir[512];
   TDLFeatureInfo *gallery_feature;
 } RUN_TDL_THREAD_ARG_S;
+
+typedef struct {
+  bool is_recording;
+  int person_id;
+  uint64_t track_id;
+  int encoded_frames;
+  int skip_counter;
+  int person_lost_counter;
+  uint64_t appearance_id;
+  char file_path[512];
+  FILE *h264_file;
+} BehaviorRecorder;
+
+static BehaviorRecorder g_behavior_recorder = {.is_recording = false,
+                                               .encoded_frames = 0,
+                                               .skip_counter = 0,
+                                               .person_lost_counter = 0,
+                                               .appearance_id = 0,
+                                               .h264_file = NULL};
+static uint64_t g_appearance_id_counter = 0;
 
 static uint32_t get_time_in_ms() {
   struct timeval tv;
@@ -310,6 +339,124 @@ static int save_feature_bin(const char *path, const TDLFeature *feature) {
   fwrite(feat_int8, 1, FEATURE_SIZE, fp);
   fclose(fp);
   return 0;
+}
+
+// ---- Behavior Video Recording Helpers ----
+
+static void behavior_recorder_stop_and_submit(const char *data_dir);
+
+static void behavior_recorder_start(int person_id, uint64_t track_id,
+                                    const char *data_dir) {
+  BehaviorRecorder *rec = &g_behavior_recorder;
+  if (rec->is_recording) {
+    behavior_recorder_stop_and_submit(data_dir);
+  }
+
+  char behavior_video_dir[512];
+  snprintf(behavior_video_dir, sizeof(behavior_video_dir), "%s/behavior_video",
+           data_dir);
+  ensure_dir(behavior_video_dir);
+
+  uint64_t app_id = g_appearance_id_counter++;
+  time_t now = time(NULL);
+  struct tm *tm_info = localtime(&now);
+  char ts[32];
+  strftime(ts, sizeof(ts), "%Y%m%d_%H%M%S", tm_info);
+
+  snprintf(rec->file_path, sizeof(rec->file_path),
+           "%s/p_%d_%s_app_%03" PRIu64 ".h264", behavior_video_dir, person_id,
+           ts, app_id);
+
+  rec->h264_file = fopen(rec->file_path, "wb");
+  if (rec->h264_file == NULL) {
+    printf("BehaviorRecorder: failed to create file %s\n", rec->file_path);
+    return;
+  }
+
+  rec->is_recording = true;
+  rec->person_id = person_id;
+  rec->track_id = track_id;
+  rec->encoded_frames = 0;
+  rec->skip_counter = 0;
+  rec->person_lost_counter = 0;
+  rec->appearance_id = app_id;
+
+  printf("BehaviorRecorder: started recording person_id=%d track_id=%" PRIu64
+         " → %s\n",
+         person_id, track_id, rec->file_path);
+}
+
+static void behavior_recorder_stop_and_submit(const char *data_dir) {
+  BehaviorRecorder *rec = &g_behavior_recorder;
+  if (!rec->is_recording) {
+    return;
+  }
+
+  if (rec->h264_file) {
+    fclose(rec->h264_file);
+    rec->h264_file = NULL;
+  }
+
+  printf("BehaviorRecorder: stopped, encoded_frames=%d, file=%s\n",
+         rec->encoded_frames, rec->file_path);
+
+  // 如果录制帧数太少（< 3帧），丢弃（路过式出现，无分析价值）
+  if (rec->encoded_frames < 3) {
+    printf("BehaviorRecorder: discarding (too few frames)\n");
+    remove(rec->file_path);
+  } else {
+#if !defined(__CMODEL_CV181X__) && !defined(__CMODEL_CV184X__)
+    char person_name[128];
+    snprintf(person_name, sizeof(person_name), "人员%d", rec->person_id + 1);
+    uint32_t duration_sec =
+        (rec->encoded_frames + BEHAVIOR_VIDEO_FPS - 1) / BEHAVIOR_VIDEO_FPS;
+    TDL_MediaAnalysisServer_SubmitBehaviorVideo(
+        rec->file_path, person_name, rec->person_id, rec->appearance_id,
+        duration_sec);
+#endif
+  }
+
+  rec->is_recording = false;
+  rec->encoded_frames = 0;
+  rec->skip_counter = 0;
+  rec->person_lost_counter = 0;
+}
+
+static void behavior_recorder_encode_frame(TDLHandle tdl_handle,
+                                           TDLImage image) {
+  BehaviorRecorder *rec = &g_behavior_recorder;
+  if (!rec->is_recording) {
+    return;
+  }
+
+  rec->skip_counter++;
+  if (rec->skip_counter % BEHAVIOR_FRAME_INTERVAL != 0) {
+    return;
+  }
+
+  if (rec->encoded_frames >= BEHAVIOR_VIDEO_MAX_FRAMES) {
+    // Max duration reached, stop and optionally restart
+    // We'll stop here; the next person snapshot will trigger a new recording
+    rec->person_lost_counter = BEHAVIOR_TIMEOUT_FRAMES + 1;
+    return;
+  }
+
+  uint8_t *encoded_data = NULL;
+  uint32_t encoded_size = 0;
+
+  int ret = TDL_EncodeH264FrameRaw(tdl_handle, image, BEHAVIOR_VENC_CHN, 960,
+                                   540, BEHAVIOR_VIDEO_FPS,
+                                   512,  // 512 kbps, low bitrate for analysis
+                                   BEHAVIOR_VIDEO_FPS,  // GOP = FPS
+                                   &encoded_data, &encoded_size);
+
+  if (ret == 0 && encoded_data != NULL && encoded_size > 0) {
+    fwrite(encoded_data, 1, encoded_size, rec->h264_file);
+    rec->encoded_frames++;
+    free(encoded_data);
+  } else {
+    printf("BehaviorRecorder: H264 encode failed, ret=%d\n", ret);
+  }
 }
 
 static int create_id_dir(const char *base_dir, int id, char *out_path,
@@ -616,7 +763,39 @@ void *run_tdl_thread(void *args) {
         }
       }
 
+      // ---- Behavior video recording: track person presence ----
+      {
+        bool person_detected = (capture_info.person_meta.size > 0);
+        if (person_detected) {
+          g_behavior_recorder.person_lost_counter = 0;
+          if (!g_behavior_recorder.is_recording) {
+            // Find the first person's info to start recording
+            int pid = TDL_APP_GetRegisteredID(
+                pstArgs->tdl_handle, capture_info.person_meta.info[0].track_id);
+            uint64_t tid = capture_info.person_meta.info[0].track_id;
+            behavior_recorder_start(pid, tid, pstArgs->data_dir);
+          }
+        } else if (g_behavior_recorder.is_recording) {
+          g_behavior_recorder.person_lost_counter++;
+          if (g_behavior_recorder.person_lost_counter >=
+              BEHAVIOR_TIMEOUT_FRAMES) {
+            printf("BehaviorRecorder: person lost timeout, stopping\n");
+            behavior_recorder_stop_and_submit(pstArgs->data_dir);
+          }
+        }
+        // Also check max frames duration (from encode function side)
+        if (g_behavior_recorder.is_recording &&
+            g_behavior_recorder.skip_counter / BEHAVIOR_FRAME_INTERVAL >=
+                BEHAVIOR_VIDEO_MAX_FRAMES) {
+          printf("BehaviorRecorder: max duration reached, stopping\n");
+          behavior_recorder_stop_and_submit(pstArgs->data_dir);
+        }
+      }
+
       if (capture_info.image) {
+        // Encode to H.264 for behavior analysis (every 5th frame)
+        behavior_recorder_encode_frame(pstArgs->tdl_handle, capture_info.image);
+
         uint8_t *encoded_data = NULL;
         uint32_t encoded_size = 0;
         ret = TDL_EncodeFrameRaw(pstArgs->tdl_handle, capture_info.image, 1,
@@ -717,6 +896,11 @@ void *run_tdl_thread(void *args) {
         TDL_DestroyImage(img);
       }
     }
+  }
+
+  // Stop any ongoing behavior recording before exit
+  if (g_behavior_recorder.is_recording) {
+    behavior_recorder_stop_and_submit(pstArgs->data_dir);
   }
 
   if (identity_fp) fclose(identity_fp);

@@ -11,6 +11,9 @@ void MediaAnalysisEventManager::RegisterTask(
   std::lock_guard<std::mutex> lock(mutex_);
   if (task) {
     tasks_[task->get_event_type()] = task;
+    for (const auto& extra : task->get_extra_event_types()) {
+      tasks_[extra] = task;
+    }
     if (task->get_event_type() == "image_analysis") {
       image_analysis_task_ = task;
     }
@@ -49,7 +52,21 @@ json MediaAnalysisEventManager::HandleEvent(const json& request) {
     description = request["payload"]["description"];
   }
 
+  // Exact match first, then prefix-based fallback
   auto task = GetTask(event_type);
+  if (!task) {
+    // Try dot-separated prefixes: "persons.list" → "persons", "person.detail" →
+    // "person"
+    std::string prefix = event_type;
+    while (!prefix.empty()) {
+      auto dot_pos = prefix.rfind('.');
+      if (dot_pos == std::string::npos) break;
+      prefix = prefix.substr(0, dot_pos);
+      task = GetTask(prefix);
+      if (task) break;
+    }
+  }
+
   if (task) {
     return task->handle_event(request, description);
   } else {

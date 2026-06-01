@@ -7,6 +7,7 @@ set(SAMPLE_INCLUDES
     ${MLIR_INCLUDES}
     ${MIDDLEWARE_INCLUDES}
     ${FBANK_INCLUDES}
+    ${SQLITE3_INCLUDES}
     ${REPO_DIR}/include
     ${REPO_DIR}/include/framework
     ${REPO_DIR}/include/components
@@ -63,6 +64,7 @@ endif()
 
 if(${CVI_PLATFORM} STREQUAL "CMODEL_CV181X" OR ${CVI_PLATFORM} STREQUAL "CMODEL_CV184X")
   list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_llm_api.c)
+  list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_sqlite_test.c)
 endif()
 list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_llm_api.c)
 list(REMOVE_ITEM SAMPLE_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_api_client.c)
@@ -103,7 +105,7 @@ foreach (fname ${SAMPLE_SRC_FILES})
   set(SAMPLE_LIBS ${CORE_LIBS} dl rt atomic m)
   
   # 只有需要网络功能的应用才链接网络相关库
-  if(name MATCHES "llm_api" OR name MATCHES "media_analysis")
+  if(name MATCHES "llm_api" OR name MATCHES "media_analysis" OR name MATCHES "sqlite")
     set(SAMPLE_LIBS ${EX_LIBS} ${CORE_LIBS} dl rt atomic m)
     message(STATUS "SAMPLE_LIBS:${SAMPLE_LIBS} for ${name}")
   endif()
