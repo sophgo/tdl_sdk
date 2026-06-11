@@ -18,6 +18,7 @@ print_usage() {
     echo "  clean          Clean build"
     echo "  debug          Build debug sdk"
     echo "  static         Build static sdk"
+    echo "  static-debug   Build static debug sdk"
 }
 
 # Check parameter
@@ -193,7 +194,7 @@ elif [[ "$1" == "sample" ]]; then
         exit 1
     fi
 
-elif [[ "$1" == "all" || "$1" == "debug" || "$1" == "static" ]]; then
+elif [[ "$1" == "all" || "$1" == "debug" || "$1" == "static" || "$1" == "static-debug" ]]; then
     echo "Using ${BASH_SOURCE[0]} $1"
     echo "Compiling modules and sample..."
 
@@ -204,7 +205,7 @@ elif [[ "$1" == "all" || "$1" == "debug" || "$1" == "static" ]]; then
 
     BUILD_OPTION=all
 
-    if [[ "$1" == "static" ]]; then
+    if [[ "$1" == "static" || "$1" == "static-debug" ]]; then
         BUILD_SHARED=OFF
     fi
 
@@ -243,7 +244,7 @@ TDL_SDK_INSTALL_PATH="${CVI_TDL_ROOT}"/install/"${CHIP_ARCH}"
 # Set build option and type
 BUILD_TYPE=SDKRelease
 
-if [[ "$1" == "debug" ]]; then
+if [[ "$1" == "debug" || "$1" == "static-debug" ]]; then
     BUILD_TYPE=Debug
 fi
 
