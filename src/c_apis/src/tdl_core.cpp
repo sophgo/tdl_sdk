@@ -13,6 +13,7 @@
 #include "utils/common_utils.hpp"
 #include "utils/tdl_log.hpp"
 #include "utils/tokenizer_bpe.hpp"
+#include "vehicle_adas/vehicle_adas.hpp"
 #ifndef DISABLE_SPEECH_RECOGNITION
 #include "speech_recognition/zipformer_encoder.hpp"
 #endif
@@ -2631,6 +2632,100 @@ int32_t TDL_APP_HumanPoseSmooth(TDLHandle handle, const char *channel_name,
     if (t.obj_idx_ != -1) {
       capture_info->person_meta.info[t.obj_idx_].track_id = t.track_id_;
     }
+  }
+
+  return 0;
+}
+
+int32_t TDL_APP_VehicleAdas(TDLHandle handle, const char *channel_name,
+                            TDLVehicleAdasInfo *adas_info) {
+  TDLContext *context = (TDLContext *)handle;
+  int ret = 0;
+  if (context == nullptr) {
+    return -1;
+  }
+  if (context->app_task == nullptr) {
+    LOGE("app_task is not init\n");
+    return -1;
+  }
+
+  int processing_channel_num = context->app_task->getProcessingChannelNum();
+  if (processing_channel_num == 0) {
+    printf("no processing channel\n");
+    return 2;
+  }
+  if ((context->app_task->getChannelNodeName(std::string(channel_name), 0) ==
+       "video_node") ==
+      context->app_task->isExternalFrameChannel(std::string(channel_name))) {
+    LOGE("only one of TDLImage and video_node should be set!");
+    return -1;
+  }
+
+  Packet result;
+  ret = context->app_task->getResult(std::string(channel_name), result);
+  if (ret != 0) {
+    printf("get result failed\n");
+    context->app_task->removeChannel(std::string(channel_name));
+    return 1;
+  }
+
+  std::shared_ptr<VehicleAdasResult> adas_result =
+      result.get<std::shared_ptr<VehicleAdasResult>>();
+  if (adas_result == nullptr) {
+    printf("adas_result is nullptr\n");
+    return 1;
+  }
+
+  adas_info->frame_id = adas_result->frame_id;
+  adas_info->frame_width = adas_result->frame_width;
+  adas_info->frame_height = adas_result->frame_height;
+
+  if (adas_result->image) {
+    TDLImageContext *image_context = new TDLImageContext();
+    image_context->image = adas_result->image;
+    adas_info->image = (TDLImage)image_context;
+  } else {
+    adas_info->image = NULL;
+  }
+
+  // Map ADAS objects
+  uint32_t obj_size = (uint32_t)adas_result->objects.size();
+  adas_info->adas_objects.size = obj_size;
+  if (obj_size > 0) {
+    adas_info->adas_objects.info = (TDLVehicleAdasObjectInfo *)malloc(
+        obj_size * sizeof(TDLVehicleAdasObjectInfo));
+    for (uint32_t i = 0; i < obj_size; i++) {
+      auto &obj = adas_result->objects[i];
+      adas_info->adas_objects.info[i].track_id = obj.track_id;
+      adas_info->adas_objects.info[i].box.x1 = obj.info.x1;
+      adas_info->adas_objects.info[i].box.y1 = obj.info.y1;
+      adas_info->adas_objects.info[i].box.x2 = obj.info.x2;
+      adas_info->adas_objects.info[i].box.y2 = obj.info.y2;
+      adas_info->adas_objects.info[i].class_id = obj.info.class_id;
+      adas_info->adas_objects.info[i].score = obj.info.score;
+      adas_info->adas_objects.info[i].distance = obj.distance;
+      adas_info->adas_objects.info[i].speed = obj.speed;
+      adas_info->adas_objects.info[i].state = static_cast<int>(obj.state);
+    }
+  } else {
+    adas_info->adas_objects.info = NULL;
+  }
+
+  // Map lane meta
+  adas_info->lane_meta.lane_state = adas_result->lane_state.lane_state;
+  uint32_t lane_size = (uint32_t)adas_result->lane_lines.size();
+  adas_info->lane_meta.size = lane_size;
+  if (lane_size > 0) {
+    adas_info->lane_meta.lines = (TDLVehicleAdasLaneLine *)malloc(
+        lane_size * sizeof(TDLVehicleAdasLaneLine));
+    for (uint32_t i = 0; i < lane_size; i++) {
+      adas_info->lane_meta.lines[i].x1 = adas_result->lane_lines[i].x1;
+      adas_info->lane_meta.lines[i].y1 = adas_result->lane_lines[i].y1;
+      adas_info->lane_meta.lines[i].x2 = adas_result->lane_lines[i].x2;
+      adas_info->lane_meta.lines[i].y2 = adas_result->lane_lines[i].y2;
+    }
+  } else {
+    adas_info->lane_meta.lines = NULL;
   }
 
   return 0;

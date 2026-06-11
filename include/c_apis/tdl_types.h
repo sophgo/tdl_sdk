@@ -292,6 +292,40 @@ typedef struct {
 } TDLCaptureInfo;
 
 typedef struct {
+  uint64_t track_id;
+  TDLBox box;
+  int class_id;
+  float score;
+  float distance;
+  float speed;
+  int state;  // 0=NORMAL, 1=START, 2=COLLISION_WARNING
+} TDLVehicleAdasObjectInfo;
+
+typedef struct {
+  uint32_t size;
+  TDLVehicleAdasObjectInfo *info;
+} TDLVehicleAdasObject;
+
+typedef struct {
+  float x1, y1, x2, y2;
+} TDLVehicleAdasLaneLine;
+
+typedef struct {
+  uint32_t size;
+  TDLVehicleAdasLaneLine *lines;
+  int lane_state;
+} TDLVehicleAdasLaneMeta;
+
+typedef struct {
+  uint64_t frame_id;
+  uint32_t frame_width;
+  uint32_t frame_height;
+  TDLVehicleAdasObject adas_objects;
+  TDLVehicleAdasLaneMeta lane_meta;
+  TDLImage image;
+} TDLVehicleAdasInfo;
+
+typedef struct {
   uint64_t frame_id;
   uint32_t frame_width;
   uint32_t frame_height;

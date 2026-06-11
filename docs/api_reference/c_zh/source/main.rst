@@ -3437,6 +3437,48 @@ TDL_APP_FallDetection
      - 检测结果
 
 
+TDL_APP_VehicleAdas
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【语法】
+
+.. code-block:: c
+
+  int32_t TDL_APP_VehicleAdas(TDLHandle handle,
+                          const char *channel_name,
+                          TDLVehicleAdasInfo *adas_info);
+
+【描述】
+
+执行车辆ADAS（高级辅助驾驶系统）任务，包括物体检测、距离估计、速度估计、前车启动提醒、碰撞预警和车道偏离检测。
+
+【参数】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - 数据型态
+     - 参数名称
+     - 说明
+
+   * - 输入
+     - TDLHandle
+     - handle
+     - TDLHandle 对象
+
+   * - 输入
+     - const char*
+     - channel_name
+     - 当前channel的名称
+
+   * - 输出
+     - TDLVehicleAdasInfo*
+     - adas_info
+     - ADAS检测结果（距离、速度、前车启动提醒、碰撞预警、车道偏离等）
+
+
 TDL_APP_HumanPoseSmooth
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

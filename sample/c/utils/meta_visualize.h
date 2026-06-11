@@ -76,6 +76,7 @@ int32_t DrawObjRect(const TDLObject *meta, void *frame, const bool drawText,
 int32_t DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
                      TDLBrush brush);
 int32_t ObjectWriteText(char *name, int x, int y, void *frame, TDLBrush brush);
+int32_t DrawLine(box_t *lines, int32_t num, void *frame, TDLBrush brush);
 #endif
 
 #ifdef __cplusplus

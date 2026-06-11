@@ -4,6 +4,7 @@
 #include "face_pet_capture/face_pet_capture_app.hpp"
 #include "fall_detection/fall_detection_app.hpp"
 #include "human_pose_smooth/human_pose_smooth_app.hpp"
+#include "vehicle_adas/vehicle_adas_app.hpp"
 
 std::shared_ptr<AppTask> AppFactory::createAppTask(
     const std::string &task_name, const std::string &json_config_file,
@@ -26,6 +27,9 @@ std::shared_ptr<AppTask> AppFactory::createAppTask(
   } else if (task_name == "human_pose_smooth") {
     return std::make_shared<HumanPoseSmoothApp>(task_name, json_config_file,
                                                 skip_input_alloc);
+  } else if (task_name == "vehicle_adas") {
+    return std::make_shared<VehicleAdasApp>(task_name, json_config_file,
+                                            skip_input_alloc);
   }
   return nullptr;
 }

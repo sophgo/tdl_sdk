@@ -394,6 +394,30 @@ int32_t TDL_ReleaseObjectCountingInfo(
   return 0;
 }
 
+int32_t TDL_ReleaseVehicleAdasInfo(TDLVehicleAdasInfo *adas_info) {
+  if (adas_info->adas_objects.info) {
+    free(adas_info->adas_objects.info);
+    adas_info->adas_objects.info = NULL;
+  }
+  adas_info->adas_objects.size = 0;
+
+  if (adas_info->lane_meta.lines) {
+    free(adas_info->lane_meta.lines);
+    adas_info->lane_meta.lines = NULL;
+  }
+  adas_info->lane_meta.size = 0;
+
+  if (adas_info->image) {
+    TDL_DestroyImage(adas_info->image);
+  }
+
+  adas_info->frame_id = 0;
+  adas_info->frame_width = 0;
+  adas_info->frame_height = 0;
+
+  return 0;
+}
+
 int32_t TDL_CaculateSimilarity(const TDLFeature feature1,
                                const TDLFeature feature2, float *similarity) {
   *similarity = 0;
