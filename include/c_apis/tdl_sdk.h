@@ -641,6 +641,17 @@ int32_t TDL_APP_FallDetection(TDLHandle handle, const char *channel_name,
 int32_t TDL_APP_HumanPoseSmooth(TDLHandle handle, const char *channel_name,
                                 TDLCaptureInfo *capture_info);
 
+/**
+ * @brief 执行ADAS车辆辅助驾驶任务
+ *
+ * @param handle TDLHandle 对象
+ * @param channel_name 当前channel的名称
+ * @param adas_info ADAS检测结果（距离、速度、碰撞预警、车道偏离等）
+ * @return 成功返回 0，继续等待返回 1，无处理通道返回 2，失败返回 -1
+ */
+int32_t TDL_APP_VehicleAdas(TDLHandle handle, const char *channel_name,
+                            TDLVehicleAdasInfo *adas_info);
+
 #ifdef __cplusplus
 }
 #endif

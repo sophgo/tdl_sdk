@@ -62,6 +62,8 @@ int32_t TDL_ReleaseCaptureInfo(TDLCaptureInfo *capture_info);
 
 int32_t TDL_ReleaseObjectCountingInfo(TDLObjectCountingInfo *obj_counting_info);
 
+int32_t TDL_ReleaseVehicleAdasInfo(TDLVehicleAdasInfo *adas_info);
+
 int32_t TDL_RegisterFeature(const TDLFeature feature);
 
 int32_t TDL_MatchFeature(const TDLFeature feature, TDLFeature *matched_feature);

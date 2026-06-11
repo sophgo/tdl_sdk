@@ -1,0 +1,37 @@
+{
+  "model_dir": "./models/",
+  "frame_buffer_size": 1,
+  "pipelines": [
+    {
+      "name": "vehicle_adas",
+      "nodes": {
+        "video_node": {
+          "video_type": "image_folder",
+          "video_path": "./images",
+          "is_loop": false
+        },
+        "object_detection_node": {
+          "config_thresh": 0.5
+        },
+        "track_node": {},
+        "lane_detection_node": {
+          "config_thresh": 0.5
+        },
+        "adas_node": {
+          "det_type": 1,
+          "_det_type_comment": "0: 只检测车辆, 1: 同时检测车道线和车辆",
+          "sence_type": 0,
+          "_sence_type_comment": "0: 汽车摄像头, 1: 摩托车摄像头",
+          "location_type": 1,
+          "_location_type_comment": "摄像头位置, 仅摩托车场景有效, 0: 左侧, 1: 中间, 2: 右侧",
+          "collison_time": 4.0,
+          "_collison_time_comment": "碰撞时间阈值, 单位: 秒",
+          "departure_time": 1.5,
+          "_departure_time_comment": "车道偏离时间阈值, 单位: 秒",
+          "FPS": 15.0,
+          "_FPS_comment": "运行帧率"
+        }
+      }
+    }
+  ]
+}

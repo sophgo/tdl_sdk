@@ -537,7 +537,7 @@ void DrawRect<FORMAT_YUV_420P>(VIDEO_FRAME_INFO_S *frame, float x1, float x2,
     cv::Size cv_size =
         cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
     cv::Point cv_point = cv::Point(x1, y1 - 2);
-    double font_scale = 2;
+    double font_scale = 0.5;
     int thickness = rect_thickness;
     if (i != 0) {
       cv_size =
@@ -673,7 +673,7 @@ void DrawRect<FORMAT_NV21>(VIDEO_FRAME_INFO_S *frame, float x1, float x2,
     cv::Size cv_size =
         cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
     cv::Point cv_point = cv::Point(x1, y1 - 2);
-    double font_scale = 2;
+    double font_scale = 0.8;
     int thickness = rect_thickness;
     if (i != 0) {
       cv_size =
@@ -809,5 +809,104 @@ int32_t DrawFaceRect(const TDLFace *meta, void *frame, const bool drawText,
 
 int32_t ObjectWriteText(char *name, int x, int y, void *frame, TDLBrush brush) {
   return WriteText(name, x, y, (VIDEO_FRAME_INFO_S *)frame, brush);
+}
+
+int32_t DrawLine(box_t *lines, int32_t num, void *frame, TDLBrush brush) {
+  if (num <= 0 || lines == NULL || frame == NULL) {
+    return 0;
+  }
+
+  VIDEO_FRAME_INFO_S *drawFrame = (VIDEO_FRAME_INFO_S *)frame;
+  if (drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV21 &&
+      drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_NV12 &&
+      drawFrame->stVFrame.enPixelFormat != PIXEL_FORMAT_YUV_PLANAR_420) {
+    LOGE("Only NV21, NV12 and YUV_PLANAR_420 are supported in DrawLine\n");
+    return -1;
+  }
+
+  color_rgb rgb_color = brush.color;
+  if (rgb_color.r == -1) rgb_color.r = DEFAULT_RECT_COLOR_R;
+  if (rgb_color.g == -1) rgb_color.g = DEFAULT_RECT_COLOR_G;
+  if (rgb_color.b == -1) rgb_color.b = DEFAULT_RECT_COLOR_B;
+
+  uint8_t color_y = (uint8_t)GetYuvColor(PLANE_Y, &rgb_color);
+  uint8_t color_u = (uint8_t)GetYuvColor(PLANE_U, &rgb_color);
+  uint8_t color_v = (uint8_t)GetYuvColor(PLANE_V, &rgb_color);
+  int thickness = max(brush.size, 2);
+
+  bool do_unmap = false;
+  for (int i = 0; i < 3; ++i) {
+    CVI_U32 u32DataLen =
+        drawFrame->stVFrame.u32Stride[i] * drawFrame->stVFrame.u32Height;
+    if (u32DataLen == 0) {
+      continue;
+    }
+    drawFrame->stVFrame.pu8VirAddr[i] = (uint8_t *)CVI_SYS_Mmap(
+        drawFrame->stVFrame.u64PhyAddr[i], drawFrame->stVFrame.u32Length[i]);
+    CVI_SYS_IonFlushCache(drawFrame->stVFrame.u64PhyAddr[i],
+                          drawFrame->stVFrame.pu8VirAddr[i],
+                          drawFrame->stVFrame.u32Length[i]);
+    do_unmap = true;
+  }
+
+  bool is_planar =
+      (drawFrame->stVFrame.enPixelFormat == PIXEL_FORMAT_YUV_PLANAR_420);
+
+  for (int k = 0; k < num; k++) {
+    int x1 = (int)lines[k].x1, y1 = (int)lines[k].y1;
+    int x2 = (int)lines[k].x2, y2 = (int)lines[k].y2;
+
+    // Y plane - full resolution
+    cv::Mat y_mat(drawFrame->stVFrame.u32Height, drawFrame->stVFrame.u32Width,
+                  CV_8UC1, drawFrame->stVFrame.pu8VirAddr[0],
+                  drawFrame->stVFrame.u32Stride[0]);
+    cv::line(y_mat, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color_y),
+             thickness, cv::LINE_AA);
+
+    if (is_planar) {
+      int thickness_half = max(thickness / 2, 1);
+      // U plane - half resolution
+      cv::Mat u_mat(drawFrame->stVFrame.u32Height / 2,
+                    drawFrame->stVFrame.u32Width / 2, CV_8UC1,
+                    drawFrame->stVFrame.pu8VirAddr[1],
+                    drawFrame->stVFrame.u32Stride[1]);
+      cv::line(u_mat, cv::Point(x1 / 2, y1 / 2), cv::Point(x2 / 2, y2 / 2),
+               cv::Scalar(color_u), thickness_half, cv::LINE_AA);
+
+      // V plane - half resolution
+      cv::Mat v_mat(drawFrame->stVFrame.u32Height / 2,
+                    drawFrame->stVFrame.u32Width / 2, CV_8UC1,
+                    drawFrame->stVFrame.pu8VirAddr[2],
+                    drawFrame->stVFrame.u32Stride[2]);
+      cv::line(v_mat, cv::Point(x1 / 2, y1 / 2), cv::Point(x2 / 2, y2 / 2),
+               cv::Scalar(color_v), thickness_half, cv::LINE_AA);
+    } else {
+      int thickness_half = max(thickness / 2, 1);
+      // UV plane (interleaved) - half resolution
+      cv::Mat uv_mat(drawFrame->stVFrame.u32Height / 2,
+                     drawFrame->stVFrame.u32Width / 2, CV_8UC2,
+                     drawFrame->stVFrame.pu8VirAddr[1],
+                     drawFrame->stVFrame.u32Stride[1]);
+      cv::line(uv_mat, cv::Point(x1 / 2, y1 / 2), cv::Point(x2 / 2, y2 / 2),
+               cv::Scalar(color_v, color_u), thickness_half, cv::LINE_AA);
+    }
+  }
+
+  if (do_unmap) {
+    for (int i = 0; i < 3; i++) {
+      CVI_U32 u32DataLen =
+          drawFrame->stVFrame.u32Stride[i] * drawFrame->stVFrame.u32Height;
+      if (u32DataLen == 0) {
+        continue;
+      }
+      CVI_SYS_Munmap((void *)drawFrame->stVFrame.pu8VirAddr[i],
+                     drawFrame->stVFrame.u32Length[i]);
+    }
+    drawFrame->stVFrame.pu8VirAddr[0] = NULL;
+    drawFrame->stVFrame.pu8VirAddr[1] = NULL;
+    drawFrame->stVFrame.pu8VirAddr[2] = NULL;
+  }
+
+  return 0;
 }
 #endif

@@ -3419,6 +3419,47 @@ Execute fall detection task.
      - capture_info
      - Detection results
 
+TDL_APP_VehicleAdas
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+【Syntax】
+
+.. code-block:: c
+
+  int32_t TDL_APP_VehicleAdas(TDLHandle handle,
+                          const char *channel_name,
+                          TDLVehicleAdasInfo *adas_info);
+
+【Description】
+
+Execute vehicle ADAS (Advanced Driver Assistance System) task, including object detection, distance estimation, speed estimation, leading vehicle start reminder, collision warning, and lane departure detection.
+
+【Parameters】
+
+.. list-table::
+   :widths: 1 4 1 2
+   :header-rows: 1
+
+   * -
+     - Data Type
+     - Parameter Name
+     - Description
+
+   * - Input
+     - TDLHandle
+     - handle
+     - TDLHandle object
+
+   * - Input
+     - const char*
+     - channel_name
+     - Current channel name
+
+   * - Output
+     - TDLVehicleAdasInfo*
+     - adas_info
+     - ADAS detection results (distance, speed, start reminder, collision warning, lane departure etc.)
+
 TDL_APP_HumanPoseSmooth
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
