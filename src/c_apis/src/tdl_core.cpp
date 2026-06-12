@@ -733,6 +733,13 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
       int32_t crop_y =
           (int32_t)object_meta->info[i].box.y1 - (new_height - height) / 2;
 
+      // YUV420SP 要求宽高为偶数
+      if (image_context->image->getImageFormat() == ImageFormat::YUV420SP_VU ||
+          image_context->image->getImageFormat() == ImageFormat::YUV420SP_UV) {
+        new_width &= ~1;
+        new_height &= ~1;
+      }
+
       //边界控制：保证整个裁剪框在图像内部
       if (crop_x < 0) crop_x = 0;
       if (crop_y < 0) crop_y = 0;
