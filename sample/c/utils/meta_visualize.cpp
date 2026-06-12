@@ -390,20 +390,18 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name,
       cv::Size cv_size =
           cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
       cv::Point cv_point = cv::Point(x, y - 2);
-      double font_scale = 1;
+      double font_scale = thickness;
       if (i != 0) {
         cv_size = cv::Size(frame->stVFrame.u32Width / 2,
                            frame->stVFrame.u32Height / 2);
         cv_point = cv::Point(x / 2, (y - 2) / 2);
         font_scale /= 2;
-        // FIXME: Should div but don't know why it's not correct.
-        // thickness /= 2;
       }
       // FIXME: Color incorrect.
       cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i],
                     frame->stVFrame.u32Stride[i]);
       cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_COMPLEX_SMALL,
-                  font_scale, cv::Scalar(draw_color), thickness, cv::LINE_AA);
+                  font_scale, cv::Scalar(draw_color), 1, cv::LINE_AA);
     }
   } else { /* PIXEL_FORMAT_NV21 */
     // 0: Y-plane, 1: VU-plane
@@ -411,22 +409,20 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name,
       cv::Size cv_size =
           cv::Size(frame->stVFrame.u32Width, frame->stVFrame.u32Height);
       cv::Point cv_point = cv::Point(x, y - 2);
-      double font_scale = 1;
-      int text_thickness = max(thickness, 2);
+      double font_scale = thickness;
       if (i != 0) {
         cv_size = cv::Size(frame->stVFrame.u32Width / 2,
                            frame->stVFrame.u32Height / 2);
         cv_point = cv::Point(x / 2, (y - 2) / 2);
         font_scale /= 2;
-        text_thickness /= 2;
       }
 
       if (i == 0) {
         cv::Mat image(cv_size, CV_8UC1, frame->stVFrame.pu8VirAddr[i],
                       frame->stVFrame.u32Stride[i]);
         cv::putText(image, name_str, cv_point, cv::FONT_HERSHEY_SIMPLEX,
-                    font_scale, cv::Scalar(static_cast<uint8_t>(color_y)),
-                    text_thickness, 8);
+                    font_scale, cv::Scalar(static_cast<uint8_t>(color_y)), 1,
+                    8);
       } else {
         cv::Mat image(cv_size, CV_8UC2, frame->stVFrame.pu8VirAddr[i],
                       frame->stVFrame.u32Stride[i]);
@@ -434,7 +430,7 @@ int _WriteText(VIDEO_FRAME_INFO_S *frame, int x, int y, const char *name,
                     font_scale,
                     cv::Scalar(static_cast<uint8_t>(color_v),
                                static_cast<uint8_t>(color_u)),
-                    text_thickness, 8);
+                    1, 8);
       }
     }
   }
@@ -755,7 +751,7 @@ int DrawMeta(const MetaType *meta, VIDEO_FRAME_INFO_S *drawFrame,
     rgb_color.g = brush.color.g;
     rgb_color.b = brush.color.b;
 
-    int thickness = max(brush.size, 2);
+    int thickness = 1;
     if ((brush.size % 2) != 0) {
       brush.size += 1;
     }

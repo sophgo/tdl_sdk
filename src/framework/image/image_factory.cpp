@@ -284,8 +284,9 @@ std::shared_ptr<BaseImage> ImageFactory::alignFace(
   // 分支一：输入为 YUV420SP（NV12 或 NV21）
   if (image->getImageFormat() == ImageFormat::YUV420SP_VU ||
       image->getImageFormat() == ImageFormat::YUV420SP_UV) {
-    const uint32_t width = image->getWidth();
-    const uint32_t height = image->getHeight();
+    // YUV420SP 要求宽高为偶数，向下取整到合法值
+    const uint32_t width = image->getWidth() & ~1u;
+    const uint32_t height = image->getHeight() & ~1u;
 
     // 期望 image->getVirtualAddress()[0] = Y 平面首地址
     //       image->getVirtualAddress()[1] = UV/VU 平面首地址
@@ -373,17 +374,32 @@ std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
     LOGE("Image is nullptr");
     return nullptr;
   }
+
+  // 允许支持的输入格式
   if (image->getImageFormat() != ImageFormat::BGR_PACKED &&
-      image->getImageFormat() != ImageFormat::RGB_PACKED) {
-    LOGE("only BGR_PACKED or RGB_PACKED format is supported,current format:%d",
-         static_cast<int>(image->getImageFormat()));
+      image->getImageFormat() != ImageFormat::RGB_PACKED &&
+      image->getImageFormat() != ImageFormat::YUV420SP_VU &&  // NV21
+      image->getImageFormat() != ImageFormat::YUV420SP_UV) {  // NV12
+    LOGE(
+        "only BGR_PACKED or RGB_PACKED or YUV420SP_VU/NV21 or YUV420SP_UV/NV12 "
+        "format is supported, current format:%d",
+        static_cast<int>(image->getImageFormat()));
     return nullptr;
   }
+
   int dst_img_width = 96;
   int dst_img_height = 24;
+
+  // 若输入为任一 YUV420SP，目标格式统一为 RGB_PACKED
+  ImageFormat dst_format =
+      (image->getImageFormat() == ImageFormat::YUV420SP_VU ||
+       image->getImageFormat() == ImageFormat::YUV420SP_UV)
+          ? ImageFormat::RGB_PACKED
+          : image->getImageFormat();
+
   std::shared_ptr<BaseImage> aligned_image = ImageFactory::createImage(
-      dst_img_width, dst_img_height, image->getImageFormat(),
-      TDLDataType::UINT8, false, InferencePlatform::AUTOMATIC);
+      dst_img_width, dst_img_height, dst_format, TDLDataType::UINT8, false,
+      InferencePlatform::AUTOMATIC);
   if (aligned_image == nullptr) {
     LOGE("Failed to create aligned image");
     return nullptr;
@@ -398,12 +414,76 @@ std::shared_ptr<BaseImage> ImageFactory::alignLicensePlate(
     return nullptr;
   }
 
-  LOGI("srcimg,width:%d,height:%d,stride:%d,addr:%lx", image->getWidth(),
-       image->getHeight(), image->getStrides()[0],
-       image->getVirtualAddress()[0]);
   LOGI("dstimg,width:%d,height:%d,stride:%d,addr:%lx", dst_img_width,
        dst_img_height, aligned_image->getStrides()[0],
        aligned_image->getVirtualAddress()[0]);
+
+  // 分支一：输入为 YUV420SP（NV12 或 NV21）
+  if (image->getImageFormat() == ImageFormat::YUV420SP_VU ||
+      image->getImageFormat() == ImageFormat::YUV420SP_UV) {
+    // YUV420SP 要求宽高为偶数，向下取整到合法值
+    const uint32_t width = image->getWidth() & ~1u;
+    const uint32_t height = image->getHeight() & ~1u;
+
+    size_t nv_size = static_cast<size_t>(width) * height * 3 / 2;
+    unsigned char* nv_data = (unsigned char*)malloc(nv_size);
+    if (!nv_data) {
+      LOGE("Failed to allocate NV buffer");
+      return nullptr;
+    }
+
+    // 拷贝 Y 平面
+    {
+      const uint8_t* src_y =
+          reinterpret_cast<const uint8_t*>(image->getVirtualAddress()[0]);
+      const int src_y_stride =
+          image->getStrides()[0] > 0 ? image->getStrides()[0] : (int)width;
+      uint8_t* dst_y = nv_data;
+      for (uint32_t r = 0; r < height; ++r) {
+        memcpy(dst_y + r * width, src_y + r * src_y_stride, width);
+      }
+    }
+
+    // 拷贝 UV（或 VU）平面
+    {
+      const uint8_t* src_uv =
+          reinterpret_cast<const uint8_t*>(image->getVirtualAddress()[1]);
+      const int src_uv_stride =
+          image->getStrides().size() > 1 && image->getStrides()[1] > 0
+              ? image->getStrides()[1]
+              : (int)width;
+      uint8_t* dst_uv = nv_data + width * height;
+      const uint32_t uv_rows = height / 2;
+      for (uint32_t r = 0; r < uv_rows; ++r) {
+        memcpy(dst_uv + r * width, src_uv + r * src_uv_stride, width);
+      }
+    }
+
+    cv::Mat nv_img(height + height / 2, width, CV_8UC1, nv_data);
+
+    int cvt_code = (image->getImageFormat() == ImageFormat::YUV420SP_UV)
+                       ? cv::COLOR_YUV2RGB_NV12   // NV12: YUV420SP_UV
+                       : cv::COLOR_YUV2RGB_NV21;  // NV21: YUV420SP_VU
+
+    cv::Mat rgb_img;
+    cv::cvtColor(nv_img, rgb_img, cvt_code);
+
+    LOGI("srcimg,width:%d,height:%d,stride:%zu,addr:%p", (int)width,
+         (int)height, rgb_img.step, rgb_img.data);
+
+    tdl_license_plate_warp_affine(
+        rgb_img.data, (int)rgb_img.step, (int)width, (int)height,
+        aligned_image->getVirtualAddress()[0], aligned_image->getStrides()[0],
+        dst_img_width, dst_img_height, src_landmark_xy);
+
+    free(nv_data);
+    return aligned_image;
+  }
+
+  // 分支二：输入为 BGR/RGB 打包
+  LOGI("srcimg,width:%d,height:%d,stride:%d,addr:%lx", image->getWidth(),
+       image->getHeight(), image->getStrides()[0],
+       image->getVirtualAddress()[0]);
 
   tdl_license_plate_warp_affine(
       image->getVirtualAddress()[0], image->getStrides()[0], image->getWidth(),
