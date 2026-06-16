@@ -228,6 +228,7 @@ int main(int argc, char **argv) {
     }
     if (track_meta.out_num > 0) {
       box_t boxes[track_meta.out_num];
+      int rect_colors[track_meta.out_num * 3];
       char outpath[128];
       if (output_file != NULL) {
         size_t len = strlen(output_file);
@@ -247,22 +248,22 @@ int main(int argc, char **argv) {
         boxes[c].y1 = track_meta.info[c].bbox.y1;
         boxes[c].x2 = track_meta.info[c].bbox.x2;
         boxes[c].y2 = track_meta.info[c].bbox.y2;
+        rect_colors[c * 3] = 0;        // B
+        rect_colors[c * 3 + 1] = 0;    // G
+        rect_colors[c * 3 + 2] = 255;  // R (red)
         if (output_file != NULL) {
           char text[5] = {0};
           snprintf(text, 5, "%" PRIu64, track_meta.info[c].id);
-          if (c == 0) {
-            VisualizText(boxes[c].x1 + (boxes[c].x2 - boxes[c].x1) / 2,
-                         boxes[c].y1 + (boxes[c].y2 - boxes[c].y1) / 2, text,
-                         files[i], outpath);
-          } else {
-            VisualizText(boxes[c].x1 + (boxes[c].x2 - boxes[c].x1) / 2,
-                         boxes[c].y1 + (boxes[c].y2 - boxes[c].y1) / 2, text,
-                         outpath, outpath);
-          }
+          int text_colors[3] = {0, 255, 0};  // B, G, R (green)
+          DrawText(image,
+                   (int32_t)(boxes[c].x1 + (boxes[c].x2 - boxes[c].x1) / 2),
+                   (int32_t)(boxes[c].y1 + (boxes[c].y2 - boxes[c].y1) / 2),
+                   text, text_colors);
         }
       }
       if (output_file != NULL) {
-        VisualizeRectangleFromFile(boxes, track_meta.out_num, outpath, outpath);
+        VisualizeRectangle(boxes, track_meta.out_num, image, outpath,
+                           rect_colors);
       }
     }
 

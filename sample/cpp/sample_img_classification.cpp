@@ -18,6 +18,7 @@ int main(int argc, char** argv) {
   }
 
   TDLModelFactory& model_factory = TDLModelFactory::getInstance();
+  model_factory.loadModelConfig();
 
   std::shared_ptr<BaseModel> model_cls =
       model_factory.getModel(model_type, model_file);

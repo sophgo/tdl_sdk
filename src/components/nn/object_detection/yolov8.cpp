@@ -310,6 +310,10 @@ int32_t YoloV8Detection::outputParse(
     for (auto &bbox : lb_boxes) {
       for (auto &b : bbox.second) {
         DetectionHelper::rescaleBbox(b, scale_params);
+        b.x1 = std::max(0.0f, std::min(b.x1, (float)image_width));
+        b.y1 = std::max(0.0f, std::min(b.y1, (float)image_height));
+        b.x2 = std::max(0.0f, std::min(b.x2, (float)image_width));
+        b.y2 = std::max(0.0f, std::min(b.y2, (float)image_height));
         if (type_mapping_.count(b.class_id)) {
           b.object_type = type_mapping_[b.class_id];
         }

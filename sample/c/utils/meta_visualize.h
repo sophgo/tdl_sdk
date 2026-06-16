@@ -62,8 +62,11 @@ int32_t CropImage(int x, int y, int weight, int height, char *input_path,
 int32_t MatToImage(int **mat, int weight, int height, char *output_path,
                    int scale);
 
-int32_t VisualizText(int32_t x, int32_t y, char *text, char *input_path,
-                     char *output_path);
+int32_t VisualizTextFromFile(int32_t x, int32_t y, char *text, char *input_path,
+                             char *output_path);
+
+int32_t VisualizText(int32_t x, int32_t y, TDLImage image_handle,
+                     const char *text, char *output_path, int *colors);
 
 int32_t VisualizeDepthMap(TDLDepthLogits *depth_logits,
                           const char *output_path);

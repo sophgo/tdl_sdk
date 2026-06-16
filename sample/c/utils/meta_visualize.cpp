@@ -252,8 +252,8 @@ int32_t MatToImage(int **mat, int weight, int height, char *output_path,
   return 0;
 }
 
-int32_t VisualizText(int32_t x, int32_t y, char *text, char *input_path,
-                     char *output_path) {
+int32_t VisualizTextFromFile(int32_t x, int32_t y, char *text, char *input_path,
+                             char *output_path) {
   cv::Mat image = cv::imread(input_path);
   if (image.empty()) {
     LOGE("input path is empty\n");
@@ -269,6 +269,29 @@ int32_t VisualizText(int32_t x, int32_t y, char *text, char *input_path,
   cv::putText(image, text, textOrg, fontFace, fontScale, color, thickness);
 
   cv::imwrite(output_path, image);
+
+  return 0;
+}
+
+int32_t VisualizText(int32_t x, int32_t y, TDLImage image_handle,
+                     const char *text, char *output_path, int *colors) {
+  int32_t ret = DrawText(image_handle, x, y, text, colors);
+  if (ret != 0) {
+    return ret;
+  }
+
+  cv::Mat mat;
+  bool is_rgb;
+  TDLImageContext *image_context = (TDLImageContext *)image_handle;
+  ImageFactory::convertToMat(image_context->image, mat, is_rgb);
+
+  if (is_rgb) {
+    cv::Mat bgr_mat;
+    cv::cvtColor(mat, bgr_mat, cv::COLOR_RGB2BGR);
+    cv::imwrite(output_path, bgr_mat);
+  } else {
+    cv::imwrite(output_path, mat);
+  }
 
   return 0;
 }

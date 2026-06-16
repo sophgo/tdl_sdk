@@ -9,7 +9,7 @@
 static int get_model_info(char *model_path, TDLModel *model_index) {
   int ret = 0;
 
-  if (strstr(model_path, "osnet_cv181x_int8_sym") != NULL) {
+  if (strstr(model_path, "osnet_reid") != NULL) {
     *model_index = TDL_MODEL_FEATURE_REID;
   } else {
     ret = -1;

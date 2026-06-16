@@ -148,7 +148,8 @@ void *process_thread(void *arg) {
                         (end_time.tv_usec - start_time.tv_usec) / 1000.0;
 
     if (frame_count % 20 == 1) {
-      printf("Model inference time : %.2f ms\n", elapsed_ms);
+      printf("Model inference time : %.2f ms, objects: %d\n", elapsed_ms,
+             obj_meta.size);
     }
     frame_count++;
 

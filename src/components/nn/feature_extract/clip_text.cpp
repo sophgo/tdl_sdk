@@ -12,6 +12,7 @@ void parse_feature_info(T *data, int num_elem, float qscale, float *features) {
 Clip_Text::Clip_Text() {
   net_param_.model_config.std = {255.0, 255.0, 255.0};
   net_param_.model_config.mean = {0.0, 0.0, 0.0};
+  net_param_.model_config.rgb_order = "gray";
 }
 
 Clip_Text::~Clip_Text() {}

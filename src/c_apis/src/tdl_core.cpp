@@ -41,9 +41,7 @@ int32_t TDL_DestroyHandle(TDLHandle handle) {
   if (context == nullptr) {
     return -1;
   }
-  for (auto &model : context->models) {
-    TDL_CloseModel(handle, model.first);
-  }
+  context->models.clear();
   if (context->app_task) {
     context->app_task->release();
   }

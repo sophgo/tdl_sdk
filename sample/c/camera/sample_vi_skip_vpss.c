@@ -12,8 +12,8 @@
 #include "sample_utils.h"
 #include "tdl_sdk.h"
 
-#define WIDTH 1280
-#define HEIGHT 720
+#define WIDTH 640
+#define HEIGHT 384
 
 static volatile bool to_exit = false;
 static ImageQueue image_queue;
