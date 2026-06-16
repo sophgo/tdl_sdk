@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
     if (obj_meta->box_seg.size() == 0) {
       printf("No object detected\n");
     } else {
-      cv::Mat image = cv::imread(argv[2]);
+      cv::Mat image = cv::imread(argv[3]);
       for (size_t j = 0; j < obj_meta->box_seg.size(); j++) {
         std::cout << "obj_meta_index: " << j << "  "
                   << "class: " << obj_meta->box_seg[j].class_id << "  "

@@ -296,12 +296,8 @@ int main(int argc, char *argv[]) {
     if (g_status == DETECTION) {
       ret = TDL_Detection(tdl_handle, det_model_id, image, &det_obj_meta);
       if (ret == 0) {
-        printf("det_obj_meta: %d\n", det_obj_meta.size);
-
         TDL_CopyObjectMeta(&det_obj_meta, &g_obj_meta);
         int closest_idx = find_closest_box_in_selection(&det_obj_meta);
-        printf("g_obj_meta: %d closest_idx: %d\n", g_obj_meta.size,
-               closest_idx);
         bool has_target = (closest_idx >= 0);
 
 #ifdef ENABLE_RTSP

@@ -58,7 +58,7 @@ std::vector<std::shared_ptr<ModelOutputInfo>> extract_crop_hand_landmark(
 }
 
 int main(int argc, char **argv) {
-  if (argc != 4) {
+  if (argc != 3) {
     printf("Usage: %s <model_dir> <image_path>\n", argv[0]);
     return -1;
   }
