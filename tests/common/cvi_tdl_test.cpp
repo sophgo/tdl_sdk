@@ -222,16 +222,10 @@ bool CVI_TDLModelTestSuite::checkToGetProcessResult(
     nlohmann::ordered_json &result) {
   CVI_TDLTestContext &context = CVI_TDLTestContext::getInstance();
   if (test_flag == TestFlag::GENERATE_FUNCTION_RES) {
-    if (m_json_object.find(platform) != m_json_object.end()) {
-      LOGIP("platform: %s is in json file %s, no need to generate",
-            platform.c_str(), context.getJsonFilePath().c_str());
+    result = getProcessResult();
+    if (result.empty()) {
+      LOGIP("results is empty,%s", context.getJsonFilePath().c_str());
       return false;
-    } else {
-      result = getProcessResult();
-      if (result.empty()) {
-        LOGIP("results is empty,%s", context.getJsonFilePath().c_str());
-        return false;
-      }
     }
   } else {
     result = m_json_object[platform];
