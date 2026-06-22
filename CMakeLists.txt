@@ -59,7 +59,7 @@ elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
   add_definitions(-DUSE_NEON)
 elseif("${CVI_PLATFORM}" STREQUAL "CV184X")
   add_definitions(-D__CV184X__)
-elseif("${CVI_PLATFORM}" STREQUAL "SOPHON")
+elseif("${CVI_PLATFORM}" STREQUAL "88a2")
   add_definitions(-D__CV186X__)
 elseif("${CVI_PLATFORM}" STREQUAL "BM1688")
   add_definitions(-D__BM168X__)
@@ -276,7 +276,7 @@ if( "${CVI_PLATFORM}" STREQUAL "CV180X" OR
     "${CVI_PLATFORM}" STREQUAL "CV182X" OR
     "${CVI_PLATFORM}" STREQUAL "CV183X" OR
     "${CVI_PLATFORM}" STREQUAL "CV184X" OR
-    "${CVI_PLATFORM}" STREQUAL "SOPHON" )
+    "${CVI_PLATFORM}" STREQUAL "88a2" )
   include(cmake/cvi_rtsp.cmake)
 endif()
 

@@ -18,7 +18,7 @@ elif [[ "$CHIP_ARCH" == "CV181X" ]]; then
     USE_TPU_IVE=OFF
 elif [[ "$CHIP_ARCH" == "CV180X" ]]; then
     USE_TPU_IVE=ON
-elif [[ "$CHIP_ARCH" == "SOPHON" ]] || [[ "$CHIP_ARCH" == "CV186X" ]]; then
+elif [[ "$CHIP_ARCH" == "88a2" ]] || [[ "$CHIP_ARCH" == "CV186X" ]]; then
     CHIP_ARCH=CV186X
     USE_TPU_IVE=OFF
 elif [[ "$CHIP_ARCH" == "CV184X" ]]; then

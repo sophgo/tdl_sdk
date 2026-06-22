@@ -290,7 +290,7 @@ elif [[ "$CHIP_ARCH" == "CV184X" ]]; then
     TPU_SDK_INSTALL_PATH=${TOP_DIR}/libsophon/install/libsophon-0.4.9
     MPI_PATH="${TOP_DIR}"/cvi_mpi
 
-elif [[ "$CHIP_ARCH" == "SOPHON" ]]; then
+elif [[ "$CHIP_ARCH" == "88a2" ]]; then
     TPU_SDK_INSTALL_PATH="$OUTPUT_DIR"/tpu_"$SDK_VER"/cvitek_tpu_sdk
     MPI_PATH="${TOP_DIR}"/middleware/v2
 
@@ -332,7 +332,7 @@ elif [[ "${CHIP_ARCH}" == "CV180X" ]]; then
     if [ -n "${ALIOS_PATH}" && -d "${ALIOS_PATH}" ]; then
         CONFIG_DUAL_OS=ON
     fi
-elif [[ "${CHIP_ARCH}" == "SOPHON" ]]; then
+elif [[ "${CHIP_ARCH}" == "88a2" ]]; then
     MPI_PATH="${TOP_DIR}"/middleware/"${MW_VER}"
     USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "CV184X" ]]; then

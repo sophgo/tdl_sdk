@@ -93,7 +93,7 @@ elseif("${MW_VER}" STREQUAL "v2")
 endif()
 
 string(TOLOWER ${CVI_PLATFORM} CVI_PLATFORM_LOWER)
-if("${CVI_PLATFORM}" STREQUAL "SOPHON")
+if("${CVI_PLATFORM}" STREQUAL "88a2")
   set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/modules/isp/include/cv186x)
 else()
   set(ISP_HEADER_PATH ${MIDDLEWARE_SDK_ROOT}/include/isp/${CVI_PLATFORM_LOWER}/
@@ -141,7 +141,7 @@ elseif(${CVI_PLATFORM} STREQUAL "CV184X")
     ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_bin.o
     ${MIDDLEWARE_SDK_ROOT}/sample_app/common/sample_common_peripheral.o
     )
-elseif(${CVI_PLATFORM} STREQUAL "SOPHON")
+elseif(${CVI_PLATFORM} STREQUAL "88a2")
   set(MIDDLEWARE_OBJ
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_platform.o
     ${MIDDLEWARE_SDK_ROOT}/sample/common/sample_common_sys.o
@@ -158,7 +158,7 @@ else()
 endif()
 
 # Set SAMPLE_LIBS based on platform
-if(${CVI_PLATFORM} STREQUAL "SOPHON")
+if(${CVI_PLATFORM} STREQUAL "88a2")
     set(MIDDLEWARE_LIBS 
         ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
         ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so
@@ -285,7 +285,7 @@ else()
 
     # Additional libraries for v2
     if(${MW_VER} STREQUAL "v2")
-        if(${CVI_PLATFORM} STRLESS "SOPHON")
+        if(${CVI_PLATFORM} MATCHES "^(CV|CMODEL)")
             set(MIDDLEWARE_LIBS
                 ${MIDDLEWARE_SDK_ROOT}/lib/libsys.so
                 ${MIDDLEWARE_SDK_ROOT}/lib/libvi.so

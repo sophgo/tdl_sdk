@@ -25,7 +25,7 @@ elseif(("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X"))
       )
 
 elseif(("${CVI_PLATFORM}" STREQUAL "CV184X") OR
-        ("${CVI_PLATFORM}" STREQUAL "SOPHON"))
+        ("${CVI_PLATFORM}" STREQUAL "88a2"))
   set(NET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/net/bm168x_net.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory/cvi_memory_pool.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory/bm_memory_pool.cpp
@@ -43,7 +43,7 @@ else()
 
 endif()
 
-if("${CVI_PLATFORM}" STREQUAL "SOPHON" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
+if("${CVI_PLATFORM}" STREQUAL "88a2" OR "${CVI_PLATFORM}" STREQUAL "CV184X")
   set(NET_SRCS ${NET_SRCS} ${CMAKE_CURRENT_SOURCE_DIR}/image/vpss_image.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/preprocess/vpss_preprocessor.cpp
               )
@@ -71,7 +71,7 @@ set(PROJ_SRCS
                 )
 
 
-if("${CVI_PLATFORM}" STREQUAL "SOPHON" OR 
+if("${CVI_PLATFORM}" STREQUAL "88a2" OR 
    "${CVI_PLATFORM}" STREQUAL "CV184X" OR 
    "${CVI_PLATFORM}" STREQUAL "CV181X" OR 
    "${CVI_PLATFORM}" STREQUAL "CV180X")
