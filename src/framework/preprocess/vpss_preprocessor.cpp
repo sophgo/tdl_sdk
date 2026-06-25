@@ -3,6 +3,7 @@
 #include <cvi_vb.h>
 #include <cvi_vpss.h>
 #include <cassert>
+#include <cmath>
 // #include "core/utils/vpss_helper.h"
 #include "cvi_comm_vb.h"
 #include "image/vpss_image.hpp"
@@ -339,9 +340,12 @@ int32_t VpssPreprocessor::generateVPSSChnAttr(
   //              (int)(params.mean[1] / params.scale[1]),
   //              (int)(params.mean[2] / params.scale[2]));
 
-  bool enable_normalize = params.scale[0] != 1 || params.scale[1] != 1 ||
-                          params.scale[2] != 1 || params.mean[0] != 0 ||
-                          params.mean[1] != 0 || params.mean[2] != 0;
+  auto not_close = [](float a, float b) { return std::fabs(a - b) > 1e-3f; };
+  bool enable_normalize =
+      not_close(params.scale[0], 1.0f) || not_close(params.scale[1], 1.0f) ||
+      not_close(params.scale[2], 1.0f) || not_close(params.mean[0], 0.0f) ||
+      not_close(params.mean[1], 0.0f) || not_close(params.mean[2], 0.0f);
+  LOGI("enable_normalize:%d", enable_normalize);
   pastVpssChnAttr->stNormalize.bEnable = enable_normalize;
   if (enable_normalize) {
     for (uint32_t i = 0; i < 3; i++) {
