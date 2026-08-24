@@ -4,6 +4,7 @@
 #define MODEL_TYPE_LIST                                                       \
   X(MBV2_DET_PERSON, "0:person")                                              \
   X(YOLOV8N_DET_HAND, "")                                                     \
+  X(YOLOV8N_DET_DRONE, "0:drone")                                             \
   X(YOLOV8N_DET_PET_PERSON, "0:cat,1:dog,2:person")                           \
   X(YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE, "0:bicycle,1:motorcycle,2:ebicycle")  \
   X(YOLOV8N_DET_PERSON_VEHICLE,                                               \
@@ -66,6 +67,7 @@
                                                                               \
   /* sound classification */                                                  \
   X(CLS_SOUND_BABAY_CRY, "0:background,1:cry")                                \
+  X(CLS_AEROEAR, "0:background,1:drone")                                      \
   X(CLS_SOUND_COMMAND_NIHAOSHIYUN, "0:background,1:nihaoshiyun")              \
   X(CLS_SOUND_COMMAND_NIHAOSUANNENG, "0:background,1:nihaosuanneng")          \
   X(CLS_SOUND_COMMAND_XIAOAIXIAOAI, "0:background,1:xiaoaixiaoai")            \

@@ -1,5 +1,6 @@
 #include "keypoints_detection/hand_keypoint.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <sstream>
@@ -14,6 +15,11 @@
 #define R_MEAN (0.485 / 0.229)
 #define G_MEAN (0.456 / 0.224)
 #define B_MEAN (0.406 / 0.225)
+
+namespace {
+constexpr int32_t kVpssMinHandKeypointCropWidth = 32;
+constexpr int32_t kVpssMinHandKeypointCropHeight = 32;
+}  // namespace
 
 HandKeypoint::HandKeypoint() {
   net_param_.model_config.mean = {R_MEAN / R_SCALE, G_MEAN / G_SCALE,
@@ -45,8 +51,24 @@ int32_t HandKeypoint::inference(
     int new_height = static_cast<int>(height * expansion_factor);
     int crop_x = (int)crop_boxes[i].x1 - (new_width - width) / 2;
     int crop_y = (int)crop_boxes[i].y1 - (new_height - height) / 2;
+    bool use_vpss = image->getImageType() == ImageType::VPSS_FRAME;
+    if (use_vpss && (new_width < kVpssMinHandKeypointCropWidth ||
+                     new_height < kVpssMinHandKeypointCropHeight)) {
+      LOGW(
+          "skip hand keypoint for small VPSS crop,width:%d,height:%d,"
+          "min_width:%d,min_height:%d",
+          new_width, new_height, kVpssMinHandKeypointCropWidth,
+          kVpssMinHandKeypointCropHeight);
+      continue;
+    }
+
     std::shared_ptr<BaseImage> human_crop =
         preprocessor_->crop(image, crop_x, crop_y, new_width, new_height);
+    if (human_crop == nullptr) {
+      LOGE("crop image failed");
+      return -1;
+    }
+
     batch_images.clear();
     batch_images.push_back(human_crop);
     std::vector<std::shared_ptr<ModelOutputInfo>> batch_out_datas;
@@ -92,10 +114,11 @@ int32_t HandKeypoint::outputParse(
     float *out_data = out_data_tensor->getBatchPtr<float>(b);
 
     for (int k = 0; k < 42; k++) {
+      float coord = std::max(0.0f, std::min(out_data[k], 1.0f));
       if (k % 2 == 0) {
-        obj->landmarks_x.push_back(out_data[k]);
+        obj->landmarks_x.push_back(coord);
       } else {
-        obj->landmarks_y.push_back(out_data[k]);
+        obj->landmarks_y.push_back(coord);
       }
     }
     // TODO:should restore to original image coordinate

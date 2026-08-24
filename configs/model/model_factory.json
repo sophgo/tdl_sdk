@@ -11,6 +11,10 @@
       "types":["hand"],
       "file_name":"yolov8n_det_hand_384_640_INT8"
     },
+    "YOLOV8N_DET_DRONE":{
+      "types":["drone"],
+      "file_name":"yolov8n_drone_640_640_INT8"
+    },
     "YOLOV8N_DET_PET_PERSON":{
       "types":["cat","dog","person"],
       "file_name":"yolov8n_det_pet_person_384_640_INT8"
@@ -234,7 +238,15 @@
       "rgb_order":"gray",
       "hop_len":128,
       "fix":1
-    },     
+    },
+    "CLS_SOUND_DRONE":{
+      "_comment":"single channel; drone sound 8k*2s, hop128, width126, n_mel40 (0:background,1:drone)",
+      "types":["background","drone"],
+      "file_name":"cls_sound_drone_126_40_INT8",
+      "rgb_order":"gray",
+      "hop_len":128,
+      "fix":1
+    },
     "CLS_IMG":{
       "_comment":"custom classification, set types,file_name,specify rgb order and mean/std",
       "types":["custom"],

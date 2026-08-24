@@ -14,6 +14,10 @@ class VPSSImage : public BaseImage {
             TDLDataType pix_data_type, bool alloc_memory = false,
             std::shared_ptr<BaseMemoryPool> memory_pool = nullptr,
             ImageType imageType = ImageType::UNKOWN);
+  VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
+            TDLDataType pix_data_type, bool alloc_memory,
+            std::shared_ptr<BaseMemoryPool> memory_pool, ImageType imageType,
+            bool use_vpss_image_format);
   VPSSImage(const VIDEO_FRAME_INFO_S& frame, bool is_preprocessed = false);
   // VPSSImage();
   ~VPSSImage();
@@ -44,6 +48,9 @@ class VPSSImage : public BaseImage {
 
   static PIXEL_FORMAT_E convertPixelFormat(ImageFormat imageFormat,
                                            TDLDataType pix_data_type);
+  static PIXEL_FORMAT_E convertPixelFormatForVpssImage(
+      ImageFormat imageFormat, TDLDataType pix_data_type);
+  bool useVpssImageFormat() const { return use_vpss_image_format_; }
   VIDEO_FRAME_INFO_S* getFrame() const;
 
   PIXEL_FORMAT_E getPixelFormat() const;
@@ -60,12 +67,14 @@ class VPSSImage : public BaseImage {
                            bool is_preprocessed);
   int32_t initFrameInfo(uint32_t width, uint32_t height,
                         ImageFormat imageFormat, TDLDataType pix_data_type,
-                        VIDEO_FRAME_INFO_S* frame);
+                        VIDEO_FRAME_INFO_S* frame,
+                        bool use_vpss_image_format = false);
 
  private:
   VIDEO_FRAME_INFO_S frame_;
   bool is_from_pool_ = false;
   bool own_vpss_frame_ = false;
+  bool use_vpss_image_format_ = false;
 };
 
 #endif  // VPSS_IMAGE_H

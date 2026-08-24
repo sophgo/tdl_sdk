@@ -17,6 +17,62 @@ void init_vpss_grp_attr(VPSS_GRP_ATTR_S* pstVpssGrpAttr, CVI_U32 srcWidth,
 void init_vpss_chn_attr(VPSS_CHN_ATTR_S* pastVpssChnAttr, CVI_U32 dst_width,
                         CVI_U32 dst_height, PIXEL_FORMAT_E enDstFormat,
                         CVI_BOOL keep_aspect_ratio);
+
+namespace {
+constexpr uint32_t kVpssMinWidth = 32;
+constexpr uint32_t kVpssMinHeight = 32;
+
+bool isValidVpssSize(uint32_t width, uint32_t height) {
+  return width >= kVpssMinWidth && height >= kVpssMinHeight;
+}
+
+bool validateVpssPreprocessParams(const std::shared_ptr<BaseImage>& src_image,
+                                  const PreprocessParams& params) {
+  if (src_image == nullptr) {
+    LOGE("src_image is nullptr!\n");
+    return false;
+  }
+
+  uint32_t src_width = src_image->getWidth();
+  uint32_t src_height = src_image->getHeight();
+  if (!isValidVpssSize(src_width, src_height)) {
+    LOGE(
+        "VPSS src image too small,width:%u,height:%u,min_width:%u,"
+        "min_height:%u",
+        src_width, src_height, kVpssMinWidth, kVpssMinHeight);
+    return false;
+  }
+
+  uint32_t roi_width = params.crop_width > 0
+                           ? static_cast<uint32_t>(params.crop_width)
+                           : src_width;
+  uint32_t roi_height = params.crop_height > 0
+                            ? static_cast<uint32_t>(params.crop_height)
+                            : src_height;
+  if (!isValidVpssSize(roi_width, roi_height)) {
+    LOGE(
+        "VPSS crop image too small,width:%u,height:%u,min_width:%u,"
+        "min_height:%u",
+        roi_width, roi_height, kVpssMinWidth, kVpssMinHeight);
+    return false;
+  }
+
+  uint32_t dst_width =
+      params.dst_width > 0 ? static_cast<uint32_t>(params.dst_width) : 0;
+  uint32_t dst_height =
+      params.dst_height > 0 ? static_cast<uint32_t>(params.dst_height) : 0;
+  if (!isValidVpssSize(dst_width, dst_height)) {
+    LOGE(
+        "VPSS dst image too small,width:%d,height:%d,min_width:%u,"
+        "min_height:%u",
+        params.dst_width, params.dst_height, kVpssMinWidth, kVpssMinHeight);
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
+
 VpssContext::VpssContext() {
   CVI_S32 s32Ret = CVI_SUCCESS;
 
@@ -168,9 +224,13 @@ bool VpssPreprocessor::stop() {
 std::shared_ptr<BaseImage> VpssPreprocessor::preprocess(
     const std::shared_ptr<BaseImage>& image, const PreprocessParams& params,
     std::shared_ptr<BaseMemoryPool> memory_pool) {
+  if (!validateVpssPreprocessParams(image, params)) {
+    return nullptr;
+  }
+
   std::shared_ptr<VPSSImage> vpss_image = std::make_shared<VPSSImage>(
       params.dst_width, params.dst_height, params.dst_image_format,
-      params.dst_pixdata_type, false, memory_pool);
+      params.dst_pixdata_type, false, memory_pool, ImageType::UNKOWN, true);
   std::unique_ptr<MemoryBlock> memory_block;
   if (memory_pool == nullptr) {
     LOGW("input memory_pool is nullptr,use src image memory pool\n");
@@ -192,19 +252,28 @@ std::shared_ptr<BaseImage> VpssPreprocessor::preprocess(
   }
   LOGI("setup output image done");
 
-  preprocessToImage(image, params, vpss_image);
+  ret = preprocessToImage(image, params, vpss_image);
+  if (ret != 0) {
+    LOGE("preprocessToImage failed, ret: %d\n", ret);
+    return nullptr;
+  }
   LOGI("CVI_VPSS_GetChnFrame done");
   return vpss_image;
 }
 
 int32_t VpssPreprocessor::prepareVPSSParams(
-    const std::shared_ptr<BaseImage>& src_image,
-    const PreprocessParams& params) {
+    const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
+    bool use_vpss_image_format) {
+  if (!validateVpssPreprocessParams(src_image, params)) {
+    return -1;
+  }
+
   VPSS_GRP_ATTR_S vpss_grp_attr;
   VPSS_CROP_INFO_S vpss_chn_crop_attr;
   VPSS_CHN_ATTR_S vpss_chn_attr;
-  bool is_ok = generateVPSSParams(src_image, params, vpss_grp_attr,
-                                  vpss_chn_crop_attr, vpss_chn_attr);
+  bool is_ok =
+      generateVPSSParams(src_image, params, vpss_grp_attr, vpss_chn_crop_attr,
+                         vpss_chn_attr, use_vpss_image_format);
   if (!is_ok) {
     LOGE("generateVPSSParams failed!\n");
     return -1;
@@ -243,7 +312,7 @@ int32_t VpssPreprocessor::prepareVPSSParams(
 bool VpssPreprocessor::generateVPSSParams(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
     VPSS_GRP_ATTR_S& vpss_grp_attr, VPSS_CROP_INFO_S& vpss_chn_crop_attr,
-    VPSS_CHN_ATTR_S& vpss_chn_attr) const {
+    VPSS_CHN_ATTR_S& vpss_chn_attr, bool use_vpss_image_format) const {
   if (src_image == nullptr) {
     LOGE("src_image is nullptr!\n");
     return false;
@@ -268,7 +337,7 @@ bool VpssPreprocessor::generateVPSSParams(
 
   generateVPSSGrpAttr(src_image, params, vpss_grp_attr);
 
-  generateVPSSChnAttr(src_image, params, vpss_chn_attr);
+  generateVPSSChnAttr(src_image, params, vpss_chn_attr, use_vpss_image_format);
 
   if (params.crop_width > 0 && params.crop_height > 0) {
     vpss_chn_crop_attr.bEnable = true;
@@ -299,11 +368,15 @@ int32_t VpssPreprocessor::generateVPSSGrpAttr(
 }
 int32_t VpssPreprocessor::generateVPSSChnAttr(
     const std::shared_ptr<BaseImage>& src_image, const PreprocessParams& params,
-    VPSS_CHN_ATTR_S& vpss_chn_attr) const {
+    VPSS_CHN_ATTR_S& vpss_chn_attr, bool use_vpss_image_format) const {
   VPSS_CHN_ATTR_S* pastVpssChnAttr = &vpss_chn_attr;
 
-  PIXEL_FORMAT_E dst_format = VPSSImage::convertPixelFormat(
-      params.dst_image_format, params.dst_pixdata_type);
+  PIXEL_FORMAT_E dst_format =
+      use_vpss_image_format
+          ? VPSSImage::convertPixelFormatForVpssImage(params.dst_image_format,
+                                                      params.dst_pixdata_type)
+          : VPSSImage::convertPixelFormat(params.dst_image_format,
+                                          params.dst_pixdata_type);
   pastVpssChnAttr->u32Width = params.dst_width;
   pastVpssChnAttr->u32Height = params.dst_height;
   pastVpssChnAttr->enVideoFormat = VIDEO_FORMAT_LINEAR;
@@ -380,7 +453,9 @@ int32_t VpssPreprocessor::preprocessToImage(
          static_cast<int>(src_image->getImageType()));
     return -1;
   }
-  int32_t ret = prepareVPSSParams(src_image, params);
+  VPSSImage* vpss_image = static_cast<VPSSImage*>(image.get());
+  bool use_vpss_image_format = vpss_image->useVpssImageFormat();
+  int32_t ret = prepareVPSSParams(src_image, params, use_vpss_image_format);
   if (ret != CVI_SUCCESS) {
     LOGE("prepareVPSSParams failed with %#x\n", ret);
     return ret;
@@ -390,7 +465,6 @@ int32_t VpssPreprocessor::preprocessToImage(
       static_cast<VIDEO_FRAME_INFO_S*>(image->getInternalData());
   const VIDEO_FRAME_INFO_S* input_frame =
       static_cast<const VIDEO_FRAME_INFO_S*>(src_image->getInternalData());
-  VPSSImage* vpss_image = static_cast<VPSSImage*>(image.get());
   vpss_image->checkToSwapRGB();
 
   // prepare output frame

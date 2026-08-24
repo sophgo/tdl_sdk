@@ -709,11 +709,22 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
 
   TDLImageContext *image_context = (TDLImageContext *)image_handle;
   std::vector<std::shared_ptr<BaseImage>> images;
+  std::vector<int32_t> object_indices;
   std::vector<std::shared_ptr<ModelOutputInfo>> outputs;
   std::shared_ptr<BasePreprocessor> preprocessor = model->getPreprocessor();
   int32_t ret = 0;
   int32_t keypoint_cnt = 0;
   std::shared_ptr<ModelBoxInfo> obj_info = convertObjMeta(object_meta);
+  constexpr int32_t kVpssMinHandKeypointCropWidth = 32;
+  constexpr int32_t kVpssMinHandKeypointCropHeight = 32;
+  bool use_vpss = image_context->image->getImageType() == ImageType::VPSS_FRAME;
+
+  if (crop_image_handle != nullptr) {
+    for (uint32_t i = 0; i < object_meta->size; i++) {
+      crop_image_handle[i] = nullptr;
+    }
+  }
+
   if (object_meta->size != 0) {
     for (int32_t i = 0; i < object_meta->size; i++) {
       std::shared_ptr<BaseImage> target_img;
@@ -746,18 +757,42 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
       if (crop_y + new_height > img_height)
         crop_y = std::max(0, img_height - new_height);
 
+      if (model_id == TDL_MODEL_KEYPOINT_HAND && use_vpss &&
+          (new_width < kVpssMinHandKeypointCropWidth ||
+           new_height < kVpssMinHandKeypointCropHeight)) {
+        LOGW(
+            "skip hand keypoint for small VPSS crop,width:%d,height:%d,"
+            "min_width:%d,min_height:%d",
+            new_width, new_height, kVpssMinHandKeypointCropWidth,
+            kVpssMinHandKeypointCropHeight);
+        continue;
+      }
+
       target_img = preprocessor->crop(image_context->image, crop_x, crop_y,
                                       new_width, new_height);
+      if (target_img == nullptr) {
+        LOGE("crop image failed\n");
+        return -1;
+      }
       images.push_back(target_img);
+      object_indices.push_back(i);
     }
   } else {
     images.push_back(image_context->image);
+    object_indices.push_back(0);
   }
+
+  if (images.empty()) {
+    LOGW("skip keypoint inference because no valid target image");
+    return 0;
+  }
+
   ret = model->inference(images, outputs);
   if (ret != 0) {
     return ret;
   }
   for (size_t i = 0; i < outputs.size(); i++) {
+    int32_t object_idx = object_indices[i];
     std::shared_ptr<ModelOutputInfo> output = outputs[i];
     if (output->getType() != ModelOutputType::OBJECT_LANDMARKS) {
       LOGW("Unsupported model output type: %d", output->getType());
@@ -768,11 +803,11 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
     TDL_InitObjectMeta(object_meta, object_meta->size, keypoint_cnt);
     object_meta->width = keypoint_output->image_width;
     object_meta->height = keypoint_output->image_height;
-    object_meta->info[i].landmark_size = keypoint_cnt;
+    object_meta->info[object_idx].landmark_size = keypoint_cnt;
     for (size_t j = 0; j < keypoint_cnt; j++) {
-      object_meta->info[i].landmark_properity[j].x =
+      object_meta->info[object_idx].landmark_properity[j].x =
           keypoint_output->landmarks_x[j];
-      object_meta->info[i].landmark_properity[j].y =
+      object_meta->info[object_idx].landmark_properity[j].y =
           keypoint_output->landmarks_y[j];
     }
 
@@ -781,9 +816,10 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
       if (model_id == TDL_MODEL_KEYPOINT_LICENSE_PLATE) {
         float dst_keypoints[keypoint_cnt * 2];
         for (int32_t k = 0; k < keypoint_cnt; k++) {
-          dst_keypoints[2 * k] = object_meta->info[i].landmark_properity[k].x;
+          dst_keypoints[2 * k] =
+              object_meta->info[object_idx].landmark_properity[k].x;
           dst_keypoints[2 * k + 1] =
-              object_meta->info[i].landmark_properity[k].y;
+              object_meta->info[object_idx].landmark_properity[k].y;
         }
         std::shared_ptr<BaseImage> license_plate_align =
             ImageFactory::alignLicensePlate(images[i], dst_keypoints, nullptr,
@@ -792,7 +828,8 @@ int32_t TDL_DetectionKeypoint(TDLHandle handle, const TDLModel model_id,
       } else {
         image_crop_context->image = images[i];
       }
-      crop_image_handle[i] = reinterpret_cast<TDLImage>(image_crop_context);
+      crop_image_handle[object_idx] =
+          reinterpret_cast<TDLImage>(image_crop_context);
     }
   }
 

@@ -37,18 +37,21 @@ class VpssPreprocessor : public BasePreprocessor {
   bool init();
   bool stop();
   int32_t prepareVPSSParams(const std::shared_ptr<BaseImage>& src_image,
-                            const PreprocessParams& params);
+                            const PreprocessParams& params,
+                            bool use_vpss_image_format = false);
   int32_t generateVPSSGrpAttr(const std::shared_ptr<BaseImage>& src_image,
                               const PreprocessParams& params,
                               VPSS_GRP_ATTR_S& vpss_grp_attr) const;
   int32_t generateVPSSChnAttr(const std::shared_ptr<BaseImage>& src_image,
                               const PreprocessParams& params,
-                              VPSS_CHN_ATTR_S& vpss_chn_attr) const;
+                              VPSS_CHN_ATTR_S& vpss_chn_attr,
+                              bool use_vpss_image_format = false) const;
   bool generateVPSSParams(const std::shared_ptr<BaseImage>& src_image,
                           const PreprocessParams& params,
                           VPSS_GRP_ATTR_S& vpss_grp_attr,
                           VPSS_CROP_INFO_S& vpss_chn_crop_attr,
-                          VPSS_CHN_ATTR_S& vpss_chn_attr) const;
+                          VPSS_CHN_ATTR_S& vpss_chn_attr,
+                          bool use_vpss_image_format = false) const;
   int group_id_;
   int device_;
   VPSS_CROP_INFO_S crop_reset_attr_;

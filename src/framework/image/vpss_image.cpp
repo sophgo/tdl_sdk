@@ -13,8 +13,17 @@
 VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
                      TDLDataType dataType, bool alloc_memory,
                      std::shared_ptr<BaseMemoryPool> memory_pool,
-                     ImageType imageType) {
-  int32_t ret = initFrameInfo(width, height, imageFormat, dataType, &frame_);
+                     ImageType imageType)
+    : VPSSImage(width, height, imageFormat, dataType, alloc_memory, memory_pool,
+                imageType, false) {}
+
+VPSSImage::VPSSImage(uint32_t width, uint32_t height, ImageFormat imageFormat,
+                     TDLDataType dataType, bool alloc_memory,
+                     std::shared_ptr<BaseMemoryPool> memory_pool,
+                     ImageType imageType, bool use_vpss_image_format) {
+  use_vpss_image_format_ = use_vpss_image_format;
+  int32_t ret = initFrameInfo(width, height, imageFormat, dataType, &frame_,
+                              use_vpss_image_format_);
   if (ret != 0) {
     throw std::runtime_error("initFrameInfo failed");
   }
@@ -108,8 +117,12 @@ bool VPSSImage::isInitialized() const {
 int32_t VPSSImage::initFrameInfo(uint32_t width, uint32_t height,
                                  ImageFormat imageFormat,
                                  TDLDataType pix_data_type,
-                                 VIDEO_FRAME_INFO_S* frame) {
-  PIXEL_FORMAT_E pixel_format = convertPixelFormat(imageFormat, pix_data_type);
+                                 VIDEO_FRAME_INFO_S* frame,
+                                 bool use_vpss_image_format) {
+  PIXEL_FORMAT_E pixel_format =
+      use_vpss_image_format
+          ? convertPixelFormatForVpssImage(imageFormat, pix_data_type)
+          : convertPixelFormat(imageFormat, pix_data_type);
   if (pixel_format == PIXEL_FORMAT_MAX) {
     LOGE("convertPixelFormat failed, imageFormat: %d,pix_data_type:%d",
          (int)imageFormat, (int)pix_data_type);
@@ -228,6 +241,20 @@ PIXEL_FORMAT_E VPSSImage::convertPixelFormat(ImageFormat img_format,
   }
 
   return pixel_format;
+}
+
+PIXEL_FORMAT_E VPSSImage::convertPixelFormatForVpssImage(
+    ImageFormat img_format, TDLDataType pix_data_type) {
+  if (pix_data_type == TDLDataType::UINT8) {
+    if (img_format == ImageFormat::RGB_PLANAR) {
+      return PIXEL_FORMAT_RGB_888_PLANAR;
+    }
+    if (img_format == ImageFormat::BGR_PLANAR) {
+      return PIXEL_FORMAT_BGR_888_PLANAR;
+    }
+  }
+
+  return convertPixelFormat(img_format, pix_data_type);
 }
 
 uint32_t VPSSImage::getPlaneNum() const {

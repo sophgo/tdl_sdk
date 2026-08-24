@@ -1,6 +1,7 @@
 #include "tdl_model_factory.hpp"
 
 #include <fstream>
+#include "audio_classification/aeroear_classification.hpp"
 #include "audio_classification/audio_classification.hpp"
 #include "depth_estimation/stereo.hpp"
 #include "face_attribute/face_attribute_cls.hpp"
@@ -102,6 +103,7 @@ bool TDLModelFactory::isObjectDetectionModel(const ModelType model_type) {
   return (model_type == ModelType::YOLOV8N_DET_PERSON_VEHICLE ||
           model_type == ModelType::YOLOV8N_DET_LICENSE_PLATE ||
           model_type == ModelType::YOLOV8N_DET_HAND ||
+          model_type == ModelType::YOLOV8N_DET_DRONE ||
           model_type == ModelType::YOLOV8N_DET_PET_PERSON ||
           model_type == ModelType::YOLOV8N_DET_BICYCLE_MOTOR_EBICYCLE ||
           model_type == ModelType::YOLOV8N_DET_HAND_FACE_PERSON ||
@@ -152,6 +154,7 @@ bool TDLModelFactory::isKeypointDetectionModel(const ModelType model_type) {
 bool TDLModelFactory::isClassificationModel(const ModelType model_type) {
   return (model_type == ModelType::CLS_HAND_GESTURE ||
           model_type == ModelType::CLS_KEYPOINT_HAND_GESTURE ||
+          model_type == ModelType::CLS_AEROEAR ||
           model_type == ModelType::CLS_SOUND_BABAY_CRY ||
           model_type == ModelType::CLS_SOUND_COMMAND ||
           model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSHIYUN ||
@@ -232,6 +235,9 @@ std::shared_ptr<BaseModel> TDLModelFactory::createObjectDetectionModel(
     num_classes = 1;
   } else if (model_type == ModelType::YOLOV8N_DET_HAND) {
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_HAND;
+    num_classes = 1;
+  } else if (model_type == ModelType::YOLOV8N_DET_DRONE) {
+    model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_DRONE;
     num_classes = 1;
   } else if (model_type == ModelType::YOLOV8N_DET_PET_PERSON) {
     model_type_mapping[0] = TDLObjectType::OBJECT_TYPE_CAT;
@@ -511,7 +517,9 @@ std::shared_ptr<BaseModel> TDLModelFactory::createClassificationModel(
 #endif
 
 #ifndef DISABLE_AUDIO_CLASSIFICATION
-  if (model_type == ModelType::CLS_SOUND_BABAY_CRY) {
+  if (model_type == ModelType::CLS_AEROEAR) {
+    model = std::make_shared<AeroEarClassification>();
+  } else if (model_type == ModelType::CLS_SOUND_BABAY_CRY) {
     model = std::make_shared<AudioClassification>();
   } else if (model_type == ModelType::CLS_SOUND_COMMAND ||
              model_type == ModelType::CLS_SOUND_COMMAND_NIHAOSHIYUN ||

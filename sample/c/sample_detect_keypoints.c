@@ -148,6 +148,14 @@ int main(int argc, char *argv[]) {
     goto exit1;
   }
 
+  if (model_id_d == TDL_MODEL_YOLOV8N_DET_HAND) {
+    ret = TDL_SetModelThreshold(tdl_handle, model_id_d, 0.7f);
+    if (ret != 0) {
+      printf("set hand detection threshold failed with %#x!\n", ret);
+      goto exit2;
+    }
+  }
+
   TDLImage image = TDL_ReadImage(input_image);
   if (image == NULL) {
     printf("read image failed with %#x!\n", ret);
