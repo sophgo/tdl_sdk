@@ -99,7 +99,8 @@ VpssContext::VpssContext() {
     assert(false);
   }
 
-#if defined(__CV184X__) || defined(__CV181X__) || defined(__CV180X__)
+#if defined(__CV184X__) || defined(__CV181X__) || defined(__CV180X__) || \
+    defined(__CV190X__)
   s32Ret = CVI_VB_Init();
   if (s32Ret != CVI_SUCCESS) {
     LOGE("CVI_VB_Init failed!\n");
@@ -111,7 +112,8 @@ VpssContext::VpssContext() {
 }
 
 VpssContext::~VpssContext() {
-#if defined(__CV184X__) || defined(__CV181X__) || defined(__CV180X__)
+#if defined(__CV184X__) || defined(__CV181X__) || defined(__CV180X__) || \
+    defined(__CV190X__)
   CVI_VB_Exit();
 #endif
   int s32Ret = CVI_SYS_Exit();

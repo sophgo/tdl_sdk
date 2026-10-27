@@ -86,12 +86,12 @@ int main(int argc, char *argv[]) {
   std::string dataset_dir = argv[3];
 
   std::string test_flag = "func";
-  if (argc == 5) {
+  if (argc >= 5) {
     test_flag = argv[4];
   }
 
   std::string test_type = "all";
-  if (argc == 6) {
+  if (argc >= 6) {
     test_type = argv[5];
   }
 

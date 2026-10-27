@@ -5,6 +5,11 @@
 #include <iostream>
 #include <vector>
 
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+#include <arm_neon.h>
+#define CCL_USE_NEON 1
+#endif
+
 #include "ccl.hpp"
 #include "utils/tdl_log.hpp"
 #define CC_MAX_NUM_LABELS 200
@@ -24,12 +29,18 @@ typedef struct CCTag {
   int superPixMapW;
   int superPixMapH;
 
+  // allocated capacity of the super-pixel buffers (in super-pixels). ROI mode
+  // calls this with varying w/h; realloc only when the new frame needs a larger
+  // buffer than what is already allocated, to avoid new/delete churn per ROI.
+  int superPixMapCap;
+
   int numTotalObj;
 
   int maxID;
 
   unsigned char *dataSuperPixMap;
   unsigned char *dataSuperPixFG;
+  unsigned char *dataSuperPixHit;
   unsigned char *eqCCLabelArray;
 
   int numObjects;
@@ -56,27 +67,41 @@ void initConnectedComponent(CCLType *ccGst, int width, int height) {
   superPixMapW = ccGst->superPixMapW;
   superPixMapH = ccGst->superPixMapH;
 
-  ccGst->dataSuperPixMap = new unsigned char[superPixMapW * superPixMapH];
+  int cap = superPixMapW * superPixMapH;
 
-  memset(ccGst->dataSuperPixMap, 0, superPixMapH * superPixMapW);
+  // Grow-only: keep existing buffers if they already cover the requested size,
+  // so switching between ROIs of different sizes does not re-allocate.
+  if (ccGst->dataSuperPixMap == nullptr || cap > ccGst->superPixMapCap) {
+    // Allocate into temporaries first: if a later new throws, the old
+    // buffers and superPixMapCap stay valid (no dangling / double-free).
+    unsigned char *newMap = new unsigned char[cap];
+    unsigned char *newFG = new unsigned char[cap];
+    unsigned char *newHit = new unsigned char[cap];
+    delete[] ccGst->dataSuperPixMap;
+    delete[] ccGst->dataSuperPixFG;
+    delete[] ccGst->dataSuperPixHit;
+    ccGst->dataSuperPixMap = newMap;
+    ccGst->dataSuperPixFG = newFG;
+    ccGst->dataSuperPixHit = newHit;
+    ccGst->superPixMapCap = cap;
+  }
+  memset(ccGst->dataSuperPixMap, 0, cap);
+  memset(ccGst->dataSuperPixFG, 0, cap);
 
-  ccGst->dataSuperPixFG = new unsigned char[superPixMapH * superPixMapW];
-  memset(ccGst->dataSuperPixFG, 0, superPixMapH * superPixMapW);
-
-  ccGst->eqCCLabelArray = new unsigned char[CC_MAX_NUM_LABELS + 1];
-
-  ccGst->boundingBoxesTmp = new int[MAX_CC_OBJECTS * 5];
-  ccGst->boundingBoxes = new int[MAX_CC_OBJECTS * 5];
+  if (ccGst->eqCCLabelArray == nullptr) {
+    ccGst->eqCCLabelArray = new unsigned char[CC_MAX_NUM_LABELS + 1];
+    ccGst->boundingBoxesTmp = new int[MAX_CC_OBJECTS * 5];
+    ccGst->boundingBoxes = new int[MAX_CC_OBJECTS * 5];
+  }
 }
 
 void releaseConnectedComponent(CCLType *ccGst) {
-  if (ccGst->maskWidth > 0 && ccGst->maskHeight > 0) {
-    delete[] ccGst->dataSuperPixMap;
-    delete[] ccGst->dataSuperPixFG;
-    delete[] ccGst->eqCCLabelArray;
-    delete[] ccGst->boundingBoxesTmp;
-    delete[] ccGst->boundingBoxes;
-  }
+  delete[] ccGst->dataSuperPixMap;
+  delete[] ccGst->dataSuperPixFG;
+  delete[] ccGst->dataSuperPixHit;
+  delete[] ccGst->eqCCLabelArray;
+  delete[] ccGst->boundingBoxesTmp;
+  delete[] ccGst->boundingBoxes;
 
   memset(ccGst, 0, sizeof(CCLType));
 }
@@ -190,6 +215,7 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
   unsigned char *ptrSuperPixMap0;
   unsigned char *ptrSuperPixFG;
   unsigned char *ptrSuperPixFG0;
+  unsigned char *ptrSuperPixHit0;
   unsigned char *ptrLabelMap;
   unsigned char *ptrLabelMap0;
   unsigned char *eqLabelArray;
@@ -203,10 +229,10 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
   if (ccGst->maskWidth != width || ccGst->maskHeight != height) {
     LOGI("allocate ccl,w:%d,h:%d\n", width, height);
 
-    releaseConnectedComponent(ccGst);
+    // Grow-only init: reuses buffers across differently-sized ROIs instead of
+    // release()+init() every call. init() re-computes superPixMap dimensions
+    // and clears the buffers, so no separate reset is needed here.
     initConnectedComponent(ccGst, width, height);
-    // std::cout<<"to allocate
-    // ccl,w:"<<width<<",height:"<<height<<",maskw:"<<ccGst->maskWidth<<std::endl;
   }
 
   // imgW = ccGst->maskWidth;
@@ -215,16 +241,17 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
 
   ptrSuperPixMap0 = ccGst->dataSuperPixMap;
   ptrSuperPixFG0 = ccGst->dataSuperPixFG;
+  ptrSuperPixHit0 = ccGst->dataSuperPixHit;
   eqLabelArray = ccGst->eqCCLabelArray;
 
   ptrImgData0 = p_fg_mask;
 
   tmpMaxLabel = 0;
 
-  /* reset foreground super pixels.*/
+  /* reset foreground super pixels. dataSuperPixFG is fully overwritten by the
+   * block-sum pass below (every cell is written), so only dataSuperPixMap needs
+   * clearing here (the scan-window pass writes it sparsely). */
   memset(ccGst->dataSuperPixMap, 0,
-         superPixMapH * superPixMapW * sizeof(unsigned char));
-  memset(ccGst->dataSuperPixFG, 0,
          superPixMapH * superPixMapW * sizeof(unsigned char));
 
   ptrUCHAR = ccGst->eqCCLabelArray;
@@ -241,9 +268,32 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
   imgDataWStep = (CC_SUPER_PIXEL_H * wstride);
 
   for (rBlk = 0; rBlk < superPixMapH; rBlk += 1) {
-    for (cBlk = 0; cBlk < superPixMapW; cBlk += 1) {
-      ptrImgData =
-          ptrImgData0 + (rBlk * imgDataWStep) + (cBlk * CC_SUPER_PIXEL_W);
+    unsigned char *rowFG = ptrSuperPixFG0 + (rBlk * superPixMapW);
+    unsigned char *rowImg0 = ptrImgData0 + (rBlk * imgDataWStep);
+    cBlk = 0;
+
+#if defined(CCL_USE_NEON) && CC_SUPER_PIXEL_W == 2 && CC_SUPER_PIXEL_H == 2
+    // Each output block sums a 2x2 window of the mask, counting bytes > 0.
+    // Process 8 blocks (16 input columns, two rows) per NEON iteration; the
+    // per-lane count is 0..4, matching the scalar path bit-for-bit.
+    unsigned char *rowImg1 = rowImg0 + wstride;
+    const uint8x16_t vzero = vdupq_n_u8(0);
+    const uint8x16_t vone = vdupq_n_u8(1);
+    for (; cBlk + 8 <= superPixMapW; cBlk += 8) {
+      uint8x16_t v0 = vld1q_u8(rowImg0 + cBlk * CC_SUPER_PIXEL_W);
+      uint8x16_t v1 = vld1q_u8(rowImg1 + cBlk * CC_SUPER_PIXEL_W);
+      // 0/1 per pixel: (pixel > 0) ? 1 : 0
+      uint8x16_t b0 = vandq_u8(vcgtq_u8(v0, vzero), vone);
+      uint8x16_t b1 = vandq_u8(vcgtq_u8(v1, vzero), vone);
+      uint8x16_t s = vaddq_u8(b0, b1);  // per-column vertical sum, 0..2
+      // horizontal pairwise add adjacent columns -> 8 block sums, 0..4
+      uint8x8_t sum = vpadd_u8(vget_low_u8(s), vget_high_u8(s));
+      vst1_u8(rowFG + cBlk, sum);
+    }
+#endif
+
+    for (; cBlk < superPixMapW; cBlk += 1) {
+      ptrImgData = rowImg0 + (cBlk * CC_SUPER_PIXEL_W);
 
       cumulatedBlkSum = 0;
 
@@ -257,7 +307,7 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
         ptrImgData += (wstride - CC_SUPER_PIXEL_W);
       } /* r */
 
-      *(ptrSuperPixFG0 + (rBlk * superPixMapW) + cBlk) = cumulatedBlkSum;
+      *(rowFG + cBlk) = cumulatedBlkSum;
     } /*end of: for ( cBlk )*/
   }   /*end of: for ( rBlk )*/
 
@@ -265,6 +315,99 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
   /* Scan image for objects */
   /**************************/
 
+#if defined(CCL_USE_NEON) && CC_SCAN_WINDOW_W == 2 && CC_SCAN_WINDOW_H == 2 && \
+    CC_FG_SUPER_PIX_THD == 3
+  // Bit-exact NEON rewrite of the 2x2 scan-window foreground marking.
+  //
+  // Scalar semantics: window (r,c), r in [0,H-2), c in [0,W-2), sums the 2x2
+  // block S = FG[r][c]+FG[r][c+1]+FG[r+1][c]+FG[r+1][c+1]; if S > 3, all four
+  // cells of that window in the map are set to 255. Overlapping windows write
+  // the same constant 255, so this is equivalent to the OR-dilation form:
+  //   Map[y][x] = 255 iff any covering window (r in {y-1,y}, c in {x-1,x},
+  //   both clamped to the valid window range) has S > 3.
+  //
+  // Step 1: build a per-window hit mask M (0xFF where S>3) in dataSuperPixHit.
+  // Step 2: 2x2 OR-dilate M into the map. M is zeroed first so cells outside
+  // the valid window range (last row/col) read as 0 during dilation.
+  //
+  // NOTE: unlike the P1 block-sum pass, scan windows OVERLAP by one column, so
+  // vpadd_u8 (which sums DISJOINT adjacent pairs) cannot be used here -- it
+  // would drop every odd-column window. The horizontal sum is done with two
+  // offset unaligned loads (+0 and +1) added together instead.
+  {
+    const uint8x16_t vthd = vdupq_n_u8(CC_FG_SUPER_PIX_THD);
+
+    memset(ptrSuperPixHit0, 0,
+           superPixMapH * superPixMapW * sizeof(unsigned char));
+
+    /* Step 1: hit mask M[r][c] = (S(r,c) > CC_FG_SUPER_PIX_THD) ? 0xFF : 0 */
+    for (r = 0; r < (superPixMapH - CC_SCAN_WINDOW_H); r += 1) {
+      unsigned char *rowFG0 = ptrSuperPixFG0 + (r * superPixMapW);
+      unsigned char *rowFG1 = rowFG0 + superPixMapW;
+      unsigned char *rowM = ptrSuperPixHit0 + (r * superPixMapW);
+      c = 0;
+      // Produce 16 consecutive window sums per iteration. The +1 shifted load
+      // reads up to column cBlk+16, so require cBlk+17 <= W (which also keeps
+      // the last produced window column cBlk+15 <= W-2).
+      for (; c + 17 <= superPixMapW; c += 16) {
+        uint8x16_t a0 = vld1q_u8(rowFG0 + c);
+        uint8x16_t a1 = vld1q_u8(rowFG0 + c + 1);
+        uint8x16_t b0 = vld1q_u8(rowFG1 + c);
+        uint8x16_t b1 = vld1q_u8(rowFG1 + c + 1);
+        // lane i = FG[r][c+i]+FG[r][c+i+1]+FG[r+1][c+i]+FG[r+1][c+i+1], 0..16
+        uint8x16_t s = vaddq_u8(vaddq_u8(a0, a1), vaddq_u8(b0, b1));
+        uint8x16_t m = vcgtq_u8(s, vthd);  // 0xFF where S > thd
+        vst1q_u8(rowM + c, m);
+      }
+      for (; c < (superPixMapW - CC_SCAN_WINDOW_W); c += 1) {
+        ctFGPixels = rowFG0[c] + rowFG0[c + 1] + rowFG1[c] + rowFG1[c + 1];
+        rowM[c] = (ctFGPixels > CC_FG_SUPER_PIX_THD) ? 0xFF : 0;
+      }
+    }
+
+    /* Step 2: Map[y][x] = M[y][x] | M[y][x-1] | M[y-1][x] | M[y-1][x-1],
+     * with out-of-range M reads treated as 0. */
+    for (r = 0; r < superPixMapH; r += 1) {
+      unsigned char *rowMap = ptrSuperPixMap0 + (r * superPixMapW);
+      unsigned char *rowM = ptrSuperPixHit0 + (r * superPixMapW);
+      unsigned char *rowMup =
+          (r >= 1) ? (ptrSuperPixHit0 + ((r - 1) * superPixMapW)) : nullptr;
+
+      // Column 0: no left/up-left neighbor.
+      {
+        unsigned char v = rowM[0];
+        if (rowMup) v |= rowMup[0];
+        rowMap[0] = v;
+      }
+
+      c = 1;
+      // Main loop needs the x-1 unaligned load, so start at c=1; requires
+      // c+16 <= W for the 16-byte loads to stay in row.
+      if (rowMup) {
+        for (; c + 16 <= superPixMapW; c += 16) {
+          uint8x16_t cur = vld1q_u8(rowM + c);
+          uint8x16_t left = vld1q_u8(rowM + c - 1);
+          uint8x16_t up = vld1q_u8(rowMup + c);
+          uint8x16_t upl = vld1q_u8(rowMup + c - 1);
+          uint8x16_t res = vorrq_u8(vorrq_u8(cur, left), vorrq_u8(up, upl));
+          vst1q_u8(rowMap + c, res);
+        }
+      } else {
+        for (; c + 16 <= superPixMapW; c += 16) {
+          uint8x16_t cur = vld1q_u8(rowM + c);
+          uint8x16_t left = vld1q_u8(rowM + c - 1);
+          uint8x16_t res = vorrq_u8(cur, left);
+          vst1q_u8(rowMap + c, res);
+        }
+      }
+      for (; c < superPixMapW; c += 1) {
+        unsigned char v = rowM[c] | rowM[c - 1];
+        if (rowMup) v |= (rowMup[c] | rowMup[c - 1]);
+        rowMap[c] = v;
+      }
+    }
+  }
+#else
   for (r = 0; r < (superPixMapH - CC_SCAN_WINDOW_H); r += 1) {
     for (c = 0; c < (superPixMapW - CC_SCAN_WINDOW_W); c += 1) {
       /* sum up pixel in scanning window.*/
@@ -301,6 +444,7 @@ int *extractConnectedComponent(unsigned char *p_fg_mask, int width, int height,
 
     } /*end of: for ( c )*/
   }   /*end of: for ( r )*/
+#endif
 
   // now the map is saved in ptrSuperPixMap
   /*	Connected component labeling.*/

@@ -47,6 +47,18 @@
           "yolov7_tiny_det_coco80_640_640_INT8.json"
         ],
         "exclude": {
+          "CV190X": [
+            "yolov8n_det_head_hardhat_576_960_INT8.json",
+            "ppyoloe_det_coco80_640_640_INT8.json",
+            "yolov10n_det_coco80_640_640_INT8.json",
+            "yolov6n_det_coco80_640_640_INT8.json",
+            "yolov6s_det_coco80_640_640_INT8.json",
+            "yolov8s_det_coco80_640_640_INT8.json",
+            "scrfd_det_face_432_768_INT8.json",
+            "yolov5m_det_coco80_640_640_INT8.json",
+            "yolov5s_det_coco80_640_640_INT8.json",
+            "yolov7_tiny_det_coco80_640_640_INT8.json"
+          ],
           "CV180X": [
             "scrfd_det_face_432_768_INT8.json",
             "ppyoloe_det_coco80_640_640_INT8.json",
@@ -105,6 +117,9 @@
           "cls_attribute_gender_age_glass_emotion_112_112_INT8.json"
         ],
         "exclude": {
+          "CV190X": [
+            "cls_attribute_gender_age_glass_emotion_112_112_INT8.json"
+          ],
           "BM1684X": [
             "cls_attribute_gender_age_glass_mask_112_112_INT8.json",
             "cls_attribute_gender_age_glass_112_112_INT8.json",
@@ -165,6 +180,11 @@
           "topformer_seg_person_face_vehicle_384_640_INT8.json"
         ],
         "exclude": {
+          "CV190X": [
+            "yolov8n_seg_coco80_640_640_INT8.json",
+            "fastsam_seg_320_320_INT8.json",
+            "topformer_seg_person_face_vehicle_384_640_INT8.json"
+          ],
           "CV180X": [
             "yolov8n_seg_coco80_640_640_INT8.json",
             "fastsam_seg_320_320_INT8.json",
@@ -220,6 +240,10 @@
           "feature_mobileclip2_S2_224_224_INT8.json"
         ],
         "exclude": {
+          "CV190X": [
+            "feature_mobileclip2_B_224_224_INT8.json",
+            "feature_mobileclip2_S2_224_224_INT8.json"
+          ],
           "CV184X": [
             "feature_mobileclip2_B_224_224_INT8.json",
             "feature_mobileclip2_S2_224_224_INT8.json"

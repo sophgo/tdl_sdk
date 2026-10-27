@@ -342,6 +342,19 @@ else()
     endif()
 endif()
 
+# phobos3 (CV190X) cvi_mpi lacks VO / cvi_bin_isp / misc modules; drop them from
+# link lists. Other platforms (88a2/CV184X/CV181X...) keep these libs untouched.
+if(${CVI_PLATFORM} STREQUAL "CV190X")
+    list(REMOVE_ITEM MIDDLEWARE_LIBS
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvo.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.so
+        ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.so)
+    list(REMOVE_ITEM MIDDLEWARE_LIBS_STATIC
+        ${MIDDLEWARE_SDK_ROOT}/lib/libvo.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_bin_isp.a
+        ${MIDDLEWARE_SDK_ROOT}/lib/libmisc.a)
+endif()
+
 set(MIDDLEWARE_AUDIO_LIBS
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp.so
     ${MIDDLEWARE_SDK_ROOT}/lib/libcvi_ssp2.so
@@ -376,7 +389,7 @@ message("MIDDLEWARE_AUDIO_LIBS_STATIC: ${MIDDLEWARE_AUDIO_LIBS_STATIC}")
 
 set(MIDDLEWARE_PATH ${CMAKE_INSTALL_PREFIX}/sample/cvi_mpi)
 install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/include/ DESTINATION ${MIDDLEWARE_PATH}/include)
-if(${CVI_PLATFORM} STREQUAL "CV184X")
+if(${CVI_PLATFORM} STREQUAL "CV184X" OR ${CVI_PLATFORM} STREQUAL "CV190X")
   install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/sample_app/common/ DESTINATION ${MIDDLEWARE_PATH}/include)
 else()
   install(DIRECTORY ${MIDDLEWARE_SDK_ROOT}/sample/common/ DESTINATION ${MIDDLEWARE_PATH}/include)

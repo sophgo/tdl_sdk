@@ -24,6 +24,9 @@ std::string gen_model_suffix() {
 #elif defined(__CV186X__)
   return std::string("_cv186x.bmodel");
 
+#elif defined(__CV190X__)
+  return std::string("_cv190x.cvimodel");
+
 #elif defined(__BM1684X__)
   return std::string("_bm1684x.bmodel");
 
@@ -50,6 +53,9 @@ std::string get_platform_str() {
 #elif defined(__CV186X__)
   return std::string("CV186X");
 
+#elif defined(__CV190X__)
+  return std::string("CV190X");
+
 #elif defined(__BM1684X__)
   return std::string("BM1684X");
 
@@ -71,6 +77,7 @@ std::vector<std::string> get_platform_list() {
   platform_list.push_back(std::string("CV183X"));
   platform_list.push_back(std::string("CV184X"));
   platform_list.push_back(std::string("CV186X"));
+  platform_list.push_back(std::string("CV190X"));
   platform_list.push_back(std::string("BM1684X"));
   platform_list.push_back(std::string("BM1688"));
   platform_list.push_back(std::string("BM1684"));
@@ -89,6 +96,9 @@ std::string gen_model_dir() {
 
 #elif defined(__CV186X__)
   return std::string("cv186x");
+
+#elif defined(__CV190X__)
+  return std::string("cv190x");
 
 #elif defined(__BM1684X__)
   return std::string("bm1684x");

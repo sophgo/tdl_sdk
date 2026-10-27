@@ -12,7 +12,7 @@ std::shared_ptr<BaseMemoryPool> MemoryPoolFactory::createMemoryPool() {
   return std::make_shared<BmMemoryPool>(nullptr);
 
 #elif defined(__CV180X__) || defined(__CV181X__) || defined(__CV182X__) || \
-    defined(__CV183X__)
+    defined(__CV183X__) || defined(__CV190X__)
   return std::make_shared<CviMemoryPool>();
 
 #elif defined(__CMODEL_CV181X__) || defined(__CMODEL_CV184X__)

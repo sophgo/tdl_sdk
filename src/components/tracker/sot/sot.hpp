@@ -68,6 +68,10 @@ class SOT : public Tracker {
   void clampBBox(std::vector<float>& bbox,
                  const std::shared_ptr<BaseImage>& image, int min_side = 3);
 
+  // ===== 自适应模板刷新 =====
+  void maybeUpdateTemplate(const std::shared_ptr<BaseImage>& image,
+                           uint64_t frame_id, float score);
+
   // 模型
   std::shared_ptr<BaseModel> sot_model_;
   std::shared_ptr<FastSAMSegmentor> fastsam_segmentor_;  // FastSAM分割器实例
@@ -82,9 +86,15 @@ class SOT : public Tracker {
   int template_size_ = 128;           // 模板大小
   float template_bbox_offset_ = 0.2;  // 模板边界框偏移
   float search_bbox_offset_ = 3.0;    // 搜索边界框偏移
-  int kalman_update_count_ = 25;      // 卡尔曼开始更新的帧数
-  float size_ratio_threshold_ = 1;    // 宽高比阈值
-  float max_expand_ratio_ = 2.0;      // 目标丢失时最大外扩比例
+  // pad-with-mean-color 裁剪: true=越界填整图均值色(本变体);
+  // false=clamp+stretch(基线)
+  bool pad_mean_color_enable_ = true;
+  float pad_area_ratio_threshold_ = 0.025f;  // 目标面积/画面 大于此值走 pad
+  float pad_oob_ratio_threshold_ = 0.20f;  // 越界面积/搜索区 大于此值走 pad
+  cv::Scalar first_frame_mean_;     // 首帧均值，供 pad 填充使用
+  int kalman_update_count_ = 25;    // 卡尔曼开始更新的帧数
+  float size_ratio_threshold_ = 1;  // 宽高比阈值
+  float max_expand_ratio_ = 2.0;    // 目标丢失时最大外扩比例
 
   // 判断目标是否丢失相关参数
   float occluded_score_ratio_threshold_ = 0.9;  // 目标丢失时得分比率阈值
@@ -103,6 +113,8 @@ class SOT : public Tracker {
 
   // 模板图像
   std::shared_ptr<BaseImage> template_image_;
+  std::shared_ptr<BaseImage>
+      initial_template_image_;  // 首帧初始模板，低面积回退用
 
   // 是否已初始化
   bool is_initialized_ = false;
@@ -115,6 +127,13 @@ class SOT : public Tracker {
   TrackStatus status_ = TrackStatus::TRACKED;
   std::vector<float> last_reliable_template_bbox_;
   int lost_frames_ = 0;
+
+  // ===== 自适应模板刷新状态 =====
+  int template_update_interval_ = 3;
+  float template_update_score_thresh_ = 0.7f;
+  float template_blending_ = 0.2f;
+  float template_update_area_ratio_ = 0.025f;  // 框面积/画面 >= 此值才刷新
+  int low_area_frame_count_ = 0;  // 连续低面积帧数，超阈值回退初始模板
 
   // 中间结果
   SOTInfo sot_info_;

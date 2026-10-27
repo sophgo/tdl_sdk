@@ -31,7 +31,7 @@ if("${CVI_PLATFORM}" STREQUAL "88a2")
       ${MLIR_SDK_ROOT}/libsophon-0.4.9/lib/libbmodel.a
       ${MLIR_SDK_ROOT}/lib/libz.a
 )
-elseif("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X")
+elseif("${CVI_PLATFORM}" STREQUAL "CV181X" OR "${CVI_PLATFORM}" STREQUAL "CV180X" OR "${CVI_PLATFORM}" STREQUAL "CV190X")
   set(MLIR_LIBS
       ${MLIR_SDK_ROOT}/lib/libcnpy.so
       ${MLIR_SDK_ROOT}/lib/libcvikernel.so

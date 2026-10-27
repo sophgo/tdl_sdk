@@ -52,6 +52,8 @@ if("${CVI_PLATFORM}" STREQUAL "CV180X")
   add_definitions(-D__CV180X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CV181X")
   add_definitions(-D__CV181X__)
+elseif("${CVI_PLATFORM}" STREQUAL "CV190X")
+  add_definitions(-D__CV190X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CV182X")
   add_definitions(-D__CV182X__)
 elseif("${CVI_PLATFORM}" STREQUAL "CV183X")
@@ -191,6 +193,17 @@ endforeach()
 
 include(${CMAKE_TOOLCHAIN_FILE})
 
+# phobos3 (CV190X) C906 does not support RVV (CONFIG_VECTOR not set on asic
+# spinor boards); any vector instruction traps and hangs the CPU at runtime.
+# The shared riscv toolchain hardcodes -mcpu=c906fdv -march=rv64imafdcv0p7xthead
+# (vector v0.7) to enable RVV for mars (CV181X, CONFIG_VECTOR=y). For CV190X
+# override march/mcpu to the no-vector form after the toolchain loads it (the
+# last -march/-mcpu on the command line wins). mars/mars3 unaffected.
+if("${CVI_PLATFORM}" STREQUAL "CV190X")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mcpu=c906fd -march=rv64imafdcxthead -mabi=lp64d")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=c906fd -march=rv64imafdcxthead -mabi=lp64d")
+endif()
+
 message("==================================================")
 message("Branch                 ${LATEST_BRANCH}")
 message("Latest tag             ${LATEST_TAG}")
@@ -276,6 +289,7 @@ if( "${CVI_PLATFORM}" STREQUAL "CV180X" OR
     "${CVI_PLATFORM}" STREQUAL "CV182X" OR
     "${CVI_PLATFORM}" STREQUAL "CV183X" OR
     "${CVI_PLATFORM}" STREQUAL "CV184X" OR
+    "${CVI_PLATFORM}" STREQUAL "CV190X" OR
     "${CVI_PLATFORM}" STREQUAL "88a2" )
   include(cmake/cvi_rtsp.cmake)
 endif()

@@ -58,6 +58,8 @@ endif()
 if(("${CVI_PLATFORM}" STREQUAL "BM1688") OR ("${CVI_PLATFORM}" STREQUAL "BM1684X") OR ("${CVI_PLATFORM}" STREQUAL "BM1684"))
    set(CORES_SRCS ${CORES_SRCS} $<TARGET_OBJECTS:llm> )
    list(APPEND CORES_SRCS ${REPO_DIR}/src/components/cv/motion_detect/common/ccl.cpp)
+elseif("${CVI_PLATFORM}" STREQUAL "CV190X")
+   list(APPEND CORES_SRCS ${REPO_DIR}/src/components/cv/motion_detect/common/ccl.cpp)
 endif()
 
 if("${CVI_PLATFORM}" STREQUAL "CMODEL_CV184X" OR "${CVI_PLATFORM}" STREQUAL "CV184X")

@@ -19,13 +19,15 @@ print_usage() {
     echo "  debug          Build debug sdk"
     echo "  static         Build static sdk"
     echo "  static-debug   Build static debug sdk"
+ echo " package Package and verify CV190X install"
+ echo " verify Verify CV190X install/archive"
 }
 
 # Check parameter
-if [ "$#" -gt 2 ]; then
-    echo "Error: Too many arguments"
-    print_usage
-    exit 1
+if [ "$#" -gt 3 ]; then
+ echo "Error: Too many arguments"
+ print_usage
+ exit 1
 fi
 
 if [ -z "$TOP_DIR" ]; then
@@ -132,6 +134,12 @@ elif [[ "$1" == "CMODEL_CV184X" ]]; then
         exit 1
     fi
 
+
+elif [[ "$1" == "package" ]]; then
+ exec "${CVI_TDL_ROOT}/scripts/package_cv190x.sh" "${2:-${CVI_TDL_ROOT}/install/CV190X}" "${3:-${CVI_TDL_ROOT}/install/CV190X.tar.gz}"
+
+elif [[ "$1" == "verify" ]]; then
+ exec "${CVI_TDL_ROOT}/scripts/verify_cv190x_package.sh" "${2:-${CVI_TDL_ROOT}/install/CV190X}" "${3:-}"
 
 elif [[ "$1" == "clean" ]]; then
     echo "Using ${BASH_SOURCE[0]} clean"
@@ -332,6 +340,8 @@ elif [[ "${CHIP_ARCH}" == "CV180X" ]]; then
     if [ -n "${ALIOS_PATH}" && -d "${ALIOS_PATH}" ]; then
         CONFIG_DUAL_OS=ON
     fi
+elif [[ "${CHIP_ARCH}" == "CV190X" ]]; then
+    USE_TPU_IVE=OFF
 elif [[ "${CHIP_ARCH}" == "88a2" ]]; then
     MPI_PATH="${TOP_DIR}"/middleware/"${MW_VER}"
     USE_TPU_IVE=OFF

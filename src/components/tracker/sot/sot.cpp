@@ -106,27 +106,104 @@ std::shared_ptr<BaseImage> SOT::preprocess(
   float w = bbox[2];
   float h = bbox[3];
 
-  context[0] = static_cast<int>(x - w * offset);
-  context[1] = static_cast<int>(y - h * offset);
-  context[2] = static_cast<int>(w * (1.0f + 2 * offset));
-  context[3] = static_cast<int>(h * (1.0f + 2 * offset));
+  // 完整(未截断)上下文矩形,原图坐标(可能为负/越界)
+  int fcx = static_cast<int>(x - w * offset);
+  int fcy = static_cast<int>(y - h * offset);
+  int fcw = static_cast<int>(w * (1.0f + 2 * offset));
+  int fch = static_cast<int>(h * (1.0f + 2 * offset));
 
-  // 确保裁剪区域在图像内
-  context[0] = std::max(0, std::min(context[0], width));
-  context[1] = std::max(0, std::min(context[1], height));
-  context[2] = std::max(0, std::min(context[2], width - context[0]));
-  context[3] = std::max(0, std::min(context[3], height - context[1]));
+  // ===== pad-with-mean-color 路径: 面积>2.5% 或 越界>20% 才启用 VPSS 加速 pad
+  // =====
+  bool need_pad =
+      (fcx < 0 || fcy < 0 || fcx + fcw > width || fcy + fch > height);
+  int vx0 = std::max(fcx, 0), vy0 = std::max(fcy, 0);
+  int vx1 = std::min(fcx + fcw, width), vy1 = std::min(fcy + fch, height);
+  int v_w = vx1 - vx0, v_h = vy1 - vy0;
+
+  bool use_pad = false;
+  if (need_pad && pad_mean_color_enable_ && fcw > 0 && fch > 0 && v_w > 0 &&
+      v_h > 0) {
+    float oob_ratio = 1.0f - static_cast<float>(v_w * v_h) / (fcw * fch);
+    float area_ratio = (w * h) / static_cast<float>(width * height);
+    use_pad = (area_ratio > pad_area_ratio_threshold_) ||
+              (oob_ratio > pad_oob_ratio_threshold_);
+  }
+  if (use_pad) {
+    if (v_w > 0 && v_h > 0) {
+      // Step 2: 算全局缩放比例 (搜索窗 fcw×fch → crop_size×crop_size)
+      float scale_x = static_cast<float>(crop_size) / fcw;
+      float scale_y = static_cast<float>(crop_size) / fch;
+
+      // Step 3: 在 crop_size 坐标系中算 pad 量
+      int pad_left = static_cast<int>(std::max(-fcx, 0) * scale_x);
+      int pad_top = static_cast<int>(std::max(-fcy, 0) * scale_y);
+
+      // Step 4: 有效区在 crop_size 坐标系中的目标尺寸
+      int target_v_w = static_cast<int>(v_w * scale_x);
+      int target_v_h = static_cast<int>(v_h * scale_y);
+      target_v_w = std::min(target_v_w, crop_size - pad_left);
+      target_v_h = std::min(target_v_h, crop_size - pad_top);
+
+      if (target_v_w > 0 && target_v_h > 0) {
+        // Step 5: VPSS 一次性裁剪 + 缩放到目标尺寸
+        PreprocessParams pp;
+        memset(&pp, 0, sizeof(pp));
+        pp.dst_image_format = ImageFormat::RGB_PACKED;
+        pp.dst_pixdata_type = TDLDataType::UINT8;
+        pp.crop_x = vx0 & ~1;
+        pp.crop_y = vy0 & ~1;
+        pp.crop_width = std::max(2, v_w & ~1);
+        pp.crop_height = std::max(2, v_h & ~1);
+        pp.dst_width = target_v_w;
+        pp.dst_height = target_v_h;
+        pp.scale[0] = pp.scale[1] = pp.scale[2] = 1.0f;
+        pp.keep_aspect_ratio = false;
+
+        auto small_img = preprocessor_->preprocess(image, pp, nullptr);
+        if (small_img) {
+          // Step 6: 小图转 Mat (只几 KB, 极快)
+          cv::Mat small_mat;
+          bool is_rgb = false;
+          if (ImageFactory::convertToMat(small_img, small_mat, is_rgb) == 0 &&
+              small_mat.type() == CV_8UC3 && small_mat.data) {
+            // Step 7: 创建 crop_size×crop_size 均值色画布
+            cv::Mat canvas(crop_size, crop_size, CV_8UC3, first_frame_mean_);
+            // Step 8: 把小图贴到正确位置
+            cv::Mat dst_roi =
+                canvas(cv::Rect(pad_left, pad_top, target_v_w, target_v_h));
+            small_mat.copyTo(dst_roi);
+            // Step 9: 转回 VPSSImage 喂给网络
+            auto final_img = ImageFactory::convertFromMat(canvas, is_rgb);
+            if (final_img) {
+              context[0] = fcx;
+              context[1] = fcy;
+              context[2] = fcw;
+              context[3] = fch;
+              return final_img;
+            }
+          }
+        }
+      }
+    }
+    // fall through 到基线 clamp
+  }
+
+  // ===== 基线: clamp + stretch(pad 关时走此,原行为) =====
+  context[0] = std::max(0, std::min(fcx, width));
+  context[1] = std::max(0, std::min(fcy, height));
+  context[2] = std::max(0, std::min(fcw, width - context[0]));
+  context[3] = std::max(0, std::min(fch, height - context[1]));
 
   PreprocessParams params;
   memset(&params, 0, sizeof(PreprocessParams));
-  params.dst_image_format = image->getImageFormat();
-  params.dst_pixdata_type = image->getPixDataType();
+  params.dst_image_format = ImageFormat::RGB_PACKED;
+  params.dst_pixdata_type = TDLDataType::UINT8;
   params.dst_width = crop_size;
   params.dst_height = crop_size;
-  params.crop_x = context[0];
-  params.crop_y = context[1];
-  params.crop_width = context[2];
-  params.crop_height = context[3];
+  params.crop_x = context[0] & ~1;
+  params.crop_y = context[1] & ~1;
+  params.crop_width = std::max(2, context[2] & ~1);
+  params.crop_height = std::max(2, context[3] & ~1);
   params.mean[0] = 0;
   params.mean[1] = 0;
   params.mean[2] = 0;
@@ -158,6 +235,66 @@ void SOT::updateScoreLst(float score) {
     }
   } else {
     score_lst_.push_back(score);
+  }
+}
+
+// ===== 自适应模板刷新(简化: interval + score+ 面积门限) =====
+void SOT::maybeUpdateTemplate(const std::shared_ptr<BaseImage>& image,
+                              uint64_t frame_id, float score) {
+  if (static_cast<int>(frame_id) - last_template_update_frame_ <
+      template_update_interval_) {
+    return;
+  }
+  if (score < template_update_score_thresh_) {
+    return;
+  }
+
+  // 面积门限: 框面积/画面 >= 2.5% 才允许刷新；低面积连续 10 帧退回初始模板
+  float box_area = current_bbox_[2] * current_bbox_[3];
+  float frame_area = static_cast<float>(image->getWidth()) *
+                     static_cast<float>(image->getHeight());
+  if (frame_area > 0 && box_area / frame_area < template_update_area_ratio_) {
+    low_area_frame_count_++;
+    if (low_area_frame_count_ >= 10 && initial_template_image_) {
+      LOGI("低面积连续%d帧, 模板退回初始模板\n", low_area_frame_count_);
+      template_image_ = initial_template_image_;
+      last_template_update_frame_ = static_cast<int>(frame_id);
+      low_area_frame_count_ = 0;
+    }
+    return;
+  }
+  low_area_frame_count_ = 0;  // 面积恢复正常，清零计数
+
+  std::vector<int> ctx;
+  ctx.resize(4);
+  std::shared_ptr<BaseImage> new_tmpl = preprocess(
+      image, current_bbox_, template_bbox_offset_, template_size_, ctx);
+  if (!new_tmpl) {
+    LOGE("maybeUpdateTemplate: 新模板裁剪失败");
+    return;
+  }
+  cv::Mat old_mat, new_mat;
+  bool is_rgb_old = false, is_rgb_new = false;
+  if (ImageFactory::convertToMat(template_image_, old_mat, is_rgb_old) != 0 ||
+      ImageFactory::convertToMat(new_tmpl, new_mat, is_rgb_new) != 0) {
+    LOGE("maybeUpdateTemplate: convertToMat 失败, 跳过融合");
+    return;
+  }
+  if (old_mat.size() != new_mat.size() || old_mat.type() != new_mat.type()) {
+    LOGE("maybeUpdateTemplate: 新旧模板尺寸/类型不匹配, 跳过");
+    return;
+  }
+  cv::Mat blended;
+  cv::addWeighted(old_mat, 1.0f - template_blending_, new_mat,
+                  template_blending_, 0.0, blended);
+  std::shared_ptr<BaseImage> blended_img =
+      ImageFactory::convertFromMat(blended, is_rgb_old);
+  if (blended_img) {
+    template_image_ = blended_img;
+    last_template_update_frame_ = static_cast<int>(frame_id);
+    template_update_count_++;
+    LOGI("模板刷新: frame=%lu, blending=%.2f, count=%d\n",
+         (unsigned long)frame_id, template_blending_, template_update_count_);
   }
 }
 
@@ -543,12 +680,25 @@ int32_t SOT::initBBox(const std::shared_ptr<BaseImage>& image,
   if (use_kalman_filter_) {
     kalman_tracker_ = std::make_shared<KalmanBoxTracker>(current_bbox_);
   }
+  // v9: 存储首帧全图均值，供固定填充模式使用
+  {
+    cv::Mat init_mat;
+    bool init_rgb = false;
+    auto image_copy = image;
+    if (ImageFactory::convertToMat(image_copy, init_mat, init_rgb) == 0 &&
+        init_mat.type() == CV_8UC3 && init_mat.data) {
+      first_frame_mean_ = cv::mean(init_mat);
+    } else {
+      first_frame_mean_ = cv::Scalar(128, 128, 128);  // fallback
+    }
+  }
   template_image_ = preprocess(image, current_bbox_, template_bbox_offset_,
                                template_size_, context);
   if (!template_image_) {
     LOGE("模板提取失败");
     return -1;
   }
+  initial_template_image_ = template_image_;  // 保存初始模板副本
   is_initialized_ = true;
   LOGI("跟踪器初始化成功");
   return 0;
@@ -562,8 +712,19 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
   }
   std::vector<int> context;
   context.resize(4);
-  std::shared_ptr<BaseImage> search_image = preprocess(
-      image, current_bbox_, search_bbox_offset_, instance_size_, context);
+  // 大目标缩小搜索窗: 面积 >= 2.5% 时 offset 降为 2
+  float effective_offset = search_bbox_offset_;
+  if (current_bbox_.size() >= 4 && current_bbox_[2] > 0 &&
+      current_bbox_[3] > 0) {
+    float area_ratio =
+        current_bbox_[2] * current_bbox_[3] /
+        static_cast<float>(image->getWidth() * image->getHeight());
+    if (area_ratio >= template_update_area_ratio_) effective_offset = 2.0f;
+  }
+  // LOST 时搜索框保持 current_bbox_ 不变
+  std::vector<float> search_bbox = current_bbox_;
+  std::shared_ptr<BaseImage> search_image =
+      preprocess(image, search_bbox, effective_offset, instance_size_, context);
 
   std::vector<std::vector<std::shared_ptr<BaseImage>>> input_images = {
       {template_image_, search_image}};
@@ -586,6 +747,7 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
   if (track_result->bboxes.empty()) {
     LOGI("track_result->bboxes.empty()\n");
     tracker_info.status_ = TrackStatus::LOST;
+    lost_frames_ += 1;
     return 0;
   }
 
@@ -637,15 +799,24 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
       scaled_bbox[3] > 0 ? scaled_bbox[2] / scaled_bbox[3] : 1.0f;
   float aspect_ratio = prev_aspect > 0 ? new_aspect / prev_aspect : 1.0f;
 
-  bool geom_anomaly = (center_displacement > 2.0f * current_bbox_[2]) ||
-                      (area_ratio > 1.25f || area_ratio < 0.8f) ||
-                      (aspect_ratio > 1.25f || aspect_ratio < 0.8f);
+  // 面积+score 双重放行: 面积>2.5% 且 score>0.6 同时满足才跳过几何异常检测
+  float bbox_area_ratio =
+      current_bbox_[2] * current_bbox_[3] /
+      static_cast<float>(image->getWidth() * image->getHeight());
+  bool geom_anomaly;
+  if (bbox_area_ratio > template_update_area_ratio_ && score > 0.6f) {
+    geom_anomaly = false;
+  } else {
+    geom_anomaly = (center_displacement > 2.0f * current_bbox_[2]) ||
+                   (area_ratio > 1.25f || area_ratio < 0.8f) ||
+                   (aspect_ratio > 1.25f || aspect_ratio < 0.8f);
+  }
 
   if (geom_anomaly) {
     LOGI(
-        "geom_anomaly: displacement=%.2f, ori_width=%.2f, area_ratio=%.2f, "
-        "aspect_ratio=%.2f\n",
-        center_displacement, current_bbox_[2], area_ratio, aspect_ratio);
+        "geom_anomaly: score=%.2f, displacement=%.2f, ori_width=%.2f, "
+        "area_ratio=%.2f, aspect_ratio=%.2f\n",
+        score, center_displacement, current_bbox_[2], area_ratio, aspect_ratio);
     tracker_info.status_ = TrackStatus::LOST;
     tracker_info.box_info_.x1 = current_bbox_[0];
     tracker_info.box_info_.y1 = current_bbox_[1];
@@ -654,6 +825,7 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
     tracker_info.box_info_.score = score;
     tracker_info.box_info_.class_id = 0;
     frame_id_ = frame_id;
+    lost_frames_ += 1;  // 几何 reject 计 LOST
     return 0;
   }
 
@@ -671,6 +843,11 @@ int32_t SOT::track(const std::shared_ptr<BaseImage>& image, uint64_t frame_id,
 
     if (score < 0.5) {
       tracker_info.status_ = TrackStatus::LOST;
+      lost_frames_ += 1;
+    } else {
+      lost_frames_ = 0;
+      // 自适应模板刷新
+      maybeUpdateTemplate(image, frame_id, score);
     }
     frame_id_ = frame_id;
     return 0;

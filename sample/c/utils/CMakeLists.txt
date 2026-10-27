@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16.3)
 project(tdl_utils)
 
-if(${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
+if(${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X" OR ${CVI_PLATFORM} STREQUAL "CV190X")
 add_subdirectory(
     ${REPO_DIR}/src/components/encoder/rtsp
     ${CMAKE_CURRENT_BINARY_DIR}/rtsp_build
@@ -31,18 +31,32 @@ if(${CVI_PLATFORM} STREQUAL "CV181X" OR ${CVI_PLATFORM} STREQUAL "CV184X")
     list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/vi_decoder/vi_decoder.cpp)
 endif()
 
+if(${CVI_PLATFORM} STREQUAL "CV190X")
+    list(APPEND UTILS_INCLUDES ${RTSP_INCLUDE})
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/encoder/rtsp/rtsp.cpp)
+endif()
+
 if(${CVI_PLATFORM} STREQUAL "BM1688" OR ${CVI_PLATFORM} STREQUAL "BM1684" OR ${CVI_PLATFORM} STREQUAL "BM1684X")
     list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/video_decoder_factory.cpp)
     list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/image_folder/image_folder_decoder.cpp)
     list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/opencv_decoder/opencv_decoder.cpp)
 endif()
 
-if(NOT ${CVI_PLATFORM} STREQUAL "CV181X" 
+if(NOT ${CVI_PLATFORM} STREQUAL "CV181X"
     AND NOT ${CVI_PLATFORM} STREQUAL "CV184X"
     AND NOT ${CVI_PLATFORM} STREQUAL "BM1688"
     AND NOT ${CVI_PLATFORM} STREQUAL "BM1684"
-    AND NOT ${CVI_PLATFORM} STREQUAL "BM1684X")
+    AND NOT ${CVI_PLATFORM} STREQUAL "BM1684X"
+    AND NOT ${CVI_PLATFORM} STREQUAL "CV190X")
     list(REMOVE_ITEM UTILS_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/sample_utils.cpp)
+endif()
+
+# phobos3 (CV190X): only IMAGE_FOLDER decoder is needed by sample_utils
+# (GetVideoFrame). VI/RTSP/OpenCV decoders are platform-specific and unused here,
+# so add just the factory + image_folder sources.
+if(${CVI_PLATFORM} STREQUAL "CV190X")
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/video_decoder_factory.cpp)
+    list(APPEND UTILS_SOURCES ${REPO_DIR}/src/components/video_decoder/image_folder/image_folder_decoder.cpp)
 endif()
 
 include_directories(${UTILS_INCLUDES})

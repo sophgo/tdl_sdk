@@ -44,7 +44,7 @@ InferencePlatform CommonUtils::getPlatform() {
 #elif defined(__CV184X__)
   return InferencePlatform::CV184X;
 #elif defined(__CV181X__) || defined(__CV180X__) || defined(__CV182X__) || \
-    defined(__CV183X__)
+    defined(__CV183X__) || defined(__CV190X__)
   return InferencePlatform::CVITEK;
 #elif defined(__CMODEL_CV181X__)
   return InferencePlatform::CMODEL_CV181X;

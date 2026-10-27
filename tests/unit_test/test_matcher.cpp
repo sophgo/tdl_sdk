@@ -158,6 +158,10 @@ class MatcherTestSuite : public ::testing::Test {
     if (platform.find("CV181X") != std::string::npos) {
       matcher_type_ = "cvi";
     }
+#if defined(__CV190X__)
+    // CV190X 未编译 bm/cvi matcher，使用通用 CPU 实现
+    matcher_type_ = "cpu";
+#endif
 
     test_matcher_ = BaseMatcher::getMatcher(matcher_type_);
     cpu_matcher_ = BaseMatcher::getMatcher("cpu");
